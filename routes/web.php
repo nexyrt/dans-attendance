@@ -1,0 +1,27 @@
+<?php
+
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', [HomeController::class, 'index'])->name('home');
+
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/check-in', [AttendanceController::class, 'checkIn'])->name('check-in');
+    Route::post('/check-out', [AttendanceController::class, 'checkOut'])->name('check-out');
+    Route::get('/activity-logs/{id}/edit', [AttendanceController::class, 'edit'])->name('activity-logs.edit');
+    Route::patch('/activity-logs/{id}/patch', [AttendanceController::class, 'patch'])->name('activity-logs.patch');
+    Route::post('/filter', [DashboardController::class, 'filter'])->name('filter');
+    Route::get('/camera', function () {
+        return view('camera');
+    });
+});
+
+require __DIR__ . '/auth.php';
