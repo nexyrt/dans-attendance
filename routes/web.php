@@ -1,5 +1,6 @@
 <?php
 
+use App\Exports\FilteredDataExport;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
@@ -18,10 +19,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/check-out', [AttendanceController::class, 'checkOut'])->name('check-out');
     Route::get('/activity-logs/{id}/edit', [AttendanceController::class, 'edit'])->name('activity-logs.edit');
     Route::patch('/activity-logs/{id}/patch', [AttendanceController::class, 'patch'])->name('activity-logs.patch');
-    Route::post('/filter', [DashboardController::class, 'filter'])->name('filter');
-    Route::get('/camera', function () {
-        return view('camera');
-    });
+    Route::get('/fetch-data', [DashboardController::class, 'fetchData']);
+    Route::post('/export-table-data', [DashboardController::class, 'exportTableData'])->name('export-table');
+
 });
 
 require __DIR__ . '/auth.php';

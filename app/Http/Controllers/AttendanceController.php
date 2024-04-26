@@ -40,7 +40,7 @@ class AttendanceController extends Controller
         $attendanceData = Attendance::where('employee_id', $id)
             ->whereDate('date', now()->toDateString())
             ->get();
-            
+
         return view('components.staff.edit-attendance', compact('attendanceData'));
     }
 
