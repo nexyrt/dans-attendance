@@ -6,6 +6,8 @@ use App\Exports\FilteredDataExport;
 use App\Exports\FilteredTableExport;
 use App\Models\Attendance;
 use App\Models\Employee;
+use Carbon\Carbon;
+use DateTime;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
@@ -15,19 +17,23 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $activity_log = Attendance::with('employee')->get();
+        // Current Date
+        $month = Carbon::now()->month;
+
+        // Employee Records
         $user = auth()->user();
+        $admin = Attendance::with('employee')->get();
         $employee = Employee::where('user_id', $user->id)->first();
 
+        // Check today's attendance
         $attendanceRecordExists = $this->checkAttendanceRecordExists($employee->id);
         $hasCheckedOut = $this->hasCheckedOut($employee->id);
 
-        $attendance = Attendance::whereMonth('date', now()->month())
-            ->whereYear('date', now()->year)
-            ->where('employee_id', $employee->id)
+        $attendance = Attendance::where('employee_id', $employee->id)
+            ->whereMonth('date', $month)
             ->get();
 
-        return view('dashboard', compact(['activity_log', 'user', 'employee', 'attendanceRecordExists', 'hasCheckedOut', 'attendance']));
+        return view('dashboard', compact(['admin', 'user', 'employee', 'attendanceRecordExists', 'hasCheckedOut', 'attendance']));
     }
 
     public function checkAttendanceRecordExists($employeeId)

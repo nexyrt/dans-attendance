@@ -12,7 +12,7 @@
     @if (auth()->user()->isAdmin($user->role))
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <x-admin.index :dataVariable="$activity_log" :employee="$employee"></x-admin.index>
+                <x-admin.index :dataVariable="$admin" :employee="$employee"></x-admin.index>
             </div>
         </div>
     @else
