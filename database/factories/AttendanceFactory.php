@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,7 +17,7 @@ class AttendanceFactory extends Factory
     public function definition(): array
     {
         return [
-            'employee_id' => Employee::all()->random()->id,
+            'user_id' => User::all()->random()->id,
             'date' => $this->faker->date,
             'check_in' => $this->faker->dateTimeThisMonth(),
             'check_out' => $this->faker->dateTimeThisMonth(),

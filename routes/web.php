@@ -18,7 +18,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/check-in', [AttendanceController::class, 'checkIn'])->name('check-in');
     Route::post('/check-out', [AttendanceController::class, 'checkOut'])->name('check-out');
     Route::get('/activity-logs/{id}/edit', [AttendanceController::class, 'edit'])->name('activity-logs.edit');
-    Route::patch('/activity-logs/{id}/patch', [AttendanceController::class, 'patch'])->name('activity-logs.patch');
+    Route::put('/activity-logs/{id}/put', [AttendanceController::class, 'update'])->name('activity-logs.update');
     Route::get('/fetch-data', [DashboardController::class, 'fetchData']);
     Route::post('/export-table-data', [DashboardController::class, 'exportTableData'])->name('export-table');
 

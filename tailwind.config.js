@@ -11,6 +11,10 @@ export default {
 
     theme: {
         extend: {
+            // Remove any custom list styling
+            listStyleType: {
+                none: 'none',
+            },
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },

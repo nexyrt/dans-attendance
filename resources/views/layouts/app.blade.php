@@ -11,9 +11,18 @@
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <style>
+            ul {
+                list-style-type: disc;
+            }
+            ol {
+                list-style: decimal;
+            }
+        </style>
 
         <!-- Scripts -->
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        @notifyCss
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
@@ -36,15 +45,9 @@
                 {{ $slot }}
             </main>
         </div>
-        <script>
-            const activityLogs = document.querySelectorAll('[id^="activityLog"]');
-            activityLogs.forEach(activityLog => {
-                const ulElements = activityLog.querySelectorAll('ol');
-                ulElements.forEach(ul => {
-                    ul.classList.add('list-decimal'); // Add Tailwind CSS classes
-                });
-            });
-        </script>
+
+        <x-notify::notify />
+        @notifyJs
     </body>
 
 </html>

@@ -6,6 +6,7 @@ use App\Exports\FilteredDataExport;
 use App\Exports\FilteredTableExport;
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\User;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Http\Request;
@@ -19,42 +20,41 @@ class DashboardController extends Controller
     {
         // Current Date
         $month = Carbon::now()->month;
-
-        // Employee Records
         $user = auth()->user();
-        $admin = Attendance::with('employee')->get();
-        $employee = Employee::where('user_id', $user->id)->first();
-
+        
         // Check today's attendance
-        $attendanceRecordExists = $this->checkAttendanceRecordExists($employee->id);
-        $hasCheckedOut = $this->hasCheckedOut($employee->id);
-
-        $attendance = Attendance::where('employee_id', $employee->id)
+        $attendanceRecordExists = $this->checkAttendanceRecordExists($user->id);
+        $hasCheckedOut = $this->hasCheckedOut($user->id);
+        
+        // Employee Records
+        $admin_attendance = Attendance::with('user')->get();
+        $user_attendance = Attendance::where('user_id', $user->id)
             ->whereMonth('date', $month)
             ->get();
 
-        return view('dashboard', compact(['admin', 'user', 'employee', 'attendanceRecordExists', 'hasCheckedOut', 'attendance']));
+
+        return view('dashboard', compact(['admin_attendance', 'user_attendance', 'attendanceRecordExists', 'hasCheckedOut', 'user']));
     }
 
-    public function checkAttendanceRecordExists($employeeId)
+    public function checkAttendanceRecordExists($userId)
     {
         // Get today's date
         $todayDate = now()->toDateString();
 
         // Check if there's an attendance record for today's date for the given user ID
-        $attendanceRecordExists = Attendance::where('employee_id', $employeeId)
+        $attendanceRecordExists = Attendance::where('user_id', $userId)
             ->whereDate('date', $todayDate)
             ->exists();
 
         return $attendanceRecordExists;
     }
 
-    public function hasCheckedOut($employeeId)
+    public function hasCheckedOut($userId)
     {
         // Get today's date
         $today = now()->toDateString();
 
-        return Attendance::where('employee_id', $employeeId)
+        return Attendance::where('user_id', $userId)
             ->whereDate('date', $today)
             ->whereNotNull('check_out')
             ->exists();
@@ -64,25 +64,25 @@ class DashboardController extends Controller
     {
         $department = $request->input('department');
         $position = $request->input('position');
-        $employeeName = $request->input('employee_name');
+        $user_name = $request->input('user_name');
 
-        $query = Attendance::with('employee');
+        $query = Attendance::with('user');
 
         if ($department) {
-            $query->whereHas('employee', function ($q) use ($department) {
+            $query->whereHas('user', function ($q) use ($department) {
                 $q->where('department', $department);
             });
         }
 
         if ($position) {
-            $query->whereHas('employee', function ($q) use ($position) {
+            $query->whereHas('user', function ($q) use ($position) {
                 $q->where('position', $position);
             });
         }
 
-        if ($employeeName) {
-            $query->whereHas('employee', function ($q) use ($employeeName) {
-                $q->where('name', 'like', '%' . $employeeName . '%');
+        if ($user_name) {
+            $query->whereHas('user', function ($q) use ($user_name) {
+                $q->where('name', 'like', '%' . $user_name . '%');
             });
         }
 
@@ -97,23 +97,23 @@ class DashboardController extends Controller
         // Retrieve filter parameters from the request
         $department = $request->input('department');
         $position = $request->input('position');
-        $employeeName = $request->input('employeeName');
+        $user_name = $request->input('user_name');
 
         // Query to fetch attendance data based on filters
         $attendanceQuery = Attendance::query()
-            ->select('attendances.*', 'employees.name as employee_name', 'employees.department', 'employees.position')
-            ->join('employees', 'attendances.employee_id', '=', 'employees.id');
+            ->select('attendances.*', 'users.name as user_name', 'users.department', 'users.position')
+            ->join('users', 'attendances.user_id', '=', 'users.id');
 
         if (!empty($department)) {
-            $attendanceQuery->where('employees.department', $department);
+            $attendanceQuery->where('user.department', $department);
         }
 
         if (!empty($position)) {
-            $attendanceQuery->where('employees.position', $position);
+            $attendanceQuery->where('user.position', $position);
         }
 
-        if (!empty($employeeName)) {
-            $attendanceQuery->where('employees.name', 'LIKE', "%$employeeName%");
+        if (!empty($user_name)) {
+            $attendanceQuery->where('user.name', 'LIKE', "%$user_name%");
         }
 
         $filteredData = $attendanceQuery->get()->toArray();

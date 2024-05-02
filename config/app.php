@@ -164,6 +164,7 @@ return [
          * Application Service Providers...
          */
         Maatwebsite\Excel\ExcelServiceProvider::class,
+        Mckenziearts\Notify\LaravelNotifyServiceProvider::class,
         App\Providers\AppServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,

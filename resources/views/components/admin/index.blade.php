@@ -37,7 +37,7 @@
                             d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
                     </svg>
                 </div>
-                <input type="search" type="text" id="employeeName" name="employeeName"
+                <input type="search" type="text" id="user_name" name="user_name"
                     class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     placeholder="Search Employees" required />
             </div>
@@ -89,21 +89,21 @@
                                     <tr>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-gray-200">
-                                            {{ $item->employee->name }}</td>
+                                            {{ $item->user->name }}</td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
                                             <p class="bg-blue-500 p-1.5 text-white rounded-md w-fit">
-                                                {{ $item->employee->department }}</p>
+                                                {{ $item->user->department }}</p>
                                         </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
                                             <p class="bg-orange-500 p-1.5 text-white rounded-md w-fit">
-                                                {{ $item->employee->position }}</p>
-
+                                                {{ $item->user->position }}</p>
                                         </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
-                                            {{ $item->activity_log }}</td>
+                                            {!! $item->activity_log !!}
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap  text-end text-sm font-medium">
                                             {{ $item->date }}
                                         </td>
@@ -127,6 +127,7 @@
         </div>
     </div>
 </div>
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -158,13 +159,13 @@
         function fetchData() {
             const department = document.getElementById('departmentSelect').value;
             const position = document.getElementById('positionSelect').value;
-            const employeeName = document.getElementById('employeeName').value;
+            const user_name = document.getElementById('user_name').value;
             $.ajax({
                 url: '/fetch-data',
                 type: 'GET',
                 data: {
                     department: department,
-                    employee_name: employeeName,
+                    user_name: user_name,
                     position: position,
                 },
                 success: function(response) {
@@ -180,16 +181,15 @@
 
             data.forEach(item => {
                 const row = document.createElement('tr');
-
                 // Create and populate table cells with data from each item
-                const nameCell = createTableCell(item.employee.name,
+                const nameCell = createTableCell(item.user.name,
                     'px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-gray-200'
                 );
                 const departmentCell = createTableCell(
-                    `<p class="bg-blue-500 p-1.5 text-white rounded-md w-fit">${item.employee.department}</p>`,
+                    `<p class="bg-blue-500 p-1.5 text-white rounded-md w-fit">${item.user.department}</p>`,
                     'px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200');
                 const positionCell = createTableCell(
-                    `<p class="bg-orange-500 p-1.5 text-white rounded-md w-fit">${item.employee.position}</p>`,
+                    `<p class="bg-orange-500 p-1.5 text-white rounded-md w-fit">${item.user.position}</p>`,
                     'px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200');
                 const activityLogCell = createTableCell(item.activity_log,
                     'px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200');
@@ -233,5 +233,36 @@
         //     });
         //     return tableData
         // }
+    });
+</script>
+<script>
+    // Define a function to apply list styles
+    function applyListStyles() {
+        // Select all ol and ul elements
+        const listElements = document.querySelectorAll('ol, ul');
+
+        // Loop through each list element
+        listElements.forEach((list) => {
+            // Determine the appropriate list-style-type and add the classes
+            const listStyleType = list.tagName === 'OL' ? 'list-decimal' : 'list-disc';
+            list.classList.add(listStyleType, 'list-inside');
+        });
+    }
+
+    // Create a MutationObserver instance
+    const observer = new MutationObserver((mutationsList, observer) => {
+        // Call the applyListStyles function whenever a mutation occurs
+        applyListStyles();
+    });
+
+    // Start observing mutations on the body element
+    observer.observe(document.body, {
+        subtree: true,
+        childList: true
+    });
+
+    // Initial call to applyListStyles when the DOM content is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        applyListStyles();
     });
 </script>

@@ -9,14 +9,14 @@
         </div>
         <!-- Modal body -->
         <div class="p-4 text-center md:p-5 space-y-4">
-            <p>Hey there, {{ $employee->name }}</p>
+            <p>Hey there, {{ $user->name }}</p>
             <img class="max-w-20 mx-auto" src= {{ $checkOutModal ? asset('images/log-out.gif') : "https://c.tenor.com/Hw7f-4l0zgEAAAAC/tenor.gif" }} alt="Check-In">
         </div>
         <!-- Modal footer --> 
         <form class="flex items-center p-4 md:p-5 rounded-b dark:border-gray-600"
             action="{{ $checkOutModal ? route('check-out') : route('check-in') }}" method="POST">
             @csrf
-            <input type="hidden" name="employee_id" value="{{ $employee->id }}">
+            <input type="hidden" name="user_id" value="{{ $user->id }}">
             <input type="hidden" name="check_in_time" value="{{ date('H:i:s') }}">
             <input type="hidden" name="check_in_date" value="{{ now()->toDateString() }}">
             @if ($checkOutModal)

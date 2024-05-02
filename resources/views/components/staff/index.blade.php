@@ -50,3 +50,35 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Define a function to apply list styles
+    function applyListStyles() {
+        // Select all ol and ul elements
+        const listElements = document.querySelectorAll('ol, ul');
+
+        // Loop through each list element
+        listElements.forEach((list) => {
+            // Determine the appropriate list-style-type and add the classes
+            const listStyleType = list.tagName === 'OL' ? 'list-decimal' : 'list-disc';
+            list.classList.add(listStyleType, 'list-inside');
+        });
+    }
+
+    // Create a MutationObserver instance
+    const observer = new MutationObserver((mutationsList, observer) => {
+        // Call the applyListStyles function whenever a mutation occurs
+        applyListStyles();
+    });
+
+    // Start observing mutations on the body element
+    observer.observe(document.body, {
+        subtree: true,
+        childList: true
+    });
+
+    // Initial call to applyListStyles when the DOM content is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        applyListStyles();
+    });
+</script>

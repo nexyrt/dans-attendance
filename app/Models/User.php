@@ -13,10 +13,16 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
-        'employee_number',
         'name',
         'email',
         'password',
+        'role',
+        'department',
+        'position',
+        'salary',
+        'address',
+        'phone_number',
+        'birthdate',
     ];
 
     protected $hidden = [
@@ -29,9 +35,9 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    public function employee()
+    public function attendance()
     {
-        return $this->belongsTo(Employee::class);
+        return $this->hasMany(Attendance::class, 'user_id');
     }
 
     public function isAdmin($role)
