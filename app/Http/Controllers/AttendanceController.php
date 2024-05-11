@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class AttendanceController extends Controller
 {
@@ -53,5 +55,17 @@ class AttendanceController extends Controller
         notify()->success('Good job, keep it up ⚡️', 'Aktivitas ditambahkan!');
 
         return redirect()->route('dashboard');
+    }
+
+    public function receiveData(Request $request)
+    {
+        // Process the received data
+        $data = $request->input('dataToSend');
+
+        // Filter out records based on the name
+        $filteredRecords = User::where('name', $data)->get();
+
+        // Pass the filtered records to the Blade view
+        return response()->json($filteredRecords);
     }
 }

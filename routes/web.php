@@ -3,6 +3,7 @@
 use App\Exports\FilteredDataExport;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +23,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/fetch-data', [DashboardController::class, 'fetchData']);
     Route::post('/export-table-data', [DashboardController::class, 'exportTableData'])->name('export-table');
 
+    //employee management route
+    Route::get('/employee', [EmployeeController::class, 'index'])->name('employee-management');
+    
+    //some trial route
+    Route::post('/send-data', [AttendanceController::class, 'receiveData'])->name('receive-data');
 });
 
 require __DIR__ . '/auth.php';

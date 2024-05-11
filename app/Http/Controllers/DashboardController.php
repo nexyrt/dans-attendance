@@ -21,11 +21,11 @@ class DashboardController extends Controller
         // Current Date
         $month = Carbon::now()->month;
         $user = auth()->user();
-        
+
         // Check today's attendance
         $attendanceRecordExists = $this->checkAttendanceRecordExists($user->id);
         $hasCheckedOut = $this->hasCheckedOut($user->id);
-        
+
         // Employee Records
         $admin_attendance = Attendance::with('user')->get();
         $user_attendance = Attendance::where('user_id', $user->id)
@@ -65,6 +65,8 @@ class DashboardController extends Controller
         $department = $request->input('department');
         $position = $request->input('position');
         $user_name = $request->input('user_name');
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
 
         $query = Attendance::with('user');
 
@@ -86,6 +88,10 @@ class DashboardController extends Controller
             });
         }
 
+        if ($startDate && $endDate) {
+            $query->whereBetween('date', [$startDate, $endDate]);
+        }
+
         $data = $query->get();
 
         // Return the data as JSON
@@ -98,6 +104,8 @@ class DashboardController extends Controller
         $department = $request->input('department');
         $position = $request->input('position');
         $user_name = $request->input('user_name');
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
 
         // Query to fetch attendance data based on filters
         $attendanceQuery = Attendance::query()
@@ -105,20 +113,25 @@ class DashboardController extends Controller
             ->join('users', 'attendances.user_id', '=', 'users.id');
 
         if (!empty($department)) {
-            $attendanceQuery->where('user.department', $department);
+            $attendanceQuery->where('users.department', $department);
         }
 
         if (!empty($position)) {
-            $attendanceQuery->where('user.position', $position);
+            $attendanceQuery->where('users.position', $position);
         }
 
         if (!empty($user_name)) {
-            $attendanceQuery->where('user.name', 'LIKE', "%$user_name%");
+            $attendanceQuery->where('users.name', 'LIKE', "%$user_name%");
+        }
+
+        if ($startDate && $endDate) {
+            $attendanceQuery->whereBetween('date', [$startDate, $endDate]);
         }
 
         $filteredData = $attendanceQuery->get()->toArray();
 
         // Generate and return the Excel file
+        notify()->success('Silakan di cek yaa absensinya 🤙', 'Export Berhasil!');
         return Excel::download(new FilteredTableExport($filteredData), 'filtered_data.xlsx');
     }
 }
