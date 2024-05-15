@@ -4,59 +4,53 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\User;
 
 class Table extends Component
 {
     use WithPagination;
 
-    public $searchName = '';
-    public $searchPosition = '';
-    public $searchDepartment = '';
+    public $model;
+    public $columns;
+    public $filters = [];
+    public $search = '';
+    public $perPage = 10;
 
-    protected $updatesQueryString = [
-        'searchName' => ['except' => ''],
-        'searchPosition' => ['except' => ''],
-        'searchDepartment' => ['except' => ''],
-    ];
+    public function mount($model, $columns)
+    {
+        $this->model = $model;
+        $this->columns = $columns;
+    }
 
-    public function updatingSearchName()
+    public function updatingSearch()
     {
         $this->resetPage();
     }
 
-    public function updatingSearchPosition()
+    public function updatingFilters()
     {
-        $this->resetPage();
-    }
-
-    public function updatingSearchDepartment()
-    {
-        $this->resetPage();
-    }
-
-    public function setDepartment($department)
-    {
-        $this->searchDepartment = $department;
         $this->resetPage();
     }
 
     public function render()
     {
-        $users = User::query()
-            ->when($this->searchName, function($query) {
-                $query->where('name', 'like', '%'.$this->searchName.'%');
-            })
-            ->when($this->searchPosition, function($query) {
-                $query->where('position', 'like', '%'.$this->searchPosition.'%');
-            })
-            ->when($this->searchDepartment, function($query) {
-                $query->where('department', $this->searchDepartment);
-            })
-            ->paginate(10);
+        $query = $this->model::query();
 
-        return view('livewire.table', [
-            'users' => $users
-        ]);
+        foreach ($this->filters as $filter => $value) {
+            if ($value) {
+                $query->where($filter, 'like', "%$value%");
+            }
+        }
+
+        if ($this->search) {
+            $query->where(function($q) {
+                foreach ($this->columns as $column) {
+                    $q->orWhere($column, 'like', "%{$this->search}%");
+                }
+            });
+        }
+
+        $data = $query->paginate($this->perPage);
+
+        return view('livewire.table', ['data' => $data]);
     }
 }
