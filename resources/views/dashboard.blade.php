@@ -6,14 +6,14 @@
             </h2>
             <p class="text-black my-4"><span>Today's time : </span>{{ now()->hour }}.{{ now()->minute }}</p>
         </div>
-        <a href="{{ route('activity-logs.edit', ['id' => $user->id]) }}" class='p-2 bg-blue-600 hover:bg-blue-800 focus:bg-blue-500 rounded-lg text-white'>Add Activity</a>
+        <a href="{{ route('activity-logs.edit', ['id' => $user->id]) }}"
+            class='p-2 bg-blue-600 hover:bg-blue-800 focus:bg-blue-500 rounded-lg text-white'>Add Activity</a>
     </x-slot>
 
     @if (auth()->user()->isAdmin($user->role))
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <x-admin.
-                x :dataVariable="$admin_attendance" :employee="$user"></x-admin.index>
+                <x-admin.index :dataVariable="$admin_attendance" :employee="$user"></x-admin.index>
             </div>
         </div>
     @else

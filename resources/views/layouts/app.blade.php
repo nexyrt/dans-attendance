@@ -152,7 +152,7 @@
             });
         </script>
         {{-- Display activity log --}}
-        <script>
+        {{-- <script>
             // Define a function to apply list styles
             function applyListStyles() {
                 // Select all ol and ul elements
@@ -182,7 +182,7 @@
             document.addEventListener('DOMContentLoaded', function() {
                 applyListStyles();
             });
-        </script>
+        </script> --}}
         {{-- Alpine --}}
         <script>
             function sendData() {
