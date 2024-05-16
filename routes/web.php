@@ -1,6 +1,7 @@
 <?php
 
 use App\Exports\FilteredDataExport;
+use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
@@ -10,7 +11,16 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+
+// Admin routes
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+});
+
+// Employee routes
+Route::prefix('employee')->middleware(['auth', 'role:user'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('employee.dashboard');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -25,7 +35,7 @@ Route::middleware('auth')->group(function () {
 
     //employee management route
     Route::get('/employee', [EmployeeController::class, 'index'])->name('employee-management');
-    
+
     //some trial route
     Route::post('/send-data', [AttendanceController::class, 'receiveData'])->name('receive-data');
 });
