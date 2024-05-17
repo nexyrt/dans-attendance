@@ -20,7 +20,7 @@ class AdminDashboardController extends Controller
         $attendanceRecordExists = $this->checkAttendanceRecordExists($user->id);
         $hasCheckedOut = $this->hasCheckedOut($user->id);
 
-        return view('admin.index', compact(['attendances', 'attendanceRecordExists', 'hasCheckedOut']));
+        return view('admin.index', compact(['attendances', 'attendanceRecordExists', 'hasCheckedOut', 'user']));
     }
 
     public function checkAttendanceRecordExists($userId)
