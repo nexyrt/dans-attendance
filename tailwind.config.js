@@ -19,6 +19,19 @@ export default {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
+            backdropFilter: {
+                'none': 'none',
+                'blur': 'blur(10px)',
+            },
+            boxShadow: {
+                'blur-spread': '0 0 15px 5px rgba(59, 130, 246, 0.5)',
+              },
+        },
+        variants: {
+            extend: {
+                backdropFilter: ['responsive', 'hover', 'focus'],
+                boxShadow: ['focus'],
+            },
         },
     },
 

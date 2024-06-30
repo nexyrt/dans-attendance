@@ -11,9 +11,9 @@ class Table extends Component
 
     public $model;
     public $columns;
-    public $filters = [];
     public $search = '';
-    public $perPage = 10;
+
+    protected $queryString = ['search'];
 
     public function mount($model, $columns)
     {
@@ -26,31 +26,16 @@ class Table extends Component
         $this->resetPage();
     }
 
-    public function updatingFilters()
-    {
-        $this->resetPage();
-    }
-
     public function render()
     {
-        $query = $this->model::query();
-
-        foreach ($this->filters as $filter => $value) {
-            if ($value) {
-                $query->where($filter, 'like', "%$value%");
+        $items = $this->model::where(function($query) {
+            foreach ($this->columns as $column) {
+                $query->orWhere($column, 'like', '%' . $this->search . '%');
             }
-        }
+        })->paginate(10);
 
-        if ($this->search) {
-            $query->where(function($q) {
-                foreach ($this->columns as $column) {
-                    $q->orWhere($column, 'like', "%{$this->search}%");
-                }
-            });
-        }
-
-        $data = $query->paginate($this->perPage);
-
-        return view('livewire.table', ['data' => $data]);
+        return view('livewire.table', [
+            'items' => $items,
+        ]);
     }
 }

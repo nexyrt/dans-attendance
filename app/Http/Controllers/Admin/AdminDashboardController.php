@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -21,6 +22,18 @@ class AdminDashboardController extends Controller
         $hasCheckedOut = $this->hasCheckedOut($user->id);
 
         return view('admin.index', compact(['attendances', 'attendanceRecordExists', 'hasCheckedOut', 'user']));
+    }
+
+    public function users()
+    {
+        $users = User::all();
+        
+        // Check today's attendance
+        $user = auth()->user();
+        $attendanceRecordExists = $this->checkAttendanceRecordExists($user->id);
+        $hasCheckedOut = $this->hasCheckedOut($user->id);
+
+        return view('admin.user', compact(['attendanceRecordExists', 'hasCheckedOut', 'user']));
     }
 
     public function checkAttendanceRecordExists($userId)

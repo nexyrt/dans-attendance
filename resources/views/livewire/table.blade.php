@@ -1,35 +1,32 @@
 <div>
-    <div class="flex justify-between mb-4">
-        <input type="text" wire:model.live="search" placeholder="Search..." class="input">
+    <input type="text" wire:model="search" placeholder="Search..." class="mb-4 p-2 border rounded">
 
-        <div class="flex space-x-2">
-            @foreach ($columns as $column)
-                <input type="text" wire:model.live="filters.{{ $column }}"
-                    placeholder="{{ ucfirst($column) }}" class="input">
-            @endforeach
-        </div>
-    </div>
-
-    <table class="min-w-full bg-white">
+    <table class="min-w-full leading-normal">
         <thead>
             <tr>
                 @foreach ($columns as $column)
-                    <th class="py-2 px-4">{{ ucfirst($column) }}</th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        {{ ucfirst(str_replace('_', ' ', $column)) }}
+                    </th>
                 @endforeach
+                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100"></th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($data as $item)
+            @foreach ($items as $item)
                 <tr>
                     @foreach ($columns as $column)
-                        <td class="py-2 px-4">{{ $item->$column }}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                            {{ $item->$column }}
+                        </td>
                     @endforeach
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                        <a href="#" class="text-blue-600 hover:text-blue-900">Edit</a>
+                    </td>
                 </tr>
             @endforeach
         </tbody>
     </table>
 
-    <div class="mt-4">
-        {{ $data->links() }}
-    </div>
+    {{ $items->links() }}
 </div>

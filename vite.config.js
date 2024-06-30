@@ -12,7 +12,7 @@ export default defineConfig({
         }),
     ],
     server: {
-        host: '172.20.10.2',  // Your desired host
-        port: 8002,  // Your desired port
+        // host: '192.168.1.6',  // Your desired host
+        port: 8001,  // Your desired port
     },
 });

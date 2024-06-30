@@ -1,43 +1,21 @@
-@props(['align' => 'right', 'width' => '48', 'contentClasses' => 'py-1 bg-white dark:bg-gray-700'])
-
-@php
-switch ($align) {
-    case 'left':
-        $alignmentClasses = 'ltr:origin-top-left rtl:origin-top-right start-0';
-        break;
-    case 'top':
-        $alignmentClasses = 'origin-top';
-        break;
-    case 'right':
-    default:
-        $alignmentClasses = 'ltr:origin-top-right rtl:origin-top-left end-0';
-        break;
-}
-
-switch ($width) {
-    case '48':
-        $width = 'w-48';
-        break;
-}
-@endphp
-
-<div class="relative" x-data="{ open: false }" @click.outside="open = false" @close.stop="open = false">
-    <div @click="open = ! open">
-        {{ $trigger }}
+<div x-data="{ open: false, selected: '{{ $selected }}', options: @json($options) }" class="relative inline-block text-left w-full">
+    <div>
+        <button @click="open = !open" @click.away="open = false" type="button"
+            class="inline-flex justify-between w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:shadow-blur-spread"
+            id="menu-button" aria-expanded="true" aria-haspopup="true">
+            <span x-text="selected"></span>
+            <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 01.707 1.707L7.414 8H13a1 1 0 110 2H7.414l3.293 3.293a1 1 0 01-1.414 1.414l-5-5a1 1 0 010-1.414l5-5A1 1 0 0110 3z" clip-rule="evenodd" />
+            </svg>
+        </button>
     </div>
-
-    <div x-show="open"
-            x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-75"
-            x-transition:leave-start="opacity-100 scale-100"
-            x-transition:leave-end="opacity-0 scale-95"
-            class="absolute z-50 mt-2 {{ $width }} rounded-md shadow-lg {{ $alignmentClasses }}"
-            style="display: none;"
-            @click="open = false">
-        <div class="rounded-md ring-1 ring-black ring-opacity-5 {{ $contentClasses }}">
-            {{ $content }}
+    <div x-show="open" class="origin-top-right absolute right-0 mt-2 w-full rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none backdrop-filter backdrop-blur-lg bg-opacity-70" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
+        <div class="py-1" role="none">
+            <template x-for="option in options" :key="option">
+                <a @click="selected = option; open = false" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" :class="{'bg-gray-100': selected === option}">
+                    <span x-text="option"></span>
+                </a>
+            </template>
         </div>
     </div>
 </div>
