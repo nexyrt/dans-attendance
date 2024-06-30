@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('role')->default('user');
             $table->string('department');
             $table->string('position');
+            $table->string('image')->nullable();
             $table->decimal('salary', 10, 2)->nullable();
             $table->text('address')->nullable();
             $table->string('phone_number')->nullable();

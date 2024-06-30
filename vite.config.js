@@ -11,4 +11,8 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    server: {
+        // host: '192.168.1.6',  // Your desired host
+        port: 8001,  // Your desired port
+    },
 });
