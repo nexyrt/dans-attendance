@@ -5,6 +5,7 @@ use App\Exports\UsersExport;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\HomeController;
@@ -30,7 +31,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
         $department = $request->input('department');
         $position = $request->input('position');
         $name = $request->input('name');
-        
+
         return Excel::download(new UsersExport($department, $position, $name), 'users.xlsx');
     })->name('admin.users.export');
 
@@ -44,6 +45,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });
 
 require __DIR__ . '/auth.php';
