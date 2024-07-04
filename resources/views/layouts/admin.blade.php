@@ -50,7 +50,6 @@
                     <a href="#"
                         class="flex font-medium flex-row items-center px-4 py-2 rounded hover:bg-gray-100"><i
                             class='bx bx-cog text-2xl text-rose-400 me-5'></i>Settings</a>
-                    <p>Cukup dipakai untuk check-in dan check-out dulu ya! Sistem masih dalam proses pengembangan</p>
                 </nav>
             </div>
 
@@ -132,15 +131,16 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="{{ route('logout') }}"
+                                    <form action="{{ route('logout') }}" method="POST"
                                         class="flex items-center space-x-3 border-r-4 border-transparent hover:border-red-600 text-red-600">
+                                        @csrf
                                         <svg class="w-6 h-6" fill="none" stroke="currentColor"
                                             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                                         </svg>
-                                        <span>Logout</span>
-                                    </a>
+                                        <button type="submit">Logout</button>
+                                    </form>
                                 </li>
                             </ul>
                         </div>

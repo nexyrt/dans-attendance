@@ -1,13 +1,6 @@
 <x-admin-layout>
     <livewire:admin.user-table />
 
-    {{-- Modal Pop Up Condition --}}
-    @if (now()->hour >= 3 && now()->hour < 15.59 && !$attendanceRecordExists)
-        <x-modal :isEdit="false" :user="$user" />
-    @elseif (now()->hour >= 16 && now()->hour < 23 && !$hasCheckedOut)
-        <x-modal :isEdit="true" :user="$user" />
-    @endif
-
     <!-- Modal script -->
     <script>
         document.addEventListener('livewire:load', function() {
