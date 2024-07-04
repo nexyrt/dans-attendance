@@ -1,5 +1,5 @@
 <div>
-    <div class="bg-white p-5 ps-6 rounded-t-md mt-5 flex justify-between items-center">
+    <div class="bg-white p-5 ps-6 rounded-t-md mt-5 flex justify-between items-center" x-data="{ open: false }">
         <p class="text-md text-gray-600 font-medium">Employee Table</p>
         <div class="flex gap-x-3">
             <!-- Button to download Excel -->
@@ -9,14 +9,20 @@
             </a>
 
             <!-- Button to open the modal -->
-            <button id="openModalBtn"
+            <button id="openModalBtn" x-on:click="open = ! open"
                 class="flex items-center gap-x-3 py-2 px-4 bg-blue-500 hover:bg-blue-700 rounded-md text-white text-sm">
                 <i class='bx bx-plus text-white'></i>Tambah Karyawan
             </button>
         </div>
 
         <!-- Modal -->
-        <div id="myModal" class="fixed z-10 inset-0 overflow-y-auto hidden">
+        <div id="myModal" x-show="open" class="fixed z-10 inset-0 overflow-y-auto"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+            x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
             <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                 <div class="fixed inset-0 transition-opacity" aria-hidden="true">
                     <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
@@ -155,7 +161,7 @@
                         </div>
                     </div>
                     <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                        <button type="button" id="closeModalBtn"
+                        <button type="button" x-on:click="open = ! open" id="closeModalBtn"
                             class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">Batal</button>
                     </div>
                 </div>

@@ -12,17 +12,17 @@
     <script>
         document.addEventListener('livewire:load', function() {
             window.livewire.on('showEditModal', () => {
-                document.getElementById('userModal').classList.remove('hidden');
+                document.getElementById('myModal').classList.remove('hidden');
             });
-
+    
             document.getElementById('openModalBtn').addEventListener('click', function() {
-                document.getElementById('userModal').classList.remove('hidden');
+                document.getElementById('myModal').classList.remove('hidden');
             });
-
+    
             document.getElementById('closeModalBtn').addEventListener('click', function() {
-                document.getElementById('userModal').classList.add('hidden');
+                document.getElementById('myModal').classList.add('hidden');
             });
-
+    
             document.getElementById('dropzone-file').addEventListener('change', function(event) {
                 const [file] = event.target.files;
                 if (file) {

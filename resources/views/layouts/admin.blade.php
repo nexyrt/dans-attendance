@@ -50,8 +50,7 @@
                     <a href="#"
                         class="flex font-medium flex-row items-center px-4 py-2 rounded hover:bg-gray-100"><i
                             class='bx bx-cog text-2xl text-rose-400 me-5'></i>Settings</a>
-                    <p><span class="text-red-500">*</span>Remember to add Top 5 late employees</p>
-                    <p><span class="text-red-500">*</span>Remember to add Top 5 exemplary employees</p>
+                    <p>Cukup dipakai untuk check-in dan check-out dulu ya! Sistem masih dalam proses pengembangan</p>
                 </nav>
             </div>
 
