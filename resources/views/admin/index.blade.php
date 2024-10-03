@@ -106,7 +106,7 @@
     </div>
     
     {{-- Modal Pop Up Condition --}}
-    @if (now()->hour >= 3 && now()->hour < 15.59 && !$attendanceRecordExists)
+    @if (now()->hour >= 3 && now()->hour < 20.00 && !$attendanceRecordExists)
         <x-modals.checkInOutModal :user="$user" :checkOutModal="$checkOutModal = false" />
     @elseif (now()->hour >= 16 && now()->hour < 23 && !$hasCheckedOut)
         <x-modals.checkInOutModal :user="$user" :checkOutModal="$checkOutModal = true" />
