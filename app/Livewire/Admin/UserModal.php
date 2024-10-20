@@ -9,110 +9,73 @@ use Illuminate\Support\Facades\Storage;
 
 class UserModal extends Component
 {
-    public $user_id;
+    public $employee_id;
     public $name;
     public $email;
-    public $password;
-    public $role;
     public $department;
+    public $status;
     public $position;
-    public $phone_number;
-    public $birthdate;
-    public $address;
-    public $salary;
-    public $image;
-    public $isEdit = false;
+    public $password;
 
-    protected $listeners = ['editUser'];
+    protected $rules = [
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|unique:users,email',
+        'department' => 'required|string',
+        'status' => 'required|string',
+        'position' => 'required|string',
+        'password' => 'required|string|min:8'
+    ];
 
-    public function editUser($id)
+    public function mount($employee = null)
     {
-        $user = User::findOrFail($id);
-        $this->user_id = $user->id;
-        $this->name = $user->name;
-        $this->email = $user->email;
-        $this->role = $user->role;
-        $this->department = $user->department;
-        $this->position = $user->position;
-        $this->phone_number = $user->phone_number;
-        $this->birthdate = $user->birthdate;
-        $this->address = $user->address;
-        $this->salary = $user->salary;
-        $this->image = $user->image;
-        $this->isEdit = true;
-
-        $this->dispatchBrowserEvent('openModal');
+        if ($employee) {
+            $this->employee_id = $employee->id;
+            $this->name = $employee->name;
+            $this->email = $employee->email;
+            $this->department = $employee->department;
+            $this->status = $employee->status;
+            $this->position = $employee->position;
+            $this->password = '';
+        }
     }
 
-    public function createUser()
+    public function save()
     {
-        $this->resetFields();
-        $this->isEdit = false;
-        $this->dispatchBrowserEvent('openModal');
-    }
+        $this->validate();
 
-    public function saveUser()
-    {
-        $this->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $this->user_id,
-            'password' => 'nullable|string|min:8',
-            'role' => 'required|string|in:Admin,Manajer,Staff',
-            'department' => 'required|string|in:Jasa & Keuangan,Digital,Marketing',
-            'position' => 'required|string|in:Direktur,Manager,Staff,Supervisi',
-            'phone_number' => 'nullable|string|max:255',
-            'birthdate' => 'nullable|date',
-            'address' => 'nullable|string',
-            'salary' => 'nullable|numeric',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        ]);
-
-        if ($this->isEdit) {
-            $user = User::find($this->user_id);
+        if ($this->employee_id) {
+            $employee = User::find($this->employee_id);
+            $employee->update([
+                'name' => $this->name,
+                'email' => $this->email,
+                'department' => $this->department,
+                'status' => $this->status,
+                'position' => $this->position,
+                'password' => Hash::make($this->password),
+            ]);
         } else {
-            $user = new User();
-            $user->password = Hash::make($this->password);
+            User::create([
+                'name' => $this->name,
+                'email' => $this->email,
+                'department' => $this->department,
+                'status' => $this->status,
+                'position' => $this->position,
+                'password' => Hash::make($this->password),
+            ]);
         }
 
-        $user->name = $this->name;
-        $user->email = $this->email;
-        $user->role = $this->role;
-        $user->department = $this->department;
-        $user->position = $this->position;
-        $user->phone_number = $this->phone_number;
-        $user->birthdate = $this->birthdate;
-        $user->address = $this->address;
-
-        if ($this->image) {
-            $imageName = time() . '.' . $this->image->extension();
-            $this->image->storeAs('images/users', $imageName);
-            $user->image = 'images/users/' . $imageName;
-        }
-
-        $user->salary = $this->salary;
-        $user->save();
-
-        $this->dispatchBrowserEvent('closeModal');
-
-        session()->flash('success', 'User successfully saved.');
-
-        $this->emit('userAdded');
+        $this->resetInputFields();
+        $this->emit('employeeSaved');
     }
 
-    private function resetFields()
+    public function resetInputFields()
     {
-        $this->user_id = null;
         $this->name = '';
         $this->email = '';
-        $this->password = '';
-        $this->role = '';
         $this->department = '';
+        $this->status = '';
         $this->position = '';
-        $this->phone_number = '';
-        $this->birthdate = '';
-        $this->address = '';
-        $this->salary = '';
-        $this->image = null;
+        $this->password = '';
     }
 
     public function render()
