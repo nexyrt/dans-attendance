@@ -36,7 +36,7 @@
 
     <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
         <table class="w-full text-sm text-left mt-5 rtl:text-right text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 rounded-xl">
+            <thead class="text-xs border border-black text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 rounded-xl">
                 <tr>
                     <th scope="col" class="p-4 rounded-tl-lg">
                         <div class="flex items-center">
@@ -103,10 +103,10 @@
                 @endforeach
             </tbody>
         </table>
-    </div>
-    
+</div>
+
     {{-- Modal Pop Up Condition --}}
-    @if (now()->hour >= 3 && now()->hour < 20.00 && !$attendanceRecordExists)
+    @if (now()->hour >= 3 && now()->hour < 20.0 && !$attendanceRecordExists)
         <x-modals.checkInOutModal :user="$user" :checkOutModal="$checkOutModal = false" />
     @elseif (now()->hour >= 16 && now()->hour < 23 && !$hasCheckedOut)
         <x-modals.checkInOutModal :user="$user" :checkOutModal="$checkOutModal = true" />

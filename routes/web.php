@@ -26,6 +26,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     // admin/users
     Route::get('/users', [AdminDashboardController::class, 'users'])->name('admin.users');
     Route::post('users/store', [UserController::class, 'store'])->name('admin.users.store');
+    Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
     Route::delete('users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
     Route::get('/admin/users/export', function (Request $request) {
         $department = $request->input('department');

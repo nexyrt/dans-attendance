@@ -4,3 +4,4 @@ import 'flowbite';
 window.Alpine = Alpine;
 
 Alpine.start();
+
