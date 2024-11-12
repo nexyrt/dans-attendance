@@ -1,5 +1,5 @@
 <x-admin-layout>
-    <div class="flex gap-x-5 mt-5">
+    {{-- <div class="flex gap-x-5 mt-5">
         <div class="bg-white py-5 flex justify-between px-10 items-center grow gap-x-3 rounded-md">
             <div>
                 <p class="text-2xl font-bold text-green-400">12</p>
@@ -32,7 +32,7 @@
             <i
                 class='bx bxs-user-rectangle text-white text-4xl w-16 text-center rounded-full bg-gradient-to-br from-blue-700 to-purple-600 p-3'></i>
         </div>
-    </div>
+    </div> --}}
 
     <livewire:admin.attendance-table />
 
