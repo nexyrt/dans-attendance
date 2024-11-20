@@ -16,11 +16,12 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
         <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
-
         @notifyCss
         @livewireStyles
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <script src="//unpkg.com/alpinejs" defer></script>
+
     </head>
 
     <body class="bg-gray-100 h-screen">
@@ -30,34 +31,64 @@
 
         <div class="flex h-full">
 
-            <!-- Sidebar -->
-            <div class="fixed top-4 bottom-4 left-6 w-72 bg-white text-gray-800 shadow-lg rounded-lg z-10">
-                <div class="p-6 flex justify-center items-center">
-                    <img src="{{ asset('images/dans.png') }}" alt="DANS" class="h-8 w-8 mr-2 cursor-pointer">
-                    <h1 class="text-2xl font-semibold">DANS</h1>
+            <!-- Sidebar with Alpine.js -->
+            <div x-data="{ open: false }" x-cloak @toggle-sidebar.window="open = !open"
+                @resize.window="open = window.innerWidth >= 1024"
+                :class="{ 'translate-x-0': open, '-translate-x-[500px]': !open }"
+                class="fixed top-4 bottom-4 left-6 w-72 bg-white text-gray-800 shadow-lg rounded-lg z-10 transition-transform duration-300 lg:translate-x-0">
+                <!-- Overlay for mobile -->
+                <div x-show="open" x-transition.opacity @click="open = false"
+                    class="fixed inset-0 bg-black bg-opacity-50 z-0 lg:hidden"></div>
+
+                <!-- Sidebar Content -->
+                <div class="relative z-10">
+                    <div class="p-6 flex justify-center items-center">
+                        <div class="flex items-center">
+                            <img src="{{ asset('images/dans.png') }}" alt="DANS"
+                                class="h-8 w-8 mr-2 cursor-pointer">
+                            <h1 class="text-2xl font-semibold">DANS</h1>
+                        </div>
+                        <!-- Close button for mobile -->
+                        <button @click="open = false" class="lg:hidden p-2 hover:bg-gray-100 rounded-lg">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <hr class="h-px mt-0 bg-transparent bg-gradient-to-r from-transparent via-black/40 to-transparent">
+
+                    <nav class="flex-1 mt-3 px-4 space-y-2 overflow-y-auto">
+                        <a href="{{ route('admin.dashboard') }}"
+                            class="@if (request()->routeIs('admin.dashboard')) bg-gray-200 @endif flex font-medium flex-row items-center px-4 py-2 rounded hover:bg-gray-100">
+                            <i class='bx bx-home text-2xl text-blue-700 me-5'></i>Dashboard
+                        </a>
+                        <a href="{{ route('admin.users') }}"
+                            class="@if (request()->routeIs('admin.users')) bg-gray-200 @endif flex font-medium flex-row items-center px-4 py-2 rounded hover:bg-gray-100">
+                            <i class='bx bx-user text-2xl text-orange-400 me-5'></i>Users
+                        </a>
+                        <a href="#"
+                            class="flex font-medium flex-row items-center px-4 py-2 rounded hover:bg-gray-100">
+                            <i class='bx bx-cog text-2xl text-rose-400 me-5'></i>Settings
+                        </a>
+                    </nav>
                 </div>
-
-                <hr
-                    class="h-px mt-0 bg-transparent bg-gradient-to-r from-transparent via-black/40 to-transparent dark:bg-gradient-to-r dark:from-transparent dark:via-white dark:to-transparent">
-
-                <nav class="flex-1 mt-3 px-4 space-y-2 overflow-y-auto">
-                    <a href="{{ route('admin.dashboard') }}"
-                        class="@if (request()->routeIs('admin.dashboard')) bg-gray-200 @endif flex font-medium flex-row items-center px-4 py-2 rounded hover:bg-gray-100">
-                        <i class='bx bx-home text-2xl text-blue-700 me-5'></i>Dashboard</a>
-                    <a href="{{ route('admin.users') }}"
-                        class="@if (request()->routeIs('admin.users')) bg-gray-200 @endif flex font-medium flex-row items-center px-4 py-2 rounded hover:bg-gray-100">
-                        <i class='bx bx-user text-2xl text-orange-400 me-5'></i>Users</a>
-                    <a href="#"
-                        class="flex font-medium flex-row items-center px-4 py-2 rounded hover:bg-gray-100"><i
-                            class='bx bx-cog text-2xl text-rose-400 me-5'></i>Settings</a>
-                </nav>
             </div>
 
             <!-- Main Content -->
-            <div class="flex-1 ml-80 relative overflow-y-auto p-4">
+            <div class="flex-1 lg:ml-80 relative overflow-y-auto p-4">
                 <!-- Breadcrumbs -->
-                <div class="flex justify-between">
-                    <nav class="flex text-white" aria-label="Breadcrumb">
+                <div class="flex justify-between mb-5 ">
+                    <!-- Hamburger Button for Mobile -->
+                    <button x-data @click="$dispatch('toggle-sidebar')"
+                        class="block lg:hidden p-2 rounded-lg bg-white shadow-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                    <nav class="lg:flex text-white hidden" aria-label="Breadcrumb">
                         <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
                             <li class="inline-flex items-center">
                                 <a href="#"
@@ -93,7 +124,7 @@
                             </li>
                         </ol>
                     </nav>
-                    <div x-data="{ open: false }" class="relative">
+                    <div x-data="{ open: false }" x-cloak class="relative">
                         <div @click="open = !open" class="cursor-pointer flex items-center space-x-3">
                             <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white">
                                 <img src="https://images.unsplash.com/photo-1610397095767-84a5b4736cbd?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=750&q=80"
@@ -109,8 +140,8 @@
                                 <li>
                                     <a href="{{ route('profile.edit') }}"
                                         class="flex items-center space-x-3 border-r-4 border-transparent hover:border-indigo-700">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                            xmlns="http://www.w3.org/2000/svg">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
@@ -120,8 +151,8 @@
                                 <li>
                                     <a href="#"
                                         class="flex items-center space-x-3 border-r-4 border-transparent hover:border-indigo-700">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                            xmlns="http://www.w3.org/2000/svg">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -146,16 +177,14 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Main slot content -->
                 {{ $slot }}
-
             </div>
         </div>
 
         <x-notify::notify />
         @notifyJs
         @livewireScripts
+        <script src="//unpkg.com/alpinejs" defer></script>
     </body>
 
 </html>

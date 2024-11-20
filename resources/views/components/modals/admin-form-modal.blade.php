@@ -1,23 +1,56 @@
 @props([
     'title' => '',
     'bg' => '',
-    'text' => ''
+    'text' => '',
 ])
 
 <div x-data="{ showModal: false }" x-cloak>
     <!-- Trigger button -->
-    <button @click="showModal = true" {{ $attributes->merge(['class' => ''.$bg.' '.$text.' px-4 py-2 rounded']) }}>{{$title}}</button>
+    <button @click="showModal = true" {{ $attributes->merge(['class' => '' . $bg . ' ' . $text . ' px-4 py-2 rounded']) }}>
+        {{ $title }}
+    </button>
+
     <!-- Modal Background -->
-    <div @click="showModal = false" x-show="showModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+    <div x-show="showModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-300"
         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <!-- Modal Content -->
-        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 h-screen overflow-auto" @click.stop>
-            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">{{$title}}</h3>
-                {{$slot}}
-                <button @click="showModal = false" class="bg-red-500 text-white px-4 py-2 rounded mt-2">Close</button>
+        class="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50" @click="showModal = false">
+
+        <!-- Modal Container for Centering -->
+        <div class="min-h-screen px-4 text-center">
+            <!-- This element is to trick the browser into centering the modal contents. -->
+            <span class="inline-block h-screen align-middle" aria-hidden="true">&#8203;</span>
+
+            <!-- Modal Content -->
+            <div class="inline-block w-full max-w-2xl p-6 my-8 text-left align-middle transition-all transform bg-white shadow-xl rounded-lg"
+                @click.stop>
+
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between mb-5">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">
+                        {{ $title }}
+                    </h3>
+                    <button @click="showModal = false" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                        <span class="sr-only">Close</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Modal Body with Scroll -->
+                <div class="max-h-[calc(100vh-16rem)] overflow-y-auto">
+                    {{ $slot }}
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="mt-5 sm:mt-6 flex justify-end">
+                    <button @click="showModal = false"
+                        class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-500 text-base font-medium text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:text-sm">
+                        Close
+                    </button>
+                </div>
             </div>
         </div>
     </div>

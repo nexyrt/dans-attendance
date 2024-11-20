@@ -16,6 +16,7 @@ class UserFactory extends Factory
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
+            'role' => fake()->randomElement(['admin', 'manager', 'staff']),
             'department' => $this->faker->randomElement(['Digital', 'Keuangan', 'Digital Marketing']),
             'position' => $this->faker->randomElement(['Manager', 'Staff']),
             'salary' => $this->faker->randomNumber(5),

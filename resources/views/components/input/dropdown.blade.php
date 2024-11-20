@@ -1,4 +1,4 @@
-<div x-data="{ open: false, selected: '{{ $selected }}', options: @json($options) }" class="relative inline-block text-left w-full">
+ <div x-data="{ open: false, selected: '{{ $selected }}', options: @json($options) }" class="relative inline-block text-left w-full">
     <div>
         <button @click="open = !open" @click.away="open = false" type="button"
             class="inline-flex justify-between w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:shadow-blur-spread"
