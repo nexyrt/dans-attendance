@@ -13,7 +13,7 @@ class AttendanceTable extends Component
     public $search = '';
     public $department = '';
     public $selectedMonth;
-    
+
     protected $queryString = ['search', 'department', 'selectedMonth'];
 
     // Tambahkan watchers untuk setiap properti
@@ -36,6 +36,31 @@ class AttendanceTable extends Component
     {
         $this->selectedMonth = $this->selectedMonth ?? now()->format('Y-m');
     }
+
+    public function getChartData()
+    {
+        // Dummy data for demonstration
+        return [
+            'pieChart' => [
+                'series' => [65, 35], // 65% on time, 35% late
+                'labels' => ['On Time', 'Late'],
+            ],
+            'barChart' => [
+                'categories' => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+                'series' => [
+                    [
+                        'name' => 'On Time',
+                        'data' => [44, 55, 57, 56, 61], // Dummy values for each day
+                    ],
+                    [
+                        'name' => 'Late',
+                        'data' => [11, 8, 12, 14, 10], // Dummy values for each day
+                    ],
+                ],
+            ],
+        ];
+    }
+    
 
     public function render()
     {
@@ -63,7 +88,7 @@ class AttendanceTable extends Component
             ->filter()
             ->values();
 
-        $availableMonths = collect(range(0, 11))->map(function($i) {
+        $availableMonths = collect(range(0, 11))->map(function ($i) {
             $date = now()->subMonths($i);
             return [
                 'value' => $date->format('Y-m'),
