@@ -58,7 +58,7 @@ class UserController extends Controller
             notify()->success('Data berhasil ditambahkan!', 'Sukses');
             return redirect()->route('admin.users');
         } catch (\Exception $e) {
-            notify()->error('Terjadi kesalahan saat menambahkan data.', 'Error');
+            notify()->error('Terjadi kesalahan saat menambahkan data.'.$e, 'Error');
             return redirect()->back()->withErrors($e->getMessage());
         }
     }
