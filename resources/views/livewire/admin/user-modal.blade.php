@@ -1,116 +1,157 @@
-<div>
-    <!-- Modal -->
-    <div id="userModal" class="fixed z-10 inset-0 overflow-y-auto hidden">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+<div class="fixed z-10 inset-0 overflow-y-auto" style="display: none;" id="employeeModal" wire:ignore.self>
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Modal backdrop -->
+        <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+            <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+        </div>
+
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <!-- Modal panel -->
+        <div
+            class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <!-- Modal header -->
+            <div class="bg-white px-6 py-4 border-b">
+                <h3 class="text-lg font-medium text-gray-900 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-blue-500" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    {{ $employee_id ? 'Edit Employee' : 'Add Employee' }}
+                </h3>
             </div>
 
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <!-- Modal body -->
+            <div class="bg-white px-6 py-4">
+                <input type="hidden" wire:model="employee_id">
 
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900">
-                                {{ $userId ? 'Edit' : 'Tambah' }} Karyawan
-                            </h3>
-                            <div class="mt-2">
-                                <form wire:submit.prevent="saveUser" id="userForm" enctype="multipart/form-data">
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div class="col-span-2">
-                                            <h4 class="text-lg font-medium">User Information</h4>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Name</label>
-                                            <input type="text" wire:model="name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Email</label>
-                                            <input type="email" wire:model="email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Password</label>
-                                            <input type="password" wire:model="password" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Role</label>
-                                            <select wire:model="role" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
-                                                <option value="Admin">Admin</option>
-                                                <option value="Manajer">Manajer</option>
-                                                <option value="Staff">Staff</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-span-2 mt-4">
-                                            <h4 class="text-lg font-medium">Contact Information</h4>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Department</label>
-                                            <select wire:model="department" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
-                                                <option value="Jasa & Keuangan">Jasa & Keuangan</option>
-                                                <option value="Digital">Digital</option>
-                                                <option value="Marketing">Marketing</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Position</label>
-                                            <select wire:model="position" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
-                                                <option value="Direktur">Direktur</option>
-                                                <option value="Manager">Manager</option>
-                                                <option value="Staff">Staff</option>
-                                                <option value="Supervisi">Supervisi</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Phone Number</label>
-                                            <input type="text" wire:model="phone_number" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Birthdate</label>
-                                            <input type="date" wire:model="birthdate" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                                        </div>
-                                        <div class="col-span-2">
-                                            <label class="block text-sm font-medium text-gray-700">Address</label>
-                                            <textarea wire:model="address" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
-                                        </div>
-                                        <div class="col-span-2">
-                                            <label class="block text-sm font-medium text-gray-700">Image</label>
-                                            <div class="flex items-center justify-center w-full">
-                                                <label for="dropzone-file" class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600 relative">
-                                                    <div class="flex flex-col items-center justify-center pt-5 pb-6" id="upload-text">
-                                                        <svg class="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
-                                                        </svg>
-                                                        <p class="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                                                            <span class="font-semibold">Click to upload</span> or drag and drop
-                                                        </p>
-                                                        <p class="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
-                                                    </div>
-                                                    <input id="dropzone-file" name="image" type="file" wire:model="image" class="hidden" />
-                                                    <img id="preview-image" class="absolute inset-0 object-cover w-full h-full rounded-lg hidden" />
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700">Salary</label>
-                                            <div class="mt-1 flex rounded-md shadow-sm">
-                                                <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">Rp.</span>
-                                                <input type="text" wire:model="salary" class="flex-1 block w-full rounded-none rounded-r-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="0">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mt-5 sm:mt-6">
-                                        <button type="submit" class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-500 text-base font-medium text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:text-sm">Simpan</button>
-                                    </div>
-                                </form>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Name Field -->
+                    <div class="space-y-2">
+                        <label for="name" class="block text-sm font-medium text-gray-700">
+                            Full Name <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="name" wire:model="name"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                            placeholder="Enter employee name">
+                        @error('name')
+                            <p class="text-red-500 text-xs italic">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Email Field -->
+                    <div class="space-y-2">
+                        <label for="email" class="block text-sm font-medium text-gray-700">
+                            Email Address <span class="text-red-500">*</span>
+                        </label>
+                        <input type="email" id="email" wire:model="email"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                            placeholder="employee@company.com">
+                        @error('email')
+                            <p class="text-red-500 text-xs italic">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Department Field -->
+                    <div class="space-y-2">
+                        <label for="department" class="block text-sm font-medium text-gray-700">
+                            Department <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="department" wire:model="department"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                            placeholder="e.g. IT, HR, Finance">
+                        @error('department')
+                            <p class="text-red-500 text-xs italic">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Position Field -->
+                    <div class="space-y-2">
+                        <label for="position" class="block text-sm font-medium text-gray-700">
+                            Position <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="position" wire:model="position"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                            placeholder="e.g. Software Engineer">
+                        @error('position')
+                            <p class="text-red-500 text-xs italic">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Status Field -->
+                    <div class="space-y-2">
+                        <label for="status" class="block text-sm font-medium text-gray-700">
+                            Status
+                        </label>
+                        <select id="status" wire:model="status"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <option value="">Select Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                        @error('status')
+                            <p class="text-red-500 text-xs italic">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="space-y-2">
+                        <label for="password" class="block text-sm font-medium text-gray-700">
+                            Password {{ $employee_id ? '(Leave blank to keep current)' : '' }}
+                        </label>
+                        <div class="relative">
+                            <input type="password" id="password" wire:model="password"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                placeholder="Enter password">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                <button type="button" onclick="togglePassword('password')"
+                                    class="text-gray-400 hover:text-gray-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                </button>
                             </div>
                         </div>
-                    </div>
-                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                        <button type="button" id="closeModalBtn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">Batal</button>
+                        @error('password')
+                            <p class="text-red-500 text-xs italic">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
+            </div>
+
+            <!-- Modal footer -->
+            <div class="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse">
+                <button type="button"
+                    class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                    wire:click="save" wire:loading.attr="disabled">
+                    <svg wire:loading wire:target="save" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                            stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                    <span>Save Changes</span>
+                </button>
+                <button type="button"
+                    class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto"
+                    onclick="document.getElementById('employeeModal').style.display='none'">
+                    Cancel
+                </button>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    function togglePassword(inputId) {
+        const input = document.getElementById(inputId);
+        input.type = input.type === 'password' ? 'text' : 'password';
+    }
+</script>

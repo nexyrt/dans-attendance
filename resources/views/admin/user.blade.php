@@ -1,40 +1,5 @@
-<x-admin-layout>
+<x-layouts.admin>
     <livewire:admin.user-table />
-
-    {{-- Modal Pop Up Condition --}}
-    @if (now()->hour >= 3 && now()->hour < 15.59 && !$attendanceRecordExists)
-        <x-modal :isEdit="false" :user="$user" />
-    @elseif (now()->hour >= 16 && now()->hour < 23 && !$hasCheckedOut)
-        <x-modal :isEdit="true" :user="$user" />
-    @endif
-
-    <!-- Modal script -->
-    <script>
-        document.addEventListener('livewire:load', function() {
-            window.livewire.on('showEditModal', () => {
-                document.getElementById('userModal').classList.remove('hidden');
-            });
-
-            document.getElementById('openModalBtn').addEventListener('click', function() {
-                document.getElementById('userModal').classList.remove('hidden');
-            });
-
-            document.getElementById('closeModalBtn').addEventListener('click', function() {
-                document.getElementById('userModal').classList.add('hidden');
-            });
-
-            document.getElementById('dropzone-file').addEventListener('change', function(event) {
-                const [file] = event.target.files;
-                if (file) {
-                    const previewImage = document.getElementById('preview-image');
-                    const uploadText = document.getElementById('upload-text');
-                    previewImage.src = URL.createObjectURL(file);
-                    previewImage.classList.remove('hidden');
-                    uploadText.classList.add('hidden');
-                }
-            });
-        });
-    </script>
 
     <!-- Custom CSS to remove arrows from input[type=number] -->
     <style>
@@ -65,4 +30,4 @@
             border-radius: 0.5rem;
         }
     </style>
-</x-admin-layout>
+</x-layouts.admin>
