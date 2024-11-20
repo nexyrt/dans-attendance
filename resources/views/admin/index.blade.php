@@ -4,9 +4,9 @@
     <livewire:admin.attendance-table />
 
     {{-- Modal Pop Up Condition --}}
-    @if (now()->hour >= 3 && now()->hour < 20.0 && !$attendanceRecordExists)
+    @if (now()->hour >= 17 && now()->hour < 20 && !$attendanceRecordExists)
         <x-modals.checkInOutModal :user="$user" :checkOutModal="$checkOutModal = false" />
-    @elseif (now()->hour >= 16 && now()->hour < 23 && !$hasCheckedOut)
+    @elseif (now()->hour >= 22 && now()->hour < 23 && !$hasCheckedOut)
         <x-modals.checkInOutModal :user="$user" :checkOutModal="$checkOutModal = true" />
     @endif
 </x-admin-layout>

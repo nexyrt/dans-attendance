@@ -13,7 +13,7 @@
         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <!-- Modal Content -->
-        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 h-screen overflow-auto" @click.stop>
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 h-screen overflow-auto my-16" @click.stop>
             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                 <h3 class="text-lg leading-6 font-medium text-gray-900">{{$title}}</h3>
                 {{$slot}}

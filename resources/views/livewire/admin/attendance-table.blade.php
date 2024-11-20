@@ -154,6 +154,130 @@
         </table>
     </x-table.container>
 
+    <div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+            {{-- Pie Chart Card --}}
+            <div class="bg-white p-4 rounded-lg shadow-sm">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800">Attendance Distribution</h3>
+                <div id="attendancePieChart"></div>
+            </div>
+
+            {{-- Bar Chart Card --}}
+            <div class="bg-white p-4 rounded-lg shadow-sm">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800">Weekly Attendance Trends</h3>
+                <div id="attendanceBarChart"></div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+        <script>
+            document.addEventListener('livewire:initialized', function() {
+                // Get initial chart data
+                const chartData = @json($this->getChartData());
+
+                // Pie Chart Configuration
+                const pieChartOptions = {
+                    chart: {
+                        type: 'pie',
+                        height: 350
+                    },
+                    series: chartData.pieChart.series,
+                    labels: chartData.pieChart.labels,
+                    colors: ['#22c55e', '#ef4444'],
+                    legend: {
+                        position: 'bottom'
+                    },
+                    responsive: [{
+                        breakpoint: 480,
+                        options: {
+                            chart: {
+                                width: 200
+                            },
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }]
+                };
+
+                // Create and render pie chart
+                const pieChart = new ApexCharts(
+                    document.querySelector("#attendancePieChart"),
+                    pieChartOptions
+                );
+                pieChart.render();
+
+                // Bar Chart Configuration
+                const barChartOptions = {
+                    chart: {
+                        type: 'bar',
+                        height: 350,
+                        stacked: false,
+                        toolbar: {
+                            show: false
+                        }
+                    },
+                    plotOptions: {
+                        bar: {
+                            horizontal: false,
+                            columnWidth: '55%',
+                            borderRadius: 4,
+                            dataLabels: {
+                                position: 'top'
+                            }
+                        }
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    stroke: {
+                        show: true,
+                        width: 2,
+                        colors: ['transparent']
+                    },
+                    series: chartData.barChart.series,
+                    xaxis: {
+                        categories: chartData.barChart.categories,
+                        axisBorder: {
+                            show: false
+                        },
+                        axisTicks: {
+                            show: false
+                        }
+                    },
+                    yaxis: {
+                        title: {
+                            text: 'Number of Employees'
+                        }
+                    },
+                    fill: {
+                        opacity: 1
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: function(val) {
+                                return val + " employees"
+                            }
+                        }
+                    },
+                    colors: ['#3b82f6', '#ef4444'],
+                    legend: {
+                        position: 'bottom',
+                        horizontalAlign: 'center'
+                    }
+                };
+
+                // Create and render bar chart
+                const barChart = new ApexCharts(
+                    document.querySelector("#attendanceBarChart"),
+                    barChartOptions
+                );
+                barChart.render();
+            });
+        </script>
+
+    </div>
+
     {{-- Loading State --}}
     <div wire:loading class="fixed top-0 left-0 right-0">
         <div class="bg-blue-500 text-white text-sm py-2 text-center">
