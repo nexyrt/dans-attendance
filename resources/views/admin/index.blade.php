@@ -1,6 +1,5 @@
 <x-admin-layout>
     
-
     <livewire:admin.attendance-table />
 
     {{-- Modal Pop Up Condition --}}
