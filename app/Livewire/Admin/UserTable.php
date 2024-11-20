@@ -2,16 +2,36 @@
 
 namespace App\Livewire\Admin;
 
-use Livewire\Component;
 use App\Models\User;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class UserTable extends Component
 {
+    use WithPagination; // Tambahkan trait WithPagination
     public $department = '';
     public $position = '';
     public $name = '';
 
+    public $perPage = 10;
+
     protected $listeners = ['userAdded' => 'render'];
+
+    // Reset pagination ketika filter berubah
+    public function updatedDepartment()
+    {
+        $this->resetPage();
+    }
+    
+    public function updatedPosition()
+    {
+        $this->resetPage();
+    }
+    
+    public function updatedName()
+    {
+        $this->resetPage();
+    }
 
     public function render()
     {
@@ -29,7 +49,7 @@ class UserTable extends Component
             $query->where('name', 'like', '%' . $this->name . '%');
         }
 
-        $users = $query->get();
+        $users = $query->paginate($this->perPage); 
 
         return view('livewire.admin.user-table', compact('users'));
     }

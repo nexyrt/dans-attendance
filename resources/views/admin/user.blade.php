@@ -1,4 +1,4 @@
-<x-admin-layout>
+<x-layouts.admin>
     <livewire:admin.user-table />
 
     <!-- Custom CSS to remove arrows from input[type=number] -->
@@ -30,4 +30,4 @@
             border-radius: 0.5rem;
         }
     </style>
-</x-admin-layout>
+</x-layouts.admin>

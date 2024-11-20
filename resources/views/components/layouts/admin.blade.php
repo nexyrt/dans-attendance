@@ -31,7 +31,6 @@
 
         <div class="flex h-full">
 
-
             <!-- Sidebar with Alpine.js -->
             <div x-data="{ open: false }" x-cloak @toggle-sidebar.window="open = !open"
                 @resize.window="open = window.innerWidth >= 1024"
