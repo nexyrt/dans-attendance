@@ -1,6 +1,6 @@
 <div>
     {{-- Filter Section --}}
-    <div class="bg-white p-4 mb-4 mt-20 rounded-lg shadow-sm space-y-4">
+    <div class="bg-white p-4 mb-4 rounded-lg shadow-sm space-y-4">
         <div class="flex flex-col md:flex-row gap-4">
             {{-- Month Filter --}}
             <div class="flex-1">
@@ -97,9 +97,9 @@
         </div>
     </div>
 
-    <x-table.container class="relative overflow-x-auto shadow-md sm:rounded-lg">
-        <table class="w-full text-sm text-left mt-5 rtl:text-right text-gray-500 dark:text-gray-400">
-            <x-table.thead>
+    <x-table.container class="relative overflow-x-auto rounded-lg">
+        <table class="w-full text-sm text-left rtl:text-right bg-gray-100 text-gray-500 dark:text-gray-400">
+            <x-table.thead class="bg-gray-50">
                 <tr>
                     <x-table.th class="p-4 rounded-tl-lg">Name</x-table.th>
                     <x-table.th>Position</x-table.th>

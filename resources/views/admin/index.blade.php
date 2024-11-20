@@ -1,4 +1,4 @@
-<x-admin-layout>
+<x-layouts.admin>
     
     <livewire:admin.attendance-table />
 
@@ -8,4 +8,4 @@
     @elseif (now()->hour >= 22 && now()->hour < 23 && !$hasCheckedOut)
         <x-modals.checkInOutModal :user="$user" :checkOutModal="$checkOutModal = true" />
     @endif
-</x-admin-layout>
+</x-layouts.admin>

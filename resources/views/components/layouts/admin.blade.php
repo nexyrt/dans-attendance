@@ -3,43 +3,37 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ config('app.name', 'Laravel') }}</title>
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link rel="icon" href="{{ asset('images/dans.png') }}">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
-    @notifyCss
-    @livewireStyles
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link rel="icon" href="{{ asset('images/dans.png') }}">
+        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+        @notifyCss
+        @livewireStyles
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script src="//unpkg.com/alpinejs" defer></script>
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <script src="//unpkg.com/alpinejs" defer></script>
 
-</head>
+    </head>
 
-<body class="bg-gray-100 h-screen">
+    <body class="bg-gray-100 h-screen">
 
-    <!-- Background -->
-    <div class="absolute inset-0 bg-blue-500" style="height: 45%; z-index: -1;"></div>
+        <!-- Background -->
+        <div class="absolute inset-0 bg-blue-500" style="height: 45%; z-index: -1;"></div>
 
         <div class="flex h-full">
-            <!-- Hamburger Button for Mobile -->
-            <button x-data @click="$dispatch('toggle-sidebar')"
-                class="lg:hidden fixed top-4 left-4 z-20 p-2 rounded-lg bg-white shadow-lg">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
+
 
             <!-- Sidebar with Alpine.js -->
-            <div x-data="{ open: true }" @toggle-sidebar.window="open = !open"
+            <div x-data="{ open: false }" x-cloak @toggle-sidebar.window="open = !open"
                 @resize.window="open = window.innerWidth >= 1024"
                 :class="{ 'translate-x-0': open, '-translate-x-[500px]': !open }"
                 class="fixed top-4 bottom-4 left-6 w-72 bg-white text-gray-800 shadow-lg rounded-lg z-10 transition-transform duration-300 lg:translate-x-0">
@@ -49,7 +43,7 @@
 
                 <!-- Sidebar Content -->
                 <div class="relative z-10">
-                    <div class="p-6 flex justify-between items-center">
+                    <div class="p-6 flex justify-center items-center">
                         <div class="flex items-center">
                             <img src="{{ asset('images/dans.png') }}" alt="DANS"
                                 class="h-8 w-8 mr-2 cursor-pointer">
@@ -86,8 +80,16 @@
             <!-- Main Content -->
             <div class="flex-1 lg:ml-80 relative overflow-y-auto p-4">
                 <!-- Breadcrumbs -->
-                <div class="flex justify-between">
-                    <nav class="flex text-white" aria-label="Breadcrumb">
+                <div class="flex justify-between mb-5 ">
+                    <!-- Hamburger Button for Mobile -->
+                    <button x-data @click="$dispatch('toggle-sidebar')"
+                        class="block lg:hidden p-2 rounded-lg bg-white shadow-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                    <nav class="lg:flex text-white hidden" aria-label="Breadcrumb">
                         <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
                             <li class="inline-flex items-center">
                                 <a href="#"
@@ -123,7 +125,7 @@
                             </li>
                         </ol>
                     </nav>
-                    <div x-data="{ open: false }" class="relative">
+                    <div x-data="{ open: false }" x-cloak class="relative">
                         <div @click="open = !open" class="cursor-pointer flex items-center space-x-3">
                             <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white">
                                 <img src="https://images.unsplash.com/photo-1610397095767-84a5b4736cbd?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=750&q=80"
@@ -180,10 +182,10 @@
             </div>
         </div>
 
-    <x-notify::notify />
-    @notifyJs
-    @livewireScripts
-    <script src="//unpkg.com/alpinejs" defer></script>
-</body>
+        <x-notify::notify />
+        @notifyJs
+        @livewireScripts
+        <script src="//unpkg.com/alpinejs" defer></script>
+    </body>
 
 </html>
