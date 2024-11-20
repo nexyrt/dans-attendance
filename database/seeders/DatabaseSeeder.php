@@ -15,6 +15,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UsersTableSeeder::class,
             AttendanceTableSeeder::class,
+            ScheduleSeeder::class,
+            DepartmentSeeder::class,
+            HolidaySeeder::class,
+            ScheduleExceptionSeeder::class,
         ]);
     }
 }

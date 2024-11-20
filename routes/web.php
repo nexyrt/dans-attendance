@@ -19,10 +19,8 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Admin routes
 Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
-
     // admin/dashboard
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
-
     // admin/users
     Route::get('/users', [AdminDashboardController::class, 'users'])->name('admin.users');
     Route::post('users/store', [UserController::class, 'store'])->name('admin.users.store');
@@ -32,7 +30,6 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
         $department = $request->input('department');
         $position = $request->input('position');
         $name = $request->input('name');
-
         return Excel::download(new UsersExport($department, $position, $name), 'users.xlsx');
     })->name('admin.users.export');
 

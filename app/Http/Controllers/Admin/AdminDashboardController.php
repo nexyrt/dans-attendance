@@ -27,7 +27,6 @@ class AdminDashboardController extends Controller
     public function users()
     {
         $users = User::all();
-        
         // Check today's attendance
         $user = auth()->user();
         $attendanceRecordExists = $this->checkAttendanceRecordExists($user->id);
@@ -40,12 +39,10 @@ class AdminDashboardController extends Controller
     {
         // Get today's date
         $todayDate = now()->toDateString();
-
         // Check if there's an attendance record for today's date for the given user ID
         $attendanceRecordExists = Attendance::where('user_id', $userId)
             ->whereDate('date', $todayDate)
             ->exists();
-
         return $attendanceRecordExists;
     }
 
