@@ -23,6 +23,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     // admin/users
     Route::get('/users', [AdminDashboardController::class, 'users'])->name('admin.users');
+    Route::get('/schedules', [AdminDashboardController::class, 'schedules'])->name('admin.schedules');
     Route::post('users/store', [UserController::class, 'store'])->name('admin.users.store');
     Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
     Route::delete('users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
