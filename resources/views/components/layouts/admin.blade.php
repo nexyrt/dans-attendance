@@ -30,7 +30,6 @@
         <div class="absolute inset-0 bg-blue-500" style="height: 45%; z-index: -1;"></div>
 
         <div class="flex h-full">
-
             <!-- Sidebar with Alpine.js -->
             <div x-data="{ open: false }" x-cloak @toggle-sidebar.window="open = !open"
                 @resize.window="open = window.innerWidth >= 1024"
@@ -38,11 +37,11 @@
                 class="fixed top-4 bottom-4 left-6 w-72 bg-white text-gray-800 shadow-lg rounded-lg z-10 transition-transform duration-300 lg:translate-x-0">
                 <!-- Overlay for mobile -->
                 <div x-show="open" x-transition.opacity @click="open = false"
-                    class="fixed inset-0 bg-black bg-opacity-50 z-0 lg:hidden"></div>
+                    class="fixed inset-0 bg-opacity-50 z-0 lg:hidden"></div>
 
                 <!-- Sidebar Content -->
                 <div class="relative z-10">
-                    <div class="p-6 flex justify-center items-center">
+                    <div class="p-6 flex justify-between items-center">
                         <div class="flex items-center">
                             <img src="{{ asset('images/dans.png') }}" alt="DANS"
                                 class="h-8 w-8 mr-2 cursor-pointer">

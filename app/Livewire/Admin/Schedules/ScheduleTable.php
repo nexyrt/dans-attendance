@@ -4,7 +4,9 @@ namespace App\Livewire\Admin\Schedules;
 
 use Livewire\Component;
 use App\Models\Schedule;
+use Livewire\Attributes\Layout;
 
+#[Layout('layouts.admin')] 
 class ScheduleTable extends Component
 {
     public $showModal = false;

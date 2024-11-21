@@ -10,6 +10,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
+use App\Livewire\Admin\Schedules\ScheduleTable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\Facades\Excel;
@@ -23,7 +24,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     // admin/users
     Route::get('/users', [AdminDashboardController::class, 'users'])->name('admin.users');
-    Route::get('/schedules', [AdminDashboardController::class, 'schedules'])->name('admin.schedules');
+    Route::get('/schedules', ScheduleTable::class)->name('admin.schedules');
     Route::post('users/store', [UserController::class, 'store'])->name('admin.users.store');
     Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
     Route::delete('users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
