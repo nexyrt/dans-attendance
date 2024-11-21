@@ -1,4 +1,47 @@
 <div>
+    
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-transparent rounded-lg mb-4">
+            <!-- Total Employees -->
+            <div class="p-4 bg-white rounded-lg shadow">
+                <div class="flex items-center">
+                    <div class="bg-blue-100 p-3 rounded-lg">
+                        <i class='bx bx-group text-xl text-blue-500'></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Total Employees</p>
+                        <p class="text-xl font-semibold">{{ $stats['total_employees'] }}</p>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Departments -->
+            <div class="p-4 bg-white rounded-lg shadow">
+                <div class="flex items-center">
+                    <div class="bg-purple-100 p-3 rounded-lg">
+                        <i class='bx bx-buildings text-xl text-purple-500'></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Departments</p>
+                        <p class="text-xl font-semibold">{{ $stats['departments'] }}</p>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Positions -->
+            <div class="p-4 bg-white rounded-lg shadow">
+                <div class="flex items-center">
+                    <div class="bg-green-100 p-3 rounded-lg">
+                        <i class='bx bx-briefcase text-xl text-green-500'></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Positions</p>
+                        <p class="text-xl font-semibold">{{ $stats['positions'] }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+
     <!-- Header Section -->
     <div class="bg-white p-5 ps-6 rounded-t-md mt-5 flex items-center justify-between flex-wrap gap-2">
         <p class="text-md text-gray-600 font-medium">Employee Table</p>

@@ -37,6 +37,13 @@ class UserTable extends Component
     {
         $query = User::query();
 
+        $stats = [
+            'total_employees' => User::count(),
+            'departments' => User::distinct('department')->count('department'),
+            'positions' => User::distinct('position')->count('position'),
+        ];
+
+
         if ($this->department) {
             $query->where('department', $this->department);
         }
@@ -51,7 +58,7 @@ class UserTable extends Component
 
         $users = $query->paginate($this->perPage); 
 
-        return view('livewire.admin.user-table', compact('users'));
+        return view('livewire.admin.user-table', compact('users','stats'));
     }
 }
 
