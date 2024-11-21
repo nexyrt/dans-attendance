@@ -58,52 +58,66 @@ class UserController extends Controller
             notify()->success('Data berhasil ditambahkan!', 'Sukses');
             return redirect()->route('admin.users');
         } catch (\Exception $e) {
-            notify()->error('Terjadi kesalahan saat menambahkan data.'.$e, 'Error');
+            notify()->error('Terjadi kesalahan saat menambahkan data.' . $e, 'Error');
             return redirect()->back()->withErrors($e->getMessage());
         }
     }
 
     public function update(Request $request, User $user)
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'password' => 'nullable|string|min:8',
-            'role' => 'required|string',
-            'department' => 'required|string',
-            'position' => 'required|string',
-            'phone_number' => 'nullable|string|max:15',
-            'birthdate' => 'nullable|date',
-            'address' => 'nullable|string',
-            'salary' => 'nullable|numeric',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048'
-        ]);
+        try {
+            $data = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+                'password' => 'nullable|string|min:8',
+                'role' => 'required|string',
+                'department_id' => 'required|string',
+                'position' => 'required|string',
+                'phone_number' => 'nullable|string|max:15',
+                'birthdate' => 'nullable|date',
+                'address' => 'nullable|string',
+                'salary' => 'nullable|numeric',
+                'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048'
+            ]);
 
-        if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('images', 'public');
+            if ($request->hasFile('image')) {
+                $data['image'] = $request->file('image')->store('images', 'public');
+            }
+
+            if (!empty($data['password'])) {
+                $data['password'] = Hash::make($data['password']);
+            } else {
+                unset($data['password']);
+            }
+
+            $user->update($data);
+            notify()->success('Data berhasil diubah!', 'Sukses');
+            return redirect()->route('admin.users')->with('success', 'User updated successfully.');
+        } catch (\Exception $e) {
+            notify()->error('Terjadi kesalahan saat memperbaharui data.' . $e, 'Error');
+            return redirect()->back()->withErrors($e->getMessage());
         }
 
-        if (!empty($data['password'])) {
-            $data['password'] = Hash::make($data['password']);
-        } else {
-            unset($data['password']);
-        }
 
-        $user->update($data);
-
-        return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
     }
 
     public function destroy(User $user)
     {
-        // Hapus attendance records yang berhubungan
-        $user->attendance()->delete();
+        try {
+            // Hapus attendance records yang berhubungan
+            $user->attendance()->delete();
 
-        if ($user->image) {
-            Storage::delete($user->image);
+            if ($user->image) {
+                Storage::delete($user->image);
+            }
+
+            $user->delete();
+            notify()->success('Pengguna berhasil dihapus!', 'Sukses');
+            return redirect()->route('admin.users')->with('success', 'Karyawan berhasil dihapus.');
+        }catch (\Exception $e) {
+            notify()->error('Terjadi kesalahan saat memperbaharui data.' . $e, 'Error');
+            return redirect()->back()->withErrors($e->getMessage());
         }
 
-        $user->delete();
-        return redirect()->route('admin.users')->with('success', 'Karyawan berhasil dihapus.');
     }
 }

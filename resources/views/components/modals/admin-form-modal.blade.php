@@ -44,13 +44,6 @@
                     {{ $slot }}
                 </div>
 
-                <!-- Modal Footer -->
-                <div class="mt-5 sm:mt-6 flex justify-end">
-                    <button @click="showModal = false"
-                        class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-500 text-base font-medium text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:text-sm">
-                        Close
-                    </button>
-                </div>
             </div>
         </div>
     </div>
