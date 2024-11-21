@@ -64,8 +64,8 @@
                             class="@if (request()->routeIs('admin.dashboard')) bg-gray-200 @endif flex font-medium flex-row items-center px-4 py-2 rounded hover:bg-gray-100">
                             <i class='bx bx-home text-2xl text-blue-700 me-5'></i>Dashboard
                         </a>
-                        <a href="{{ route('admin.users') }}"
-                            class="@if (request()->routeIs('admin.users')) bg-gray-200 @endif flex font-medium flex-row items-center px-4 py-2 rounded hover:bg-gray-100">
+                        <a href="{{ route('admin.users.index') }}"
+                            class="@if (request()->routeIs('admin.users.index')) bg-gray-200 @endif flex font-medium flex-row items-center px-4 py-2 rounded hover:bg-gray-100">
                             <i class='bx bx-user text-2xl text-orange-400 me-5'></i>Users
                         </a>
                         <a href="#"

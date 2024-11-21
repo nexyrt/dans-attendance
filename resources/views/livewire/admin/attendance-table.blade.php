@@ -133,7 +133,7 @@
                                 <p class="text-black">{{ $attendance->user->position }}</p>
                                 <p
                                     class="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs p-1.5 rounded-md w-fit">
-                                    {{ $attendance->user->department }}</p>
+                                    {{ $attendance->user->department->name }}</p>
                             </x-table.td>
 
                             <x-table.td> {{ $attendance->date }} </x-table.td>

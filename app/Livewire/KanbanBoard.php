@@ -6,7 +6,7 @@ use App\Models\KanbanCard;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 
-#[Layout('layouts.staff')] 
+#[Layout('components.layouts.staff')] 
 class KanbanBoard extends Component
 {
     protected $cards;
