@@ -13,6 +13,11 @@ class Department extends Model
         'name',
     ];
 
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }    
+
     // Relationship with Schedule Exceptions
     public function scheduleExceptions()
     {

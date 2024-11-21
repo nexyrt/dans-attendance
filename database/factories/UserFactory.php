@@ -3,9 +3,10 @@
 namespace Database\Factories;
 
 use App\Models\Employee;
-use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Department;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 class UserFactory extends Factory
 {
@@ -13,11 +14,12 @@ class UserFactory extends Factory
 
     public function definition(): array
     {
+
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'role' => fake()->randomElement(['admin', 'manager', 'staff']),
-            'department' => $this->faker->randomElement(['Digital', 'Keuangan', 'Digital Marketing']),
+            'department_id' => Department::inRandomOrder()->first()->id,
             'position' => $this->faker->randomElement(['Manager', 'Staff']),
             'salary' => $this->faker->randomNumber(5),
             'address' => $this->faker->address,
