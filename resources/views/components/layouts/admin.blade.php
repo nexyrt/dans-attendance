@@ -16,12 +16,12 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
         <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
-        @notifyCss
-        @livewireStyles
+        
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         <script src="//unpkg.com/alpinejs" defer></script>
-
+        @notifyCss
+        @livewireStyles
     </head>
 
     <body class="bg-gray-100 h-screen">
@@ -182,8 +182,9 @@
 
         <x-notify::notify />
         @notifyJs
+                        
         @livewireScripts
-        <script src="//unpkg.com/alpinejs" defer></script>
+        @livewireCalendarScripts
     </body>
 
 </html>

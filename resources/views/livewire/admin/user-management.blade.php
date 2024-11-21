@@ -615,8 +615,6 @@
                                                 }
                                             </script>
                                         </x-modals.admin-form-modal>
-
-                                        
                                     </td>
                                 </tr>
                             @endforeach

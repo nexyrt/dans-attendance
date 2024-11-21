@@ -6,7 +6,6 @@ use Livewire\Component;
 use App\Models\Schedule;
 use Livewire\Attributes\Layout;
 
-#[Layout('layouts.admin')] 
 class ScheduleTable extends Component
 {
     public $showModal = false;
@@ -18,11 +17,7 @@ class ScheduleTable extends Component
     public $end_time;
     public $late_tolerance;
 
-    protected $rules = [
-        'start_time' => 'required|date_format:H:i',
-        'end_time' => 'required|date_format:H:i|after:start_time',
-        'late_tolerance' => 'required|integer|min:0|max:120'
-    ];
+
 
     public function edit(Schedule $schedule)
     {
@@ -35,8 +30,6 @@ class ScheduleTable extends Component
 
     public function save()
     {
-        $this->validate();
-
         $this->editingSchedule->update([
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,

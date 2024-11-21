@@ -1,24 +1,34 @@
+<!-- resources/views/components/modals/admin-form-modal.blade.php -->
 @props([
     'title' => '',
     'bg' => '',
     'text' => '',
 ])
 
-<div x-data="{ showModal: false }" x-cloak>
+<div x-data="{ 
+        showModal: false,
+        closeModal() { this.showModal = false }
+     }" 
+     x-cloak
+     @close-modal.window="closeModal">
     <!-- Trigger button -->
-    <button @click="showModal = true" {{ $attributes->merge(['class' => '' . $bg . ' ' . $text . ' px-4 py-2 rounded']) }}>
+    <button @click="showModal = true" {{ $attributes->merge(['class' => ' ' . $bg . ' ' . $text . ' px-4 py-2 rounded']) }}>
         {{ $title }}
     </button>
 
     <!-- Modal Background -->
-    <div x-show="showModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-300"
-        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-        class="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50" @click="showModal = false">
+    <div x-show="showModal" 
+         x-transition:enter="transition ease-out duration-300" 
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100" 
+         x-transition:leave="transition ease-in duration-300"
+         x-transition:leave-start="opacity-100" 
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50" 
+         @click="closeModal">
 
         <!-- Modal Container for Centering -->
         <div class="min-h-screen px-4 text-center">
-            <!-- This element is to trick the browser into centering the modal contents. -->
             <span class="inline-block h-screen align-middle" aria-hidden="true">&#8203;</span>
 
             <!-- Modal Content -->
@@ -30,7 +40,7 @@
                     <h3 class="text-lg font-medium leading-6 text-gray-900">
                         {{ $title }}
                     </h3>
-                    <button @click="showModal = false" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                    <button @click="closeModal" class="text-gray-400 hover:text-gray-500 focus:outline-none">
                         <span class="sr-only">Close</span>
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -43,33 +53,7 @@
                 <div class="max-h-[calc(100vh-16rem)] overflow-y-auto">
                     {{ $slot }}
                 </div>
-
             </div>
         </div>
     </div>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const fileInput = document.getElementById('dropzone-file');
-        const previewImage = document.getElementById('preview-image');
-        const uploadText = document.getElementById('upload-text');
-
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    previewImage.src = e.target.result;
-                    previewImage.classList.remove('hidden');
-                    uploadText.classList.add('hidden');
-                };
-                reader.readAsDataURL(file);
-            } else {
-                previewImage.src = '';
-                previewImage.classList.add('hidden');
-                uploadText.classList.remove('hidden');
-            }
-        });
-    });
-</script>
