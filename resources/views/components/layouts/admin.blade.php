@@ -41,7 +41,7 @@
 
                 <!-- Sidebar Content -->
                 <div class="relative z-10">
-                    <div class="p-6 flex justify-between items-center">
+                    <div class="p-6 flex justify-center items-center">
                         <div class="flex items-center">
                             <img src="{{ asset('images/dans.png') }}" alt="DANS"
                                 class="h-8 w-8 mr-2 cursor-pointer">

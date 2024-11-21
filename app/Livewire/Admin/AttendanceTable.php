@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Attendance;
+use App\Models\Department;
 use App\Models\User;
 use Livewire\Component;
 
@@ -69,28 +70,22 @@ class AttendanceTable extends Component
         $attendances = Attendance::query()
             ->whereYear('date', $date->year)
             ->whereMonth('date', $date->month)
+            ->leftJoin('users', 'attendances.user_id', '=', 'users.id')
+            ->leftJoin('departments', 'users.department_id', '=', 'departments.id')
             ->when($this->search, function ($query) {
-                $query->whereHas('user', function ($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%');
-                });
+                $query->where('users.name', 'like', '%' . $this->search . '%');
             })
             ->when($this->department, function ($query) {
-                $query->whereHas('user', function ($q) {
-                    $q->where('department', $this->department);
-                });
+                $query->where('departments.name', $this->department);
             })
-            ->with('user')
+            ->select('attendances.*', 'users.name as user_name', 'users.position', 'departments.name as department_name')
+            ->with('user', 'user.department')
             ->latest('date')
             ->get();
 
-        $departments = User::with('department')
-            ->get()
-            ->pluck('department.name')
-            ->filter()
-            ->unique()
-            ->values();
+        $departments = Department::pluck('name')->filter()->values();
 
-        $availableMonths = collect(range(0, 11))->map(function ($i) {
+        $availableMonths = collect(range(0, 18))->map(function ($i) {
             $date = now()->subMonths($i);
             return [
                 'value' => $date->format('Y-m'),
