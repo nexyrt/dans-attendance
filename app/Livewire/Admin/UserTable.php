@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\User;
 use Livewire\Component;
+use App\Models\Department;
 use Livewire\WithPagination;
 
 class UserTable extends Component
@@ -37,15 +38,17 @@ class UserTable extends Component
     {
         $query = User::query();
 
+        $departments =  Department::orderBy('name')->get();
+
         $stats = [
             'total_employees' => User::count(),
-            'departments' => User::distinct('department')->count('department'),
+            'departments' => Department::whereHas('users')->count(),
             'positions' => User::distinct('position')->count('position'),
         ];
 
 
         if ($this->department) {
-            $query->where('department', $this->department);
+            
         }
 
         if ($this->position) {
@@ -58,7 +61,7 @@ class UserTable extends Component
 
         $users = $query->paginate($this->perPage); 
 
-        return view('livewire.admin.user-table', compact('users','stats'));
+        return view('livewire.admin.user-management', compact('users','stats','departments'));
     }
 }
 

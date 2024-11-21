@@ -18,7 +18,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
             'role' => 'required|string|in:Admin,Manajer,Staff',
-            'department' => 'required|string|in:Jasa & Keuangan,Digital,Marketing',
+            'department' => 'required|string',
             'position' => 'required|string|in:Direktur,Manager,Staff,Supervisi',
             'phone_number' => 'nullable|string|max:255',
             'birthdate' => 'nullable|date',
@@ -40,7 +40,7 @@ class UserController extends Controller
             $user->email = $request->email;
             $user->password = Hash::make($request->password);
             $user->role = $request->role;
-            $user->department = $request->department;
+            $user->department_id = $request->department;
             $user->position = $request->position;
             $user->phone_number = $request->phone_number;
             $user->birthdate = $request->birthdate;

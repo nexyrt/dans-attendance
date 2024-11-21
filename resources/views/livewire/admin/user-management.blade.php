@@ -1,46 +1,46 @@
 <div>
-    
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-transparent rounded-lg mb-4">
-            <!-- Total Employees -->
-            <div class="p-4 bg-white rounded-lg shadow">
-                <div class="flex items-center">
-                    <div class="bg-blue-100 p-3 rounded-lg">
-                        <i class='bx bx-group text-xl text-blue-500'></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Total Employees</p>
-                        <p class="text-xl font-semibold">{{ $stats['total_employees'] }}</p>
-                    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-transparent rounded-lg mb-4">
+        <!-- Total Employees -->
+        <div class="p-4 bg-white rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="bg-blue-100 p-3 rounded-lg">
+                    <i class='bx bx-group text-xl text-blue-500'></i>
                 </div>
-            </div>
-    
-            <!-- Departments -->
-            <div class="p-4 bg-white rounded-lg shadow">
-                <div class="flex items-center">
-                    <div class="bg-purple-100 p-3 rounded-lg">
-                        <i class='bx bx-buildings text-xl text-purple-500'></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Departments</p>
-                        <p class="text-xl font-semibold">{{ $stats['departments'] }}</p>
-                    </div>
-                </div>
-            </div>
-    
-            <!-- Positions -->
-            <div class="p-4 bg-white rounded-lg shadow">
-                <div class="flex items-center">
-                    <div class="bg-green-100 p-3 rounded-lg">
-                        <i class='bx bx-briefcase text-xl text-green-500'></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Positions</p>
-                        <p class="text-xl font-semibold">{{ $stats['positions'] }}</p>
-                    </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Total Employees</p>
+                    <p class="text-xl font-semibold">{{ $stats['total_employees'] }}</p>
                 </div>
             </div>
         </div>
-    
+
+        <!-- Departments -->
+        <div class="p-4 bg-white rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="bg-purple-100 p-3 rounded-lg">
+                    <i class='bx bx-buildings text-xl text-purple-500'></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Departments</p>
+                    <p class="text-xl font-semibold">{{ $stats['departments'] }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Positions -->
+        <div class="p-4 bg-white rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="bg-green-100 p-3 rounded-lg">
+                    <i class='bx bx-briefcase text-xl text-green-500'></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Positions</p>
+                    <p class="text-xl font-semibold">{{ $stats['positions'] }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Header Section -->
     <div class="bg-white p-5 ps-6 rounded-t-md mt-5 flex items-center justify-between flex-wrap gap-2">
@@ -145,12 +145,13 @@
                                     <label class="block text-sm font-medium text-gray-700">Department <span
                                             class="text-red-500">*</span></label>
                                     <select name="department"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                         required>
                                         <option value="">Select Department</option>
-                                        <option value="Jasa & Keuangan">Jasa & Keuangan</option>
-                                        <option value="Digital">Digital</option>
-                                        <option value="Marketing">Marketing</option>
+                                        @foreach ($departments as $department)
+                                            <option value="{{ $department->id }}">
+                                                {{ $department->name }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
 
@@ -241,15 +242,13 @@
                                         <div class="flex flex-col items-center justify-center pt-5 pb-6"
                                             id="upload-text">
                                             <svg class="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400"
-                                                aria-hidden="true"
-                                                xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
                                                 viewBox="0 0 20 16">
                                                 <path stroke="currentColor" stroke-linecap="round"
                                                     stroke-linejoin="round" stroke-width="2"
                                                     d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
                                             </svg>
-                                            <p
-                                                class="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                                            <p class="mb-2 text-sm text-gray-500 dark:text-gray-400">
                                                 <span class="font-semibold">Click to upload</span>
                                                 or
                                                 drag and drop
@@ -258,8 +257,8 @@
                                                 SVG,
                                                 PNG, JPG or GIF (MAX. 800x400px)</p>
                                         </div>
-                                        <input id="dropzone-file" name="image" type="file"
-                                            class="hidden" accept="image/*" />
+                                        <input id="dropzone-file" name="image" type="file" class="hidden"
+                                            accept="image/*" />
                                     </label>
                                 </div>
                             </div>
@@ -354,7 +353,7 @@
                                     <p class="text-gray-500 font-medium">{{ $user->position }}</p>
                                     <p
                                         class="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs p-1.5 rounded-md w-fit">
-                                        {{ $user->department }}</p>
+                                        {{ $user->department->name }}</p>
                                 </td>
                                 <td class="px-6 py-4 flex items-center gap-x-3 whitespace-nowrap"><i
                                         class='bx bxs-circle text-green-500'></i>Active</td>
@@ -413,23 +412,27 @@
                                                     <label
                                                         class="block text-sm font-medium text-gray-700">Department</label>
                                                     <select name="department"
-                                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                                         required>
-                                                        <option value="Jasa & Keuangan">Jasa & Keuangan</option>
-                                                        <option value="Digital">Digital</option>
-                                                        <option value="Marketing">Marketing</option>
+                                                        <option value="">Select Department</option>
+                                                        @foreach ($departments as $department)
+                                                            <option value="{{ $department->id }}">
+                                                                {{ $department->name }}</option>
+                                                        @endforeach
                                                     </select>
                                                 </div>
                                                 <div>
                                                     <label
                                                         class="block text-sm font-medium text-gray-700">Position</label>
-                                                    <select name="position"
-                                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                                                    <select id="department_id" name="position"
+                                                        wire:model="department_id"
+                                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                                         required>
-                                                        <option value="Direktur">Direktur</option>
-                                                        <option value="Manager">Manager</option>
-                                                        <option value="Staff">Staff</option>
-                                                        <option value="Supervisi">Supervisi</option>
+                                                        <option value="">Select Department</option>
+                                                        @foreach ($departments as $department)
+                                                            <option value="{{ $department->id }}">
+                                                                {{ $department->name }}</option>
+                                                        @endforeach
                                                     </select>
                                                 </div>
                                                 <div>
@@ -521,10 +524,8 @@
             <!-- Items Per Page Dropdown - Stacks on mobile, inline on desktop -->
             <div class="flex items-center gap-2">
                 <label class="text-sm text-gray-600">Show</label>
-                <select 
-                    wire:model.live="perPage"
-                    class="h-9 w-20 rounded-md border-none bg-gray-100 px-3 py-1 text-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-200"
-                >
+                <select wire:model.live="perPage"
+                    class="h-9 w-20 rounded-md border-none bg-gray-100 px-3 py-1 text-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-200">
                     <option value="10">10</option>
                     <option value="25">25</option>
                     <option value="50">50</option>
@@ -532,7 +533,7 @@
                 </select>
                 <label class="text-sm text-gray-600">entries</label>
             </div>
-    
+
             <!-- Pagination Links - Adapts to screen size -->
             <div class="w-full sm:w-auto flex justify-center sm:justify-end">
                 {{ $users->links() }}
