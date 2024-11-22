@@ -1,16 +1,17 @@
 <?php
 
 use App\Exports\UsersExport;
-use App\Http\Controllers\Admin\UsersController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\AttendanceController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\Admin\UsersController;
+use App\Http\Controllers\Admin\ScheduleController;
 use App\Livewire\Admin\Schedules\ScheduleTable;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use Maatwebsite\Excel\Facades\Excel;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/kanban', App\Livewire\KanbanBoard::class)->name('kanban');
@@ -34,8 +35,11 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
         })->name('export');
     });
 
-    // Schedules
-    Route::get('/schedules', [DashboardController::class, 'schedules'])->name('schedules');
+    //Schedules
+    Route::prefix('schedules')->name('schedules.')->group(function () {
+        Route::get('/dashboard', [ScheduleController::class, 'index'])->name('dashboard');
+        Route::get('/default-schedules', [ScheduleController::class, 'shift'])->name('default-schedules');
+    });
 
     // Future Routes
     // Route::prefix('clients')->name('clients.')->group(function () {});
