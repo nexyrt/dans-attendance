@@ -34,18 +34,6 @@ class DashboardController extends Controller
         return view('admin.users.index', compact(['attendanceRecordExists', 'hasCheckedOut', 'user']));
     }
 
-
-    public function schedules()
-    {
-        $users = User::all();
-        // Check today's attendance
-        $user = auth()->user();
-        $attendanceRecordExists = $this->checkAttendanceRecordExists($user->id);
-        $hasCheckedOut = $this->hasCheckedOut($user->id);
-
-        return view('admin.schedule.index', compact(['attendanceRecordExists', 'hasCheckedOut', 'user']));
-    }
-
     public function checkAttendanceRecordExists($userId)
     {
         // Get today's date

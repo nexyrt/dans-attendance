@@ -19,6 +19,7 @@
         @notifyCss
         @livewireStyles
 
+
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         <script src="//unpkg.com/alpinejs" defer></script>
 
@@ -63,10 +64,67 @@
                             class="@if (request()->routeIs('admin.dashboard')) bg-gray-200 @endif flex font-medium flex-row items-center px-4 py-2 rounded hover:bg-gray-100">
                             <i class='bx bx-home text-2xl text-blue-700 me-5'></i>Dashboard
                         </a>
+                        
                         <a href="{{ route('admin.users.index') }}"
                             class="@if (request()->routeIs('admin.users.index')) bg-gray-200 @endif flex font-medium flex-row items-center px-4 py-2 rounded hover:bg-gray-100">
                             <i class='bx bx-user text-2xl text-orange-400 me-5'></i>Users
                         </a>
+                    
+                        <!-- Schedule Management Dropdown -->
+                        <div x-data="{ open: false }" class="relative">
+                            <button @click="open = !open"
+                                class="w-full flex items-center justify-between px-4 py-2 rounded hover:bg-gray-100 @if (request()->routeIs('admin.schedule.*')) bg-gray-200 @endif">
+                                <div class="flex items-center">
+                                    <i class='bx bx-calendar text-2xl text-green-500 me-5'></i>
+                                    <span class="font-medium">Schedule</span>
+                                </div>
+                                <svg :class="{'rotate-180': open}" class="w-4 h-4 transition-transform duration-200"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                    
+                            <!-- Dropdown Menu -->
+                            <div x-show="open" x-transition:enter="transition ease-out duration-100"
+                                x-transition:enter-start="transform opacity-0 scale-95"
+                                x-transition:enter-end="transform opacity-100 scale-100"
+                                x-transition:leave="transition ease-in duration-75"
+                                x-transition:leave-start="transform opacity-100 scale-100"
+                                x-transition:leave-end="transform opacity-0 scale-95"
+                                class="pl-12 mt-2 space-y-2">
+
+                                <!-- Calendar Submenu -->
+                                <a href="{{ route('admin.schedules.dashboard') }}"
+                                    class="block py-2 text-sm hover:text-blue-600">Dashboard</a>
+
+                                <a href="{{ route('admin.schedules.default-schedules') }}"
+                                    class="block py-2 text-sm hover:text-blue-600">Jadwal Tetap</a>
+
+                                <!-- Time Slots Submenu -->
+                                <div x-data="{ openSub: false }" class="relative">
+                                    <button @click="openSub = !openSub"
+                                        class="w-full flex items-center justify-between py-2 text-sm hover:text-blue-600">
+                                        <span>Time Slots</span>
+                                        <svg :class="{'rotate-180': openSub}" class="w-4 h-4 transition-transform duration-200"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                    
+                                    <div x-show="openSub" class="pl-4 mt-2 space-y-2">
+                                        <a href=""
+                                            class="block py-2 text-sm hover:text-blue-600">Create Time Slot</a>
+                                        <a href=""
+                                            class="block py-2 text-sm hover:text-blue-600">Manage Time Slots</a>
+                                    </div>
+                                </div>
+                    
+                                
+                    
+                                
+                            </div>
+                        </div>
+                    
                         <a href="#"
                             class="flex font-medium flex-row items-center px-4 py-2 rounded hover:bg-gray-100">
                             <i class='bx bx-cog text-2xl text-rose-400 me-5'></i>Settings
@@ -183,6 +241,8 @@
         <x-notify::notify />
         @notifyJs
         @livewireScripts
+        @livewireCalendarScripts
+
         <script src="//unpkg.com/alpinejs" defer></script>
     </body>
 
