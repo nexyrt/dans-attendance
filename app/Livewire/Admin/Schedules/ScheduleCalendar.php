@@ -10,26 +10,49 @@ use Omnia\LivewireCalendar\LivewireCalendar;
 
 class ScheduleCalendar extends LivewireCalendar
 {
-    public $schedule = false;
+    public $schedule = null;
+
     public function onEventDropped($eventId, $year, $month, $day)
     {
         ScheduleException::where('id', $eventId)
             ->update([
-                'date' => $year . '-' . $month . '-' . $day
+                'date' => sprintf('%d-%02d-%02d', $year, $month, $day)
             ]);
+
+        // Optional: Notify update success
+        $this->dispatch('schedule-updated', ['message' => 'Schedule updated successfully']);
     }
 
     public function onEventClick($eventId)
     {
-        // This event is triggered when an event card is clicked
-        // You will be given the event id that was clicked
-        $schedule = ScheduleException::find($eventId);
-        $this->dispatchBrowserEvent('schedule-selected', $schedule);
+        $schedule = ScheduleException::with('department')->find($eventId);
+
+        if ($schedule) {
+            $this->dispatch('schedule-selected', [
+                'id' => $schedule->id,
+                'title' => $schedule->status,
+                'start_time' => $schedule->start_time?->format('H:i'),
+                'end_time' => $schedule->end_time?->format('H:i'),
+                'date' => $schedule->date->format('Y-m-d'),
+                'description' => $schedule->note,
+                'department' => $schedule->department?->name ?? 'All Departments'
+            ]);
+        }
     }
 
-    public function selectSchedule($schedule)
+    public function handleScheduleUpdate($data)
     {
-        // Dispatch a browser event with the schedule data
+        // Handle update dari Alpine
+        $this->schedule = $data;
+
+        // Optional: Update database jika diperlukan
+        if (isset($data['id'])) {
+            ScheduleException::find($data['id'])->update([
+                'status' => $data['title'],
+                'note' => $data['description'],
+                // ... update field lainnya
+            ]);
+        }
     }
 
     public function nextMonth()
@@ -42,20 +65,27 @@ class ScheduleCalendar extends LivewireCalendar
         $this->goToPreviousMonth();
     }
 
-
-
     public function events(): Collection
     {
-
         return ScheduleException::query()
             ->get()
             ->map(function (ScheduleException $model) {
                 return [
                     'id' => $model->id,
                     'title' => $model->status,
-                    'description' => $model->note,
+                    'description' => $model->note ?? 'No description',
                     'date' => $model->date,
+                    'backgroundColor' => $this->getStatusColor($model->status)
                 ];
             });
+    }
+
+    private function getStatusColor($status)
+    {
+        return match ($status) {
+            'wfh' => '#E5F6FD',  // Light blue
+            'halfday' => '#FFF7E6', // Light yellow
+            default => '#F3F4F6'  // Light gray
+        };
     }
 }
