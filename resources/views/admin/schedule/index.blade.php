@@ -11,7 +11,7 @@
                 before-calendar-view="calendar/before-calendar-view" 
             />
         </div>
-        <div class="basis-1/4 w-full border shadow-md bg-white rounded-md h-max p-4">
+        <div class="basis-1/4 border shadow-md bg-white rounded-md h-max p-4">
             <!-- Schedule Detail Panel -->
             <template x-if="schedule">
                 <div>
