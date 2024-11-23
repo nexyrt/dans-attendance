@@ -1,1 +1,3 @@
-<h2>12312312</h2>
+<div class="bg-red-500 border-2 border-blue-200 w-full">
+
+</div>
