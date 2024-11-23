@@ -9,7 +9,6 @@
         <div class="">
             <livewire:admin.schedules.schedule-calendar 
                 before-calendar-view="calendar/before-calendar-view"
-                calendar-view="calendar/event-view"
             />
         </div>
         
