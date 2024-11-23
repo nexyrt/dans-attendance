@@ -12,6 +12,10 @@ class ScheduleCalendar extends LivewireCalendar
 {
     public $schedule = null;
 
+    public $currentView = 'month'; // Tambahkan ini
+
+
+
     public function onEventDropped($eventId, $year, $month, $day)
     {
         ScheduleException::where('id', $eventId)
@@ -75,7 +79,9 @@ class ScheduleCalendar extends LivewireCalendar
                     'title' => $model->status,
                     'description' => $model->note ?? 'No description',
                     'date' => $model->date,
-                    'backgroundColor' => $this->getStatusColor($model->status)
+                    'backgroundColor' => $this->getStatusColor($model->status),
+                    'start_time' => $model->start_time,
+                    'end_time' => $model->end_time,
                 ];
             });
     }
@@ -83,9 +89,18 @@ class ScheduleCalendar extends LivewireCalendar
     private function getStatusColor($status)
     {
         return match ($status) {
-            'wfh' => '#E5F6FD',  // Light blue
-            'halfday' => '#FFF7E6', // Light yellow
-            default => '#F3F4F6'  // Light gray
+            'wfh' => [
+                '#E5F6FD', // Base color (Light Blue)
+                '#8BB5C0'  // Darker color (Dark Blue)
+            ],
+            'halfday' => [
+                '#FFF7E6', // Base color (Light Yellow)
+                '#998B72'  // Darker color (Dark Yellow)
+            ],
+            default => [
+                '#F3F4F6', // Base color (Light Gray)
+                '#8B8D8F'  // Darker color (Dark Gray)
+            ],
         };
     }
 }

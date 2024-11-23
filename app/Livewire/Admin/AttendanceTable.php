@@ -14,6 +14,7 @@ class AttendanceTable extends Component
     public $department = '';
     public $selectedMonth;
 
+
     protected $queryString = ['search', 'department', 'selectedMonth'];
 
     // Tambahkan watchers untuk setiap properti
@@ -31,6 +32,7 @@ class AttendanceTable extends Component
     {
         $this->render();
     }
+    
 
     public function mount()
     {
