@@ -41,7 +41,7 @@
 
                 <!-- Sidebar Content -->
                 <div class="relative z-10">
-                    <div class="p-6 flex justify-between items-center">
+                    <div class="p-6 flex justify-center items-center">
                         <div class="flex items-center">
                             <img src="{{ asset('images/dans.png') }}" alt="DANS"
                                 class="h-8 w-8 mr-2 cursor-pointer">
@@ -58,7 +58,7 @@
 
                     <hr class="h-px mt-0 bg-transparent bg-gradient-to-r from-transparent via-black/40 to-transparent">
 
-                    <nav class="flex-1 mt-3 px-4 space-y-2 overflow-y-auto">
+                    {{-- <nav class="flex-1 mt-3 px-4 space-y-2 overflow-y-auto">
                         <a href="{{ route('admin.dashboard') }}"
                             class="@if (request()->routeIs('admin.dashboard')) bg-gray-200 @endif flex font-medium flex-row items-center px-4 py-2 rounded hover:bg-gray-100">
                             <i class='bx bx-home text-2xl text-blue-700 me-5'></i>Dashboard
@@ -71,15 +71,14 @@
                             class="flex font-medium flex-row items-center px-4 py-2 rounded hover:bg-gray-100">
                             <i class='bx bx-cog text-2xl text-rose-400 me-5'></i>Settings
                         </a>
-                    </nav>
+                    </nav> --}}
                 </div>
             </div>
 
             <!-- Main Content -->
             <div class="flex-1 lg:ml-80 relative overflow-y-auto p-4">
-                <div class="flex justify-between items-center">
+                <div class="flex justify-between items-center mt-2">
                     {{-- Breadcrumbs --}}
-                    <div class="flex justify-between mb-5">
                         <!-- Hamburger Button for Mobile -->
                         <button x-data @click="$dispatch('toggle-sidebar')"
                             class="block lg:hidden p-2 rounded-lg bg-white shadow-lg">
@@ -126,7 +125,6 @@
                                 </li>
                             </ol>
                         </nav>
-                    </div>
 
                     {{-- Profile --}}
                     <div class="hs-dropdown [--placement:bottom-right] relative inline-flex">
@@ -177,8 +175,9 @@
                                     </svg>
                                     Downloads
                                 </a>
-                                <a class="flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-300 dark:focus:bg-neutral-700 dark:focus:text-neutral-300"
-                                    href="#">
+                                <form action="{{ route('logout') }}" method="POST"
+                                    class="flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-300 dark:focus:bg-neutral-700 dark:focus:text-neutral-300">
+                                    @csrf
                                     <svg class="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24"
                                         height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -187,8 +186,8 @@
                                         <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
                                         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                                     </svg>
-                                    Team Account
-                                </a>
+                                    <button type="submit">Logout</button>
+                                </form>
                             </div>
                         </div>
                     </div>

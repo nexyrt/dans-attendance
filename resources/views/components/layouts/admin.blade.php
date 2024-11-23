@@ -181,6 +181,7 @@
                             </li>
                         </ol>
                     </nav>
+                    
                     <div x-data="{ open: false }" x-cloak class="relative">
                         <div @click="open = !open" class="cursor-pointer flex items-center space-x-3">
                             <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white">
