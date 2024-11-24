@@ -52,16 +52,12 @@ Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->grou
     Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
 
     // Attendance
-    // Route::prefix('attendance')->name('attendance.')->group(function () {
-    //     // History/Record
-    //     Route::get('/', [Staff\AttendanceController::class, 'index'])->name('index');
+    Route::prefix('attendance')->name('attendance.')->group(function () {
+        // History/Record
+        Route::get('/', [App\Http\Controllers\Staff\AttendanceController::class, 'index']);
     //     Route::get('/history', [Staff\AttendanceController::class, 'history'])->name('history');
     //     Route::get('/detail/{attendance}', [Staff\AttendanceController::class, 'show'])->name('show');
-        
-    //     // Check In/Out (bisa diakses semua role)
-    //     Route::post('/check-in', [AttendanceController::class, 'checkIn'])->name('check-in');
-    //     Route::post('/check-out', [AttendanceController::class, 'checkOut'])->name('check-out');
-    // });
+    });
 
     // // Leave Management
     // Route::prefix('leave')->name('leave.')->group(function () {

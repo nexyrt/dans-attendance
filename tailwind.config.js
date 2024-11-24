@@ -26,13 +26,19 @@ export default {
             },
             boxShadow: {
                 'blur-spread': '0 0 15px 5px rgba(59, 130, 246, 0.5)',
-              },
+            },
         },
         variants: {
             extend: {
                 backdropFilter: ['responsive', 'hover', 'focus'],
                 boxShadow: ['focus'],
             },
+        },
+        screens: {
+            'md': '640px',
+            'lg': '1024px',
+            'xl': '1280px',
+            '2xl': '1440px'
         },
     },
 
