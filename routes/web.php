@@ -1,41 +1,90 @@
 <?php
 
-use App\Exports\FilteredDataExport;
 use App\Exports\UsersExport;
-use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\AttendanceController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\EmployeeController;
+use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use Maatwebsite\Excel\Facades\Excel;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\Admin\UsersController;
+use App\Http\Controllers\Admin\ScheduleController;
+use App\Livewire\Admin\Schedules\ScheduleTable;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/kanban', App\Livewire\KanbanBoard::class)->name('kanban');
 
 // Admin routes
-Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
-    // admin/dashboard
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
-    // admin/users
-    Route::get('/users', [AdminDashboardController::class, 'users'])->name('admin.users');
-    Route::get('/schedules', [AdminDashboardController::class, 'schedules'])->name('admin.schedules');
-    Route::post('users/store', [UserController::class, 'store'])->name('admin.users.store');
-    Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
-    Route::delete('users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
-    Route::get('/admin/users/export', function (Request $request) {
-        $department = $request->input('department');
-        $position = $request->input('position');
-        $name = $request->input('name');
-        return Excel::download(new UsersExport($department, $position, $name), 'users.xlsx');
-    })->name('admin.users.export');
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Users Management
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/', [DashboardController::class, 'users'])->name('index');
+        Route::post('/store', [UsersController::class, 'store'])->name('store');
+        Route::put('/{user}', [UsersController::class, 'update'])->name('update');
+        Route::delete('/{user}', [UsersController::class, 'destroy'])->name('destroy');
+        Route::get('/export', function (Request $request) {
+            $department = $request->input('department');
+            $position = $request->input('position');
+            $name = $request->input('name');
+            return Excel::download(new UsersExport($department, $position, $name), 'users.xlsx');
+        })->name('export');
+    });
 
-    // admin/clients
-    // admin/settings
+    //Schedules
+    Route::prefix('schedules')->name('schedules.')->group(function () {
+        Route::get('/dashboard', [ScheduleController::class, 'index'])->name('dashboard');
+        Route::get('/default-schedules', [ScheduleController::class, 'shift'])->name('default-schedules');
+    });
+
+    // Future Routes
+    // Route::prefix('clients')->name('clients.')->group(function () {});
+    // Route::prefix('settings')->name('settings.')->group(function () {});
+});
+
+// Staff Routes
+Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->group(function () {
+    Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
+
+    // Attendance
+    Route::prefix('attendance')->name('attendance.')->group(function () {
+        // History/Record
+        Route::get('/', [App\Http\Controllers\Staff\AttendanceController::class, 'index'])->name('index');
+    //     Route::get('/history', [Staff\AttendanceController::class, 'history'])->name('history');
+    //     Route::get('/detail/{attendance}', [Staff\AttendanceController::class, 'show'])->name('show');
+    });
+
+    // // Leave Management
+    // Route::prefix('leave')->name('leave.')->group(function () {
+    //     Route::get('/', [Staff\LeaveController::class, 'index'])->name('index');
+    //     Route::get('/create', [Staff\LeaveController::class, 'create'])->name('create');
+    //     Route::post('/store', [Staff\LeaveController::class, 'store'])->name('store');
+    //     Route::get('/{leave}', [Staff\LeaveController::class, 'show'])->name('show');
+    //     Route::delete('/{leave}', [Staff\LeaveController::class, 'destroy'])->name('destroy');
+        
+    //     // Leave Balance
+    //     Route::get('/balance', [Staff\LeaveController::class, 'balance'])->name('balance');
+    // });
+
+    // // Schedule
+    // Route::prefix('schedule')->name('schedule.')->group(function () {
+    //     Route::get('/', [Staff\ScheduleController::class, 'index'])->name('index');
+    //     Route::get('/calendar', [Staff\ScheduleController::class, 'calendar'])->name('calendar');
+    //     Route::get('/exceptions', [Staff\ScheduleController::class, 'exceptions'])->name('exceptions');
+    // });
+
+    // // Profile Management
+    // Route::prefix('profile')->name('profile.')->group(function () {
+    //     Route::get('/', [Staff\ProfileController::class, 'edit'])->name('edit');
+    //     Route::patch('/', [Staff\ProfileController::class, 'update'])->name('update');
+    //     Route::patch('/password', [Staff\ProfileController::class, 'updatePassword'])->name('password.update');
+    //     Route::patch('/photo', [Staff\ProfileController::class, 'updatePhoto'])->name('photo.update');
+    // });
 });
 
 Route::middleware('auth')->group(function () {

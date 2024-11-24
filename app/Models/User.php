@@ -41,6 +41,11 @@ class User extends Authenticatable
         return $this->hasMany(Attendance::class, 'user_id');
     }
 
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
     public function leaveBalances()
     {
         return $this->hasMany(LeaveBalance::class);

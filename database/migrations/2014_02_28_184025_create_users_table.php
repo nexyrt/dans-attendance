@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password');
             $table->enum('role', ['staff', 'manager', 'admin'])->default('admin');
-            $table->string('department');
             $table->string('position');
             $table->string('image')->nullable();
             $table->decimal('salary', 10, 2)->nullable();
@@ -25,6 +24,8 @@ return new class extends Migration
             $table->string('phone_number')->nullable();
             $table->date('birthdate')->nullable();
             $table->timestamp('email_verified_at')->nullable();
+
+            $table->foreignId('department_id')->constrained('departments')->onDelete('cascade')->nullable();
             $table->rememberToken();    
             $table->timestamps();
         });

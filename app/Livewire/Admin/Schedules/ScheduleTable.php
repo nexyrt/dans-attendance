@@ -4,7 +4,9 @@ namespace App\Livewire\Admin\Schedules;
 
 use Livewire\Component;
 use App\Models\Schedule;
+use Livewire\Attributes\Layout;
 
+#[Layout('layouts.admin')] 
 class ScheduleTable extends Component
 {
     public $showModal = false;
@@ -24,25 +26,31 @@ class ScheduleTable extends Component
 
     public function edit(Schedule $schedule)
     {
+
         $this->editingSchedule = $schedule;
         $this->start_time = $schedule->start_time->format('H:i');
         $this->end_time = $schedule->end_time->format('H:i');
         $this->late_tolerance = $schedule->late_tolerance;
-        $this->showModal = true;
     }
 
     public function save()
     {
-        $this->validate();
+        try{
+            $this->validate();
 
-        $this->editingSchedule->update([
-            'start_time' => $this->start_time,
-            'end_time' => $this->end_time,
-            'late_tolerance' => $this->late_tolerance,
-        ]);
+            $this->editingSchedule->update([
+                'start_time' => $this->start_time,
+                'end_time' => $this->end_time,
+                'late_tolerance' => $this->late_tolerance,
+            ]);
+            notify()->success('Jadwal berhasil diubah!', 'Sukses');
+            return redirect()->route('admin.schedules');
+        }catch (\Exception $e) {
+            notify()->error('Terjadi kesalahan saat mengubah data.' . $e, 'Error');
+            return redirect()->back()->withErrors($e->getMessage());
+        }
 
-        $this->showModal = false;
-        $this->dispatch('notify', ['message' => 'Schedule updated successfully']);
+
     }
 
     public function render()
