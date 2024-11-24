@@ -41,7 +41,7 @@
                             <div class="flex items-center space-x-4 py-3">
                                 <div class="text-lg text-gray-400 w-5">T</div>
                                 <input type="text" x-ref="title" :value="schedule?.title"
-                                    class="flex-1 border-0 p-1 text-base rounded focus:ring-0 focus:border-0 placeholder-gray-400 focus:bg-gray-100 transition-colors"
+                                    class="flex-1 border-0 p-1.5 text-sm rounded focus:ring-0 focus:border-0 placeholder-gray-400 focus:bg-gray-100 transition-colors"
                                     placeholder="Add title">
                             </div>
 
@@ -52,81 +52,100 @@
                                 </div>
                                 <div class="flex-1 space-y-2">
                                     <!-- Time Inputs -->
-                                    <div class="flex items-center space-x-2">
-                                        <div class="relative">
-                                            <input type="time" x-ref="start_time" :value="schedule?.start_time"
-                                                class="pl-2 pr-7 py-1 text-sm border border-gray-300 rounded hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                                            <button class="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400"
-                                                type="button">
-                                                <i class='bx bx-chevron-down text-lg'></i>
+                                    <div class="flex items-center space-x-2" x-data="{
+                                        times: Array.from({ length: 96 }, (_, i) => {
+                                            const hour = Math.floor(i / 4);
+                                            const minute = (i % 4) * 15;
+                                            const value = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                                            const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                                            const ampm = hour < 12 ? 'AM' : 'PM';
+                                            return {
+                                                value,
+                                                display: `${displayHour}:${minute.toString().padStart(2, '0')}${ampm}`
+                                            };
+                                        }),
+                                        startOpen: false,
+                                        endOpen: false,
+                                        selectedStart: '09:00',
+                                        selectedEnd: '10:00',
+                                        getDisplayTime(value) {
+                                            return this.times.find(t => t.value === value)?.display || value;
+                                        }
+                                    }">
+                                        <!-- Start Time Dropdown -->
+                                        <div class="relative flex-1">
+                                            <button @click="startOpen = !startOpen; endOpen = false" type="button"
+                                                class="w-full flex items-center px-3 py-2.5 text-xs  border-gray-300 rounded hover:bg-gray-50 focus:border-blue-500 focus:ring-0">
+                                                <span x-text="getDisplayTime(selectedStart)"></span>
+                                                <i class='bx bx-chevron-down text-gray-400 ml-auto'></i>
                                             </button>
-                                        </div>
-                                        <span class="text-gray-600">–</span>
-                                        <div class="relative">
-                                            <input type="time" x-ref="end_time" :value="schedule?.end_time"
-                                                class="pl-2 pr-7 py-1 text-sm border border-gray-300 rounded hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                                            <button class="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400"
-                                                type="button">
-                                                <i class='bx bx-chevron-down text-lg'></i>
-                                            </button>
-                                        </div>
-                                    </div>
 
-                                    <!-- Date Input -->
-                                    <div class="relative">
-                                        <input type="date" x-ref="date" :value="schedule?.date"
-                                            class="pl-2 pr-7 py-1 text-sm border border-gray-300 rounded hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                                        <button class="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400"
-                                            type="button">
-                                            <i class='bx bx-calendar text-lg'></i>
-                                        </button>
-                                    </div>
-
-                                    <!-- Options -->
-                                    <div class="flex items-center justify-between">
-                                        <label class="flex items-center">
-                                            <div class="relative inline-block w-7 h-4">
-                                                <input type="checkbox" class="hidden peer">
+                                            <!-- Dropdown Panel -->
+                                            <div x-show="startOpen"
+                                                x-transition:enter="transition ease-out duration-100"
+                                                x-transition:enter-start="transform opacity-0 scale-95"
+                                                x-transition:enter-end="transform opacity-100 scale-100"
+                                                x-transition:leave="transition ease-in duration-75"
+                                                x-transition:leave-start="transform opacity-100 scale-100"
+                                                x-transition:leave-end="transform opacity-0 scale-95"
+                                                @click.away="startOpen = false"
+                                                class="absolute z-50 mt-1 w-full bg-white rounded-md shadow-lg border border-gray-200">
                                                 <div
-                                                    class="absolute cursor-pointer inset-0 bg-gray-300 peer-checked:bg-blue-500 rounded-full transition-colors before:content-[''] before:absolute before:w-3 before:h-3 before:bg-white before:rounded-full before:top-0.5 before:left-0.5 before:transition-transform peer-checked:before:translate-x-3">
+                                                    class="max-h-60 overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-50">
+                                                    <div class="py-1">
+                                                        <template x-for="time in times" :key="time.value">
+                                                            <button type="button"
+                                                                @click="selectedStart = time.value; startOpen = false"
+                                                                class="w-full px-3 py-1.5 text-xs text-left hover:bg-gray-100 flex items-center space-x-2"
+                                                                :class="{ 'bg-blue-50': selectedStart === time.value }">
+                                                                <span x-text="time.display"></span>
+                                                                <i class='bx bx-check text-blue-500 ml-auto'
+                                                                    x-show="selectedStart === time.value"></i>
+                                                            </button>
+                                                        </template>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <span class="text-sm text-gray-600 ml-2">All-Day</span>
-                                        </label>
-                                        <button type="button" class="text-sm text-gray-600 hover:text-gray-800">Do not
-                                            repeat</button>
+                                        </div>
+
+                                        <span class="text-gray-400 text-xs">–</span>
+
+                                        <!-- End Time Dropdown -->
+                                        <div class="relative flex-1">
+                                            <button @click="endOpen = !endOpen; startOpen = false" type="button"
+                                                class="w-full flex items-center px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 focus:border-blue-500 focus:ring-0">
+                                                <span x-text="getDisplayTime(selectedEnd)"></span>
+                                                <i class='bx bx-chevron-down text-gray-400 ml-auto'></i>
+                                            </button>
+
+                                            <!-- Dropdown Panel -->
+                                            <div x-show="endOpen" x-transition:enter="transition ease-out duration-100"
+                                                x-transition:enter-start="transform opacity-0 scale-95"
+                                                x-transition:enter-end="transform opacity-100 scale-100"
+                                                x-transition:leave="transition ease-in duration-75"
+                                                x-transition:leave-start="transform opacity-100 scale-100"
+                                                x-transition:leave-end="transform opacity-0 scale-95"
+                                                @click.away="endOpen = false"
+                                                class="absolute z-50 mt-1 w-full bg-white rounded-md shadow-lg border border-gray-200">
+                                                <div
+                                                    class="max-h-60 overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-50">
+                                                    <div class="py-1">
+                                                        <template x-for="time in times" :key="time.value">
+                                                            <button type="button"
+                                                                @click="selectedEnd = time.value; endOpen = false"
+                                                                class="w-full px-3 py-1.5 text-xs text-left hover:bg-gray-100 flex items-center space-x-2"
+                                                                :class="{ 'bg-blue-50': selectedEnd === time.value }">
+                                                                <span x-text="time.display"></span>
+                                                                <i class='bx bx-check text-blue-500 ml-auto'
+                                                                    x-show="selectedEnd === time.value"></i>
+                                                            </button>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- Department Section -->
-                            <div class="flex items-start space-x-4 py-3 border-t">
-                                <div class="pt-1.5 w-5">
-                                    <i class='bx bx-map text-lg text-gray-400'></i>
-                                </div>
-                                <div class="relative flex-1">
-                                    <select x-ref="department" :value="schedule?.department"
-                                        class="w-full pl-2 pr-8 py-1 text-sm border border-gray-300 rounded hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white appearance-none">
-                                        <option value="" disabled selected>Select department</option>
-                                        <option value="it">IT Department</option>
-                                        <option value="hr">HR Department</option>
-                                        <option value="finance">Finance Department</option>
-                                    </select>
-                                    <div
-                                        class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                        <i class='bx bx-chevron-down text-lg'></i>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Description Section -->
-                            <div class="flex items-start space-x-4 py-3 border-t">
-                                <div class="pt-1.5 w-5">
-                                    <i class='bx bx-align-left text-lg text-gray-400'></i>
-                                </div>
-                                <textarea x-ref="description" x-text="schedule?.description"
-                                    class="flex-1 pl-2 pr-2 py-1 text-sm border border-gray-300 rounded hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[60px] resize-none"
-                                    placeholder="Add description"></textarea>
                             </div>
                         </form>
                     </div>
