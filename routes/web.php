@@ -54,7 +54,7 @@ Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->grou
     // Attendance
     Route::prefix('attendance')->name('attendance.')->group(function () {
         // History/Record
-        Route::get('/', [App\Http\Controllers\Staff\AttendanceController::class, 'index']);
+        Route::get('/', [App\Http\Controllers\Staff\AttendanceController::class, 'index'])->name('index');
     //     Route::get('/history', [Staff\AttendanceController::class, 'history'])->name('history');
     //     Route::get('/detail/{attendance}', [Staff\AttendanceController::class, 'show'])->name('show');
     });
