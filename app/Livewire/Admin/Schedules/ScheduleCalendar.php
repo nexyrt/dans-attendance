@@ -12,9 +12,11 @@ class ScheduleCalendar extends LivewireCalendar
 {
     public $schedule = null;
 
-    public $currentView = 'month'; // Tambahkan ini
 
 
+    protected $listeners = [
+        'handle-schedule-update' => 'handleScheduleUpdate'
+    ];
 
     public function onEventDropped($eventId, $year, $month, $day)
     {
@@ -24,13 +26,11 @@ class ScheduleCalendar extends LivewireCalendar
             ]);
 
         // Optional: Notify update success
-        $this->dispatch('schedule-updated', ['message' => 'Schedule updated successfully']);
     }
 
     public function onEventClick($eventId)
     {
-        $schedule = ScheduleException::with('department')->find($eventId);
-
+        $schedule = ScheduleException::find($eventId);
         if ($schedule) {
             $this->dispatch('schedule-selected', [
                 'id' => $schedule->id,
@@ -44,19 +44,15 @@ class ScheduleCalendar extends LivewireCalendar
         }
     }
 
+
+
     public function handleScheduleUpdate($data)
     {
-        // Handle update dari Alpine
+        // Note: $data will now include the event.detail inside a 'data' key
+
         $this->schedule = $data;
 
-        // Optional: Update database jika diperlukan
-        if (isset($data['id'])) {
-            ScheduleException::find($data['id'])->update([
-                'status' => $data['title'],
-                'note' => $data['description'],
-                // ... update field lainnya
-            ]);
-        }
+        
     }
 
     public function nextMonth()
@@ -84,23 +80,38 @@ class ScheduleCalendar extends LivewireCalendar
                     'end_time' => $model->end_time,
                 ];
             });
+        
+    }
+
+        private function adjustBrightness($hex, $steps) {
+        // Convert hex to rgb
+        $rgb = array_map('hexdec', str_split(ltrim($hex, '#'), 2));
+        
+        // Adjust brightness
+        foreach ($rgb as &$color) {
+            $color = max(0, min(255, $color + $steps));
+        }
+        
+        return sprintf("#%02x%02x%02x", $rgb[0], $rgb[1], $rgb[2]);
     }
 
     private function getStatusColor($status)
     {
         return match ($status) {
             'wfh' => [
-                '#E5F6FD', // Base color (Light Blue)
-                '#8BB5C0'  // Darker color (Dark Blue)
+                '#9D174D', // Base color (Light Blue)
+                '#FCE7F3'  // Darker color (Dark Blue)
             ],
             'halfday' => [
-                '#FFF7E6', // Base color (Light Yellow)
-                '#998B72'  // Darker color (Dark Yellow)
+                'blue-200', // Base color (Light Yellow)
+                'blue-800'  // Darker color (Dark Yellow)
             ],
             default => [
-                '#F3F4F6', // Base color (Light Gray)
-                '#8B8D8F'  // Darker color (Dark Gray)
+                'yellow-200', // Base color (Light Gray)
+                'yellow-800'  // Darker color (Dark Gray)
             ],
         };
     }
+
+
 }
