@@ -14,7 +14,7 @@ class Attendance extends Model
         'check_in',
         'check_out',
         'date',
-        'activity_log'
+        'status'
         // Add other fillable fields here if needed
     ];
 
