@@ -12,14 +12,19 @@ class AttendanceController extends Controller
     {
         $user = auth()->user();
         $today = now();
-        
+
         // Get today's attendance
         $todayAttendance = Attendance::where('user_id', $user->id)
             ->whereDate('date', $today)
             ->first();
 
+        $attendances = Attendance::where('user_id', auth()->id())
+            ->orderBy('date', 'desc')
+            ->get();
+
         return view('staff.attendance.index', [
             'todayAttendance' => $todayAttendance,
+            'attendances' => $attendances,
         ]);
     }
 }
