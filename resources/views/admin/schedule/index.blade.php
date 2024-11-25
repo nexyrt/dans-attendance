@@ -40,7 +40,7 @@
                             <!-- Title Section -->
                             <div class="flex items-center space-x-4 py-3">
                                 <div class="text-lg text-gray-400 w-5">T</div>
-                                <input type="text" x-ref="title" :value="schedule?.title"
+                                <input type="text" x-ref="title" :value="schedule?title"
                                     class="flex-1 border-0 p-1.5 text-sm rounded focus:ring-0 focus:border-0 placeholder-gray-400 focus:bg-gray-100 transition-colors"
                                     placeholder="Add title">
                             </div>

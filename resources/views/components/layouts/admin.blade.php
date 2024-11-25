@@ -118,10 +118,6 @@
                                             class="block py-2 text-sm hover:text-blue-600">Manage Time Slots</a>
                                     </div>
                                 </div>
-                    
-                                
-                    
-                                
                             </div>
                         </div>
                     
@@ -239,12 +235,27 @@
             </div>
         </div>
 
+        <livewire:shared.check-in-modal />
+
         <x-notify::notify />
         @notifyJs
         @livewireScripts
         @livewireCalendarScripts
 
         <script src="//unpkg.com/alpinejs" defer></script>
+        <script>
+            document.addEventListener('livewire:initialized', () => {
+                Livewire.on('success-checkin', () => {
+                    setTimeout(() => {
+                        Livewire.dispatch('closeModal');
+                    }, 1500);
+                });
+
+                Livewire.on('error-checkin', () => {
+                    Livewire.dispatch('closeModal');
+                });
+            });
+        </script>
     </body>
 
 </html>
