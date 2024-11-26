@@ -26,7 +26,6 @@ class ScheduleTable extends Component
 
     public function edit(Schedule $schedule)
     {
-
         $this->editingSchedule = $schedule;
         $this->start_time = $schedule->start_time->format('H:i');
         $this->end_time = $schedule->end_time->format('H:i');

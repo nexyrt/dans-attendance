@@ -10,10 +10,12 @@ class ScheduleException extends Model
     use HasFactory;
 
     protected $fillable = [
+        'title',
         'date',
         'start_time',
         'end_time',
         'department',
+        'department_id',
         'status',
         'note',
         'created_by'

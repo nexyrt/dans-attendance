@@ -12,15 +12,15 @@
         <!-- Header -->
         <div class="flex items-start justify-between mb-2">
             <div class="flex-1">
-                <h4 class="text-sm font-semibold capitalize leading-snug truncate group-hover:text-{{ $event['backgroundColor'][0] }} transition-colors duration-200"
-                    style="color: {{ $event['backgroundColor'][0] }}">
+                <h4 class="text-sm font-semibold capitalize leading-snug truncate group-hover:text-{{ $event['backgroundColor'] }} transition-colors duration-200"
+                    style="color: {{ $event['backgroundColor'] }}">
                     {{ $event['title'] }}
                 </h4>
 
                 <!-- Time if available -->
                 @if ($event['start_time'])
                     <div class="flex items-center mt-1 space-x-2">
-                        <i class='bx bx-time text-sm' style="color: {{ $event['backgroundColor'][0] }}"></i>
+                        <i class='bx bx-time text-sm' style="color: {{ $event['backgroundColor'] }}"></i>
                         <span class="text-xs text-gray-600">
                             {{ \Carbon\Carbon::parse($event['start_time'])->format('H:i') }}
                             @if ($event['end_time'])
@@ -59,7 +59,7 @@
             <!-- Tag/Category -->
             <div class="flex items-center space-x-2">
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-opacity-10"
-                    style="background-color: {{ $event['backgroundColor'][0] }}; color: {{ $event['backgroundColor'][0] }}">
+                    style="background-color: {{ $event['backgroundColor'][0] }}; color: {{ $event['backgroundColor'] }}">
                     {{ $event['status'] }}
                 </span>
             </div>
@@ -82,7 +82,7 @@
     @if (isset($event['progress']))
         <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-100">
             <div class="h-full transition-all duration-200"
-                style="width: {{ $event['progress'] }}%; background-color: {{ $event['backgroundColor'][0] }}">
+                style="width: {{ $event['progress'] }}%; background-color: {{ $event['backgroundColor'] }}">
             </div>
         </div>
     @endif
