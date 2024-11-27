@@ -11,28 +11,31 @@ use Omnia\LivewireCalendar\LivewireCalendar;
 
 class ScheduleCalendar extends LivewireCalendar
 {
-    public $schedule = null;
-
-    public $title;
-
-    public $start_time;
-
-    public $end_time;
-
-    public $selectedDate;
-
-    public $department;
-
-    public $description;
-
-    public $status;
-
-    public $departments;
 
 
     protected $listeners = [
-        'handle-schedule-update' => 'handleScheduleUpdate'
+        'open-create-modal' => 'openCreateModal',
+        'handle-schedule-update' => 'loadSchedule'
     ];
+
+    public $search = '';
+    protected $queryString = ['search'];
+
+    public $activeFilter = 'all'; // Add this property
+
+    // Add this method to handle search updates
+    public function updated($field)
+    {
+        if ($field === 'search') {
+            $this->dispatch('refresh-calendar');
+        }
+    }
+
+    // Add method to clear search
+    public function clearSearch()
+    {
+        $this->reset('search');
+    }
 
     public function onEventDropped($eventId, $year, $month, $day)
     {
@@ -43,9 +46,18 @@ class ScheduleCalendar extends LivewireCalendar
 
     }
 
-    public function setStartTime($startTime){
+    public function setFilter($filter)
+    {
+        $this->activeFilter = $filter;
+    }
+
+    public function setStartTime($startTime)
+    {
         $this->start_time = $startTime;
     }
+
+
+
 
     public function onEventClick($eventId)
     {
@@ -55,70 +67,17 @@ class ScheduleCalendar extends LivewireCalendar
             $this->dispatch('schedule-selected', [
                 'id' => $this->schedule->id,
                 'title' => $this->schedule->title,
-                'start_time' => $this->schedule->start_time?->format('H:i'),
-                'end_time' => $this->schedule->end_time?->format('H:i'),
+                'start_time' => $this->schedule->start_time->format('H:i'),
+                'end_time' => $this->schedule->end_time->format('H:i'),
                 'status' => $this->schedule->status,
                 'date' => $this->schedule->date->format('Y-m-d'),
                 'description' => $this->schedule->note,
                 'department' => $this->schedule->department?->name ?? 'All Departments',
-                'departments' => $this->departments // Pass all departments to the frontend
+                'departments' => Department::all(),
             ]);
-            
         }
     }
 
-    public function update()
-    {
-        $schedule = ScheduleException::findOrFail($this->schedule[0]['id']);
-
-        $department = Department::where('name', $this->department)->first();
-        if ($department) {
-            $departmentId = $department->id;
-        } else {
-            $departmentId = null; // Handle the case when the department is not found
-        }
-
-        @dd($this->title);
-        try {
-            $schedule->update([
-                'title' => $this->title,
-                'date' => $this->selectedDate,
-                'start_time' => $this->start_time,
-                'end_time' => $this->end_time,
-                'department_id' => $departmentId,
-                'status' => $this->status,
-                'description' => $this->description,
-            ]);
-        
-            // Reset the properties to null
-            $this->title = null;
-            $this->selectedDate = null;
-            $this->start_time = null;
-            $this->end_time = null;
-            $this->department = null; // Assuming department is the name, not ID
-            $this->status = null;
-            $this->description = null;
-        
-            notify()->success('Data berhasil diubah!', 'Sukses');
-            return redirect()->route('admin.schedules.dashboard');
-        } catch (\Exception $e) {
-            notify()->error('Terjadi kesalahan saat menambahkan data.' . $e, 'Error');
-            return redirect()->back()->withErrors($e->getMessage());
-        }
-        
-        
-    }
-
-
-
-    public function handleScheduleUpdate($data)
-    {
-        // Note: $data will now include the event.detail inside a 'data' key
-
-        $this->schedule = $data;
-
-
-    }
 
     public function nextMonth()
     {
@@ -133,20 +92,57 @@ class ScheduleCalendar extends LivewireCalendar
     public function events(): Collection
     {
         return ScheduleException::query()
+            ->when($this->search, function ($query) {
+                return $query->where('title', 'like', '%' . $this->search . '%');
+            })
+            ->when($this->activeFilter !== 'all', function ($query) {
+                $today = Carbon::today();
+
+                return match ($this->activeFilter) {
+                    'completed' => $query->where('date', '<', $today),
+                    'today' => $query->whereDate('date', $today),
+                    'upcoming' => $query->where('date', '>', $today),
+                    default => $query
+                };
+            })
+            ->whereBetween('date', [
+                $this->gridStartsAt->format('Y-m-d'),
+                $this->gridEndsAt->format('Y-m-d')
+            ])
             ->get()
-            ->map(function (ScheduleException $model) {
+            ->map(function ($event) {
+                $today = Carbon::today();
+                $eventDate = Carbon::parse($event->date);
+
+                $dateStatus = 'upcoming';
+                if ($eventDate->isPast()) {
+                    $dateStatus = 'completed';
+                } elseif ($eventDate->isToday()) {
+                    $dateStatus = 'today';
+                }
+
+                $backgroundColor = match ($dateStatus) {
+                    'completed' => '#6B7280',
+                    'today' => '#059669',
+                    'upcoming' => '#3B82F6',
+                    default => '#6B7280'
+                };
+
                 return [
-                    'id' => $model->id,
-                    'title' => $model->title,
-                    'description' => $model->note ?? 'No description',
-                    'status' => $model->status,
-                    'date' => $model->date,
-                    'backgroundColor' => $this->getStatusColor($model->status),
-                    'start_time' => $model->start_time,
-                    'end_time' => $model->end_time,
+                    'id' => $event->id,
+                    'title' => $event->title,
+                    'date' => $event->date,
+                    'status' => $event->status,
+                    'date_status' => $dateStatus,
+                    'description' => $event->note,
+                    'start_time' => $event->start_time,
+                    'end_time' => $event->end_time,
+                    'department' => $event->department?->name,
+                    'backgroundColor' => $backgroundColor,
+                    'textColor' => '#FFFFFF',
+                    'borderColor' => $backgroundColor,
                 ];
             });
-
     }
 
     private function adjustBrightness($hex, $steps)
@@ -179,6 +175,9 @@ class ScheduleCalendar extends LivewireCalendar
             ],
         };
     }
+
+    // Optional: Add a method to clear search
+
 
 
 }
