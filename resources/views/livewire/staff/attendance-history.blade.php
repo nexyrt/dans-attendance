@@ -1,50 +1,45 @@
 <div>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div class="p-6 border-b border-gray-100">
-            <div class="flex justify-between items-center space-x-3">
-                {{-- Judul Table --}}
-                <div class="flex items-center gap-x-3">
-                    <div class="p-2 bg-indigo-50 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="size-5 text-indigo-500">
-                            <path stroke-linecap="round" stroke-linejoin="round"
+    <div class="bg-white rounded-xl shadow-sm">
+        {{-- Header Section --}}
+        <div class="p-6 border-b">
+            {{-- Title and Filter Container --}}
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                {{-- Left Side: Title --}}
+                <div class="flex items-center space-x-4">
+                    <div class="p-2 bg-[#1D4ED8] rounded-xl">
+                        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                         </svg>
                     </div>
                     <div>
-                        <h2 class="font-medium text-gray-900">Attendance History</h2>
+                        <h2 class="text-lg font-semibold text-gray-900">Attendance History</h2>
                         <p class="text-sm text-gray-500">Your attendance records</p>
                     </div>
                 </div>
-                {{-- Judul Table --}}
 
-                {{-- Filter Table --}}
-                <div class="flex items-center gap-x-3">
+                {{-- Right Side: Filters --}}
+                <div class="flex flex-wrap items-center gap-3">
                     {{-- Date Range Filter --}}
                     <div x-data="{ isOpen: false }" class="relative">
-                        {{-- Trigger Button --}}
-                        <button @click="isOpen = ! isOpen" type="button"
-                            class="flex items-center gap-x-2 px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500">
-                                <path stroke-linecap="round" stroke-linejoin="round"
+                        <button @click="isOpen = !isOpen"
+                            class="flex items-center gap-x-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1D4ED8]">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
                             </svg>
-                            <span>
-                                {{ Carbon\Carbon::parse($startDate)->format('M d, Y') }} -
-                                {{ Carbon\Carbon::parse($endDate)->format('M d, Y') }}
-                            </span>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500"
-                                :class="{ 'rotate-180 transform': isOpen }">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                            {{ Carbon\Carbon::parse($startDate)->format('M d, Y') }} -
+                            {{ Carbon\Carbon::parse($endDate)->format('M d, Y') }}
+                            <svg class="w-4 h-4 text-gray-400" :class="{ 'rotate-180': isOpen }" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                             </svg>
                         </button>
 
-                        {{-- Dropdown Panel --}}
+                        {{-- Dropdown Panel (Keep existing content) --}}
                         <div x-show="isOpen" @click.outside="isOpen = false"
-                            class="absolute right-0 z-10 mt-2 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 overflow-hidden"
-                            style="display: none; width: 600px;">
+                            class="absolute right-0 z-10 mt-2 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 overflow-hidden min-w-[320px] sm:w-[600px]">
                             <div class="p-4">
                                 <div class="flex items-center justify-between space-x-4">
                                     {{-- Start Date --}}
@@ -122,66 +117,98 @@
                         :isLivewire="true" />
 
                     {{-- Reset Button --}}
-                    <button wire:click="resetFilters" type="button"
-                        class="inline-flex items-center gap-x-1.5 px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="w-4 h-4">
-                            <path stroke-linecap="round" stroke-linejoin="round"
+                    <button wire:click="resetFilters"
+                        class="inline-flex items-center gap-x-1.5 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                         </svg>
                         Reset
                     </button>
                 </div>
-
             </div>
         </div>
 
-        <x-table.container>
-            <table class="w-full text-sm text-left">
-                <x-table.thead>
+        {{-- Table Section --}}
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-y border-gray-200">
                     <tr>
-                        <x-table.th>Date</x-table.th>
-                        <x-table.th>Check In</x-table.th>
-                        <x-table.th>Check Out</x-table.th>
-                        <x-table.th>Status</x-table.th>
-                        <x-table.th>Working Hours</x-table.th>
+                        <th class="px-6 py-4 text-sm font-medium text-gray-500">Date</th>
+                        <th class="px-6 py-4 text-sm font-medium text-gray-500">Check In</th>
+                        <th class="px-6 py-4 text-sm font-medium text-gray-500">Check Out</th>
+                        <th class="px-6 py-4 text-sm font-medium text-gray-500">Status</th>
+                        <th class="px-6 py-4 text-sm font-medium text-gray-500">Working Hours</th>
                     </tr>
-                </x-table.thead>
-                <tbody>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
                     @forelse($attendances as $attendance)
-                        <x-table.tr>
-                            <x-table.td>
-                                {{ $attendance->date->format('d M Y') }}
-                            </x-table.td>
-                            <x-table.td>
-                                {{ $attendance->check_in?->format('H:i') ?? '--:--' }}
-                            </x-table.td>
-                            <x-table.td>
-                                {{ $attendance->check_out?->format('H:i') ?? '--:--' }}
-                            </x-table.td>
-                            <x-table.td>
+                        <tr class="hover:bg-gray-50/50">
+                            <td class="px-6 py-4 text-sm text-gray-600">
+                                <span class="font-medium">{{ $attendance->date->format('d M Y') }}</span>
+                                <span class="block text-xs text-gray-500">{{ $attendance->date->format('l') }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div @class([
+                                        'w-2 h-2 rounded-full mr-2',
+                                        'bg-green-400' => $attendance->status === 'present',
+                                        'bg-red-400' => $attendance->status === 'late',
+                                        'bg-yellow-400' => $attendance->status === 'early_leave',
+                                    ])></div>
+                                    <span class="text-sm font-medium text-gray-900">
+                                        {{ $attendance->check_in?->format('H:i') ?? '--:--' }}
+                                        <span
+                                            class="text-xs text-gray-500">{{ $attendance->check_in?->format('A') ?? '' }}</span>
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-sm font-medium text-gray-900">
+                                    {{ $attendance->check_out?->format('H:i') ?? '--:--' }}
+                                    <span
+                                        class="text-xs text-gray-500">{{ $attendance->check_out?->format('A') ?? '' }}</span>
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
                                 <span @class([
-                                    'px-2.5 py-1 text-xs font-medium rounded-full',
-                                    'bg-green-100 text-green-800' => $attendance->status === 'present',
-                                    'bg-red-100 text-red-800' => $attendance->status === 'late',
-                                    'bg-yellow-100 text-yellow-800' => $attendance->status === 'early_leave',
+                                    'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
+                                    'bg-green-50 text-green-700' => $attendance->status === 'present',
+                                    'bg-red-50 text-red-700' => $attendance->status === 'late',
+                                    'bg-yellow-50 text-yellow-700' => $attendance->status === 'early_leave',
                                 ])>
+                                    <span @class([
+                                        'w-1 h-1 mr-1.5 rounded-full',
+                                        'bg-green-400' => $attendance->status === 'present',
+                                        'bg-red-400' => $attendance->status === 'late',
+                                        'bg-yellow-400' => $attendance->status === 'early_leave',
+                                    ])></span>
                                     {{ ucfirst($attendance->status) }}
                                 </span>
-                            </x-table.td>
-                            <x-table.td>
-                                {{ $attendance->working_hours ?? '--' }} Hours
-                            </x-table.td>
-                        </x-table.tr>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-sm font-medium text-gray-900">
+                                    {{ $attendance->working_hours ?? '--' }}
+                                    <span class="text-xs text-gray-500">Hours</span>
+                                </span>
+                            </td>
+                        </tr>
                     @empty
-                        <x-table.tr>
-                            <x-table.td colspan="5" class="text-center text-gray-500">
-                                No attendance records found
-                            </x-table.td>
-                        </x-table.tr>
+                        <tr>
+                            <td colspan="5" class="px-6 py-8 text-sm text-center text-gray-500">
+                                <div class="flex flex-col items-center justify-center">
+                                    <svg class="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span class="font-medium">No attendance records found</span>
+                                    <p class="text-gray-400 mt-1">Try adjusting your search filters</p>
+                                </div>
+                            </td>
+                        </tr>
                     @endforelse
                 </tbody>
             </table>
-        </x-table.container>
+        </div>
     </div>
 </div>

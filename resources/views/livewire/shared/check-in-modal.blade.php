@@ -22,17 +22,11 @@
         <div x-show="show" x-cloak class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-[99]"
             x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
-            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-            style="position: fixed; top: 0; right: 0; bottom: 0; left: 0;">
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         </div>
 
         {{-- Modal Panel --}}
-        <div x-show="show" x-cloak class="fixed inset-0 z-[100] overflow-y-auto"
-            x-transition:enter="ease-out duration-300"
-            x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200"
-            x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-            x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+        <div x-show="show" x-cloak class="fixed inset-0 z-[100] overflow-y-auto">
             <div class="flex min-h-screen items-center justify-center p-4">
                 <div
                     class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
@@ -51,7 +45,29 @@
                             </h3>
                             <div class="mt-2">
                                 <p class="text-sm text-gray-500">
-                                    Silakan check-in untuk memulai hari kerja Anda.
+                                    @if ($schedule)
+                                        @php
+                                            $startTime = \Carbon\Carbon::parse($schedule->start_time)->format('H:i');
+                                            $currentTime = \Carbon\Carbon::now();
+                                            $toleranceTime = \Carbon\Carbon::parse($schedule->start_time)
+                                                ->addMinutes($schedule->late_tolerance)
+                                                ->format('H:i');
+                                        @endphp
+
+                                        @if ($currentTime->gt(\Carbon\Carbon::parse($schedule->start_time)->addMinutes($schedule->late_tolerance)))
+                                            <span class="text-red-500">
+                                                Anda terlambat. Check-in setelah {{ $toleranceTime }} akan dihitung
+                                                sebagai keterlambatan.
+                                            </span>
+                                        @else
+                                            <span>
+                                                Silakan check-in. Batas waktu check-in tanpa keterlambatan adalah
+                                                {{ $toleranceTime }}.
+                                            </span>
+                                        @endif
+                                    @else
+                                        Silakan check-in untuk memulai hari kerja Anda.
+                                    @endif
                                 </p>
                             </div>
                         </div>
@@ -61,7 +77,7 @@
                             <button type="button" wire:click="checkIn" wire:loading.attr="disabled"
                                 class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50">
                                 <span wire:loading.remove>Check In Sekarang</span>
-                                <span wire:loading>
+                                <span wire:loading class="flex items-center justify-center">
                                     <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10"
@@ -77,9 +93,7 @@
                     </div>
 
                     {{-- Success State --}}
-                    <div x-show="isSuccess" x-transition:enter="transform ease-out duration-300 transition"
-                        x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
-                        x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0">
+                    <div x-show="isSuccess">
                         <div class="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-green-100">
                             <svg class="h-16 w-16 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor">

@@ -116,14 +116,19 @@ class CheckOutModal extends Component
             }
 
             $currentTime = Carbon::now();
-            $status = $this->showEarlyLeaveForm ? 'early_leave' : 'present';
-
-            $this->attendance->update([
+            $updateData = [
                 'check_out' => $currentTime,
                 'working_hours' => $this->workingHours,
-                'status' => $status,
-                'early_leave_reason' => $this->showEarlyLeaveForm ? $this->earlyLeaveReason : null
-            ]);
+            ];
+
+            // Only update status if it's an early leave
+            if ($this->showEarlyLeaveForm) {
+                $updateData['status'] = 'early_leave';
+                $updateData['early_leave_reason'] = $this->earlyLeaveReason;
+            }
+
+            // Update attendance record
+            $this->attendance->update($updateData);
 
             $this->isSuccess = true;
             $this->dispatch('notify', [
