@@ -18,10 +18,10 @@
 
         {{-- Styles --}}
         <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
         @notifyCss
         @livewireStyles
         @vite(['resources/css/app.css', 'resources/js/app.js'])
-        <script src="//unpkg.com/alpinejs" defer></script>
 
         <style>
             [x-cloak] {
@@ -34,19 +34,13 @@
         {{-- Background Gradient --}}
         <div class="absolute inset-0 bg-blue-500" style="height: 45%; z-index: -1;"></div>
 
-        <div class="flex h-full">
+        <div class="flex h-full" x-data="{ sidebarOpen: false }">
             {{-- Sidebar --}}
-            <div x-data="{ open: false }" x-cloak @toggle-sidebar.window="open = !open"
-                @resize.window="open = window.innerWidth >= 1024"
-                :class="{ 'translate-x-0': open, '-translate-x-[500px]': !open }"
-                class="fixed top-4 bottom-4 left-6 w-72 bg-white text-gray-800 shadow-lg rounded-lg z-10 transition-transform duration-300 lg:translate-x-0">
-                {{-- Mobile Overlay --}}
-                <div x-show="open" x-transition.opacity @click="open = false"
-                    class="fixed inset-0 bg-opacity-50 z-0 lg:hidden">
-                </div>
+            <div x-cloak :class="{ 'translate-x-0': sidebarOpen, '-translate-x-[350px]': !sidebarOpen }"
+                class="fixed top-4 bottom-4 left-6 w-72 bg-white text-gray-800 shadow-lg rounded-lg z-20 transition-transform duration-300 lg:translate-x-0">
 
-                {{-- Sidebar Content --}}
-                <div class="relative z-10">
+                {{-- Mobile Overlay --}}
+                <div class="relative h-full flex flex-col">
                     {{-- Sidebar Header --}}
                     <div class="p-6 flex justify-center items-center">
                         <div class="flex items-center">
@@ -55,8 +49,7 @@
                             <h1 class="text-2xl font-semibold">DANS</h1>
                         </div>
 
-                        {{-- Mobile Close Button --}}
-                        <button @click="open = false" class="lg:hidden p-2 hover:bg-gray-100 rounded-lg">
+                        <button @click="sidebarOpen = false" class="lg:hidden p-2 hover:bg-gray-100 rounded-lg">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M6 18L18 6M6 6l12 12" />
@@ -66,7 +59,7 @@
 
                     <hr class="h-px mt-0 bg-transparent bg-gradient-to-r from-transparent via-black/40 to-transparent">
 
-                    {{-- Sidebar Navigation --}}
+                    {{-- Navigation Content --}}
                     <div
                         class="h-full overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300">
                         <nav class="hs-accordion-group p-3 px-5 w-full flex flex-col flex-wrap"
@@ -118,10 +111,20 @@
                                         Users
                                     </a>
                                 </li>
-
-                                {{-- Sisanya sama seperti sebelumnya, hanya dirapikan indentasinya --}}
                             </ul>
                         </nav>
+                    </div>
+
+                    {{-- Check-Out --}}
+                    <div class="mt-auto w-full p-4 border-t border-gray-200 bg-white">
+                        <button type="button" @click="$dispatch('open-modal', 'modal-name')"
+                            class="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            Check Out
+                        </button>
                     </div>
                 </div>
             </div>
@@ -129,9 +132,8 @@
             <!-- Main Content -->
             <div class="flex-1 lg:ml-80 relative overflow-y-auto p-4">
                 <div class="flex justify-between items-center my-3">
-                    {{-- Breadcrumbs --}}
-                    <!-- Hamburger Button for Mobile -->
-                    <button x-data @click="$dispatch('toggle-sidebar')"
+                    {{-- Hamburger Button --}}
+                    <button @click="sidebarOpen = !sidebarOpen"
                         class="block lg:hidden p-2 rounded-lg bg-white shadow-lg">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -139,6 +141,7 @@
                         </svg>
                     </button>
 
+                    {{-- Breadcrumbs --}}
                     <nav class="lg:flex text-white hidden" aria-label="Breadcrumb">
                         <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
                             <li class="inline-flex items-center">
@@ -176,24 +179,23 @@
                         </ol>
                     </nav>
 
-                    {{-- Profile --}}
+                    {{-- Profile Dropdown --}}
                     <div class="hs-dropdown [--placement:bottom-right] relative inline-flex">
                         <button id="hs-dropdown-account" type="button"
-                            class="size-[38px] inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-full border border-transparent text-gray-800 focus:outline-none disabled:opacity-50 disabled:pointer-events-none dark:text-white"
-                            aria-haspopup="menu" aria-expanded="false" aria-label="Dropdown">
+                            class="size-[38px] inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-full border border-transparent text-gray-800 focus:outline-none disabled:opacity-50 disabled:pointer-events-none dark:text-white">
                             <img class="shrink-0 size-[38px] rounded-full"
                                 src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=facearea&facepad=2&w=320&h=320&q=80"
                                 alt="Avatar">
                         </button>
 
-                        <div class="hs-dropdown-menu transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 hidden min-w-60 bg-white shadow-md rounded-lg mt-2 dark:bg-neutral-800 dark:border dark:border-neutral-700 dark:divide-neutral-700 after:h-4 after:absolute after:-bottom-4 after:start-0 after:w-full before:h-4 before:absolute before:-top-4 before:start-0 before:w-full"
-                            role="menu" aria-orientation="vertical" aria-labelledby="hs-dropdown-account">
+                        <div
+                            class="hs-dropdown-menu transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 hidden min-w-60 bg-white shadow-md rounded-lg mt-2 dark:bg-neutral-800 dark:border dark:border-neutral-700 dark:divide-neutral-700 after:h-4 after:absolute after:-bottom-4 after:start-0 after:w-full before:h-4 before:absolute before:-top-4 before:start-0 before:w-full">
                             <div class="py-3 px-5 bg-gray-100 rounded-t-lg dark:bg-neutral-700">
                                 <p class="text-sm text-gray-500 dark:text-neutral-500">Signed in as</p>
                                 <p class="text-sm font-medium text-gray-800 dark:text-neutral-200">james@site.com</p>
                             </div>
                             <div class="p-1.5 space-y-0.5">
-                                <a class="flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-300 dark:focus:bg-neutral-700 dark:focus:text-neutral-300"
+                                <a class="flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-800 hover:bg-gray-100 focus:outline-none focus:bggray-100 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-300 dark:focus:bg-neutral-700 dark:focus:text-neutral-300"
                                     href="#">
                                     <svg class="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24"
                                         height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -244,34 +246,43 @@
                 </div>
 
                 {{ $slot }}
-
-
             </div>
+        </div>
 
-            {{-- Modals & Notifications --}}
-            <livewire:shared.check-in-modal />
+        {{-- Modals & Notifications --}}
+        <livewire:shared.check-in-modal />
+        <livewire:shared.check-out-modal />
 
-            {{-- Scripts --}}
-            <x-notify::notify />
-            @notifyJs
-            @livewireScripts
-            <script src="//unpkg.com/alpinejs" defer></script>
-            <script src="./node_modules/preline/dist/preline.js"></script>
+        {{-- Scripts --}}
+        <x-notify::notify />
+        @notifyJs
+        @livewireScripts
+        <script src="./node_modules/preline/dist/preline.js"></script>
 
-            {{-- Custom Scripts --}}
-            <script>
-                document.addEventListener('livewire:initialized', () => {
-                    Livewire.on('success-checkin', () => {
-                        setTimeout(() => {
-                            Livewire.dispatch('closeModal');
-                        }, 1500);
-                    });
-
-                    Livewire.on('error-checkin', () => {
-                        Livewire.dispatch('closeModal');
-                    });
+        <script>
+            window.addEventListener('alpine:init', () => {
+                Alpine.store('app', {
+                    isSidebarOpen: window.innerWidth >= 1024,
+                    toggleSidebar() {
+                        this.isSidebarOpen = !this.isSidebarOpen;
+                    }
                 });
-            </script>
+            });
+
+            document.addEventListener('livewire:initialized', () => {
+                Livewire.on('success-checkin', () => {
+                    setTimeout(() => {
+                        Livewire.dispatch('closeModal');
+                    }, 1500);
+                });
+
+                Livewire.on('success-checkout', () => {
+                    setTimeout(() => {
+                        Livewire.dispatch('closeModal');
+                    }, 1500);
+                });
+            });
+        </script>
     </body>
 
 </html>

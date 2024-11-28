@@ -24,35 +24,36 @@ class CheckInModal extends Component
 
     public function checkAttendance()
     {
-        // Reset modal state
         $this->showModal = false;
 
         try {
-            // Cek apakah hari ini libur
             if ($this->isHoliday()) {
                 return;
             }
 
-            // Cek apakah sudah check-in hari ini
             if ($this->hasCheckedInToday()) {
                 return;
             }
 
-            // Get current schedule
             $today = strtolower(Carbon::now()->format('l'));
             $this->schedule = Schedule::where('day_of_week', $today)->first();
 
-            if ($this->schedule) {
-                $currentTime = Carbon::now();
-                $startTime = Carbon::parse($this->schedule->start_time);
-
-                // Show modal if it's time to check-in
-                if ($currentTime->gte($startTime)) {
-                    $this->showModal = true;
-                }
+            if (!$this->schedule) {
+                return;
             }
-        } catch (\Exception $e) {
-            // Log error jika diperlukan
+
+            $currentTime = Carbon::now();
+            $startTime = Carbon::parse($this->schedule->start_time);
+            $endTime = Carbon::parse($this->schedule->end_time);
+
+            // Show modal only if current time is between start time and end time
+            if ($currentTime->between(
+                $startTime->copy()->subMinutes($this->schedule->late_tolerance),
+                $endTime
+            )) {
+                $this->showModal = true;
+            }
+        } catch (Exception $e) {
             Log::error('Error in checkAttendance: ' . $e->getMessage());
         }
     }
@@ -73,17 +74,29 @@ class CheckInModal extends Component
     public function checkIn()
     {
         try {
-            $now = Carbon::now();
-            $startTime = Carbon::parse($this->schedule->start_time);
-            $toleranceLimit = $startTime->copy()->addMinutes($this->schedule->late_tolerance);
-
-            // Tentukan status
-            $status = 'present';
-            if ($now->gt($toleranceLimit)) {
-                $status = 'late';
+            if (!$this->schedule) {
+                throw new Exception('No schedule found for today.');
             }
 
-            // Buat record attendance
+            $now = Carbon::now();
+            $startTime = Carbon::parse($this->schedule->start_time);
+            $endTime = Carbon::parse($this->schedule->end_time);
+
+            // Prevent check-in after working hours
+            if ($now->gt($endTime)) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'Check-in is not allowed after working hours.'
+                ]);
+                $this->closeModal();
+                return;
+            }
+
+            $toleranceLimit = $startTime->copy()->addMinutes($this->schedule->late_tolerance);
+
+            // Determine status based on tolerance limit
+            $status = $now->gt($toleranceLimit) ? 'late' : 'present';
+
             Attendance::create([
                 'user_id' => auth()->id(),
                 'date' => $now->toDateString(),
@@ -91,7 +104,6 @@ class CheckInModal extends Component
                 'status' => $status,
             ]);
 
-            // Dispatch event untuk menampilkan success state
             $this->dispatch('success-checkin');
         } catch (Exception $e) {
             Log::error('Error during check-in process', [
