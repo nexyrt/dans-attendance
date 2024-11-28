@@ -11,8 +11,7 @@ use Omnia\LivewireCalendar\LivewireCalendar;
 
 class ScheduleCalendar extends LivewireCalendar
 {
-
-
+    public $schedule;
     protected $listeners = [
         'open-create-modal' => 'openCreateModal',
         'handle-schedule-update' => 'loadSchedule'
@@ -55,8 +54,6 @@ class ScheduleCalendar extends LivewireCalendar
     {
         $this->start_time = $startTime;
     }
-
-
 
 
     public function onEventClick($eventId)

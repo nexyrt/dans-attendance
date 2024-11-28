@@ -9,7 +9,6 @@
             this.showModal = true;
         },
         handleCreate() {
-            this.schedule = null;
             Livewire.dispatch('open-create-modal');
             this.showModal = true;
         }

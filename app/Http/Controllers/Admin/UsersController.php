@@ -63,12 +63,15 @@ class UsersController extends Controller
         }
     }
 
-    public function update(Request $request, User $user)
+    public function update(Request $request, $id)  // Changed from User $user to $id
     {
         try {
+            // Find the user first
+            $user = User::findOrFail($id);
+
             $data = $request->validate([
                 'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+                'email' => 'required|string|email|max:255|unique:users,email,' . $id, // Changed from $user->id to $id
                 'password' => 'nullable|string|min:8',
                 'role' => 'required|string',
                 'department_id' => 'required|string',
@@ -80,8 +83,10 @@ class UsersController extends Controller
                 'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048'
             ]);
 
+
+
             if ($request->hasFile('image')) {
-                $data['image'] = $request->file('image')->store('images', 'public');
+                $data['image'] = $request->file('image')->store('images/users', 'public');
             }
 
             if (!empty($data['password'])) {
@@ -92,13 +97,11 @@ class UsersController extends Controller
 
             $user->update($data);
             notify()->success('Data berhasil diubah!', 'Sukses');
-            return redirect()->route('admin.users')->with('success', 'User updated successfully.');
+            return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
         } catch (\Exception $e) {
             notify()->error('Terjadi kesalahan saat memperbaharui data.' . $e, 'Error');
             return redirect()->back()->withErrors($e->getMessage());
         }
-
-
     }
 
     public function destroy(User $user)
@@ -114,7 +117,7 @@ class UsersController extends Controller
             $user->delete();
             notify()->success('Pengguna berhasil dihapus!', 'Sukses');
             return redirect()->route('admin.users')->with('success', 'Karyawan berhasil dihapus.');
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             notify()->error('Terjadi kesalahan saat memperbaharui data.' . $e, 'Error');
             return redirect()->back()->withErrors($e->getMessage());
         }
