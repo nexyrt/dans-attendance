@@ -5,11 +5,12 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
+use App\Livewire\Admin\Users\UserDetail;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Admin\UsersController;
-use App\Http\Controllers\Admin\ScheduleController;
 use App\Livewire\Admin\Schedules\ScheduleTable;
+use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
@@ -34,6 +35,8 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
             $name = $request->input('name');
             return Excel::download(new UsersExport($department, $position, $name), 'users.xlsx');
         })->name('export');
+
+        Route::get('/{user}/detail', UserDetail::class)->name('detail');
     });
 
     //Schedules

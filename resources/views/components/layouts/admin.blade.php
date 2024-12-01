@@ -17,7 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
     @notifyCss
-    @livewireStyles
+
 
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -263,13 +263,13 @@
         </div>
     </div>
 
-    <livewire:shared.check-in-modal />
+    {{-- <livewire:shared.check-in-modal /> --}}
 
     <x-notify::notify />
-    @notifyJs
+    {{-- @notifyJs --}}
     @livewireScripts
     @livewireCalendarScripts
-    <script>
+    {{-- <script>
         document.addEventListener('livewire:initialized', () => {
             Livewire.on('success-checkin', () => {
                 setTimeout(() => {
@@ -281,7 +281,7 @@
                 Livewire.dispatch('closeModal');
             });
         });
-    </script>
+    </script> --}}
 </body>
 
 </html>
