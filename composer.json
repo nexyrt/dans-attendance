@@ -15,7 +15,9 @@
         "livewire/livewire": "^3.4",
         "maatwebsite/excel": "^3.1",
         "mckenziearts/laravel-notify": "^2.4",
-        "omnia-digital/livewire-calendar": "^3.1"
+        "nesbot/carbon": "^2.67.0",
+        "omnia-digital/livewire-calendar": "^3.1",
+        "cakephp/chronos": "^2.3"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
