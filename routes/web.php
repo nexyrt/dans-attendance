@@ -14,6 +14,8 @@ use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
+use App\Livewire\Admin\Attendances\AttendanceRecord;
+use App\Models\Attendance;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/kanban', App\Livewire\KanbanBoard::class)->name('kanban');
@@ -43,6 +45,10 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
     Route::prefix('schedules')->name('schedules.')->group(function () {
         Route::get('/dashboard', [ScheduleController::class, 'index'])->name('dashboard');
         Route::get('/default-schedules', [ScheduleController::class, 'shift'])->name('default-schedules');
+    });
+
+    Route::prefix('attendances')->name('attendances.')->group(function () {
+        Route::get('/dashboard', AttendanceRecord::class)->name('index');
     });
 
     // Future Routes
