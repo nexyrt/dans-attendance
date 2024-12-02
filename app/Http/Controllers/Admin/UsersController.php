@@ -17,9 +17,9 @@ class UsersController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
-            'role' => 'required|string|in:Admin,Manajer,Staff',
+            'role' => 'required|string|in:manajer,admin,staff',
             'department' => 'required|string',
-            'position' => 'required|string|in:Direktur,Manager,Staff,Supervisi',
+            'position' => 'required|string|in:direktur,manager,staff',
             'phone_number' => 'nullable|string|max:255',
             'birthdate' => 'nullable|date',
             'address' => 'nullable|string',
@@ -56,9 +56,10 @@ class UsersController extends Controller
             $user->save();
 
             notify()->success('Data berhasil ditambahkan!', 'Sukses');
-            return redirect()->route('admin.users');
+            return redirect()->route('admin.users.index');
         } catch (\Exception $e) {
             notify()->error('Terjadi kesalahan saat menambahkan data.' . $e, 'Error');
+            @dd($e->getMessage());
             return redirect()->back()->withErrors($e->getMessage());
         }
     }
@@ -104,8 +105,10 @@ class UsersController extends Controller
         }
     }
 
-    public function destroy(User $user)
+    public function destroy($id)
     {
+        $user = User::findOrFail($id);
+
         try {
             // Hapus attendance records yang berhubungan
             $user->attendance()->delete();
@@ -116,9 +119,10 @@ class UsersController extends Controller
 
             $user->delete();
             notify()->success('Pengguna berhasil dihapus!', 'Sukses');
-            return redirect()->route('admin.users')->with('success', 'Karyawan berhasil dihapus.');
+            return redirect()->route('admin.users.index')->with('success', 'Karyawan berhasil dihapus.');
         } catch (\Exception $e) {
             notify()->error('Terjadi kesalahan saat memperbaharui data.' . $e, 'Error');
+            @dd($e->getMessage());
             return redirect()->back()->withErrors($e->getMessage());
         }
 

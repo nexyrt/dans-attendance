@@ -29,6 +29,59 @@ class UserTable extends Component
     public $sortField = 'name';
     public $sortDirection = 'asc';
 
+    public $search = '';
+    public $selectedDepartments = [];
+    public $selectedRoles = [];
+    public $departmentFilter = '';
+    public $positionFilter = '';
+
+    public function toggleAllRoles()
+    {
+        if (count($this->selectedRoles) === 3) {
+            $this->selectedRoles = [];
+        } else {
+            $this->selectedRoles = ['admin', 'manager', 'staff'];
+        }
+    }
+
+    public function removeDepartment($deptId)
+    {
+        $this->selectedDepartments = array_filter($this->selectedDepartments, function ($id) use ($deptId) {
+            return $id != $deptId;
+        });
+    }
+
+    public function removeRole($role)
+    {
+        $this->selectedRoles = array_filter($this->selectedRoles, function ($r) use ($role) {
+            return $r !== $role;
+        });
+    }
+
+    public function resetFilters()
+    {
+        $this->search = '';
+        $this->selectedDepartments = [];
+        $this->selectedRoles = [];
+    }
+
+
+    public function updatedSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedDepartmentFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPositionFilter()
+    {
+        $this->resetPage();
+    }
+
+
     protected $listeners = ['openEditModal' => '$refresh'];
 
     protected $queryString = [
@@ -51,63 +104,24 @@ class UserTable extends Component
     }
 
 
-    public function openEditModal($userId)
-    {
-        $this->editModal = true;
-        $user = User::find($userId);
-
-        // Set form fields with existing user data
-        $this->userId = $user->id;
-        $this->name = $user->name;
-        $this->email = $user->email;
-        $this->phone_number = $user->phone_number;
-        $this->birthdate = optional($user->birthdate)->format('Y-m-d');
-        $this->department_id = $user->department_id;
-        $this->position = $user->position;
-        $this->role = $user->role;
-        $this->salary = $user->salary;
-        $this->address = $user->address;
-
-    }
-
-    public function closeModal()
-    {
-        $this->editModal = false;
-        $this->reset([
-            'userId',
-            'name',
-            'email',
-            'phone_number',
-            'birthdate',
-            'department_id',
-            'position',
-            'role',
-            'salary',
-            'address',
-            'image'
-        ]);
-    }
-
- 
-
-
     public function render()
     {
         $query = User::query()
-            ->when(
-                $this->department,
-                fn($q) =>
-                $q->whereHas(
-                    'department',
-                    fn($q) =>
-                    $q->where('name', $this->department)
-                )
-            )
-            ->when(
-                $this->position,
-                fn($q) =>
-                $q->where('position', $this->position)
-            )
+            ->when($this->search, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('name', 'like', '%' . $this->search . '%')
+                        ->orWhere('email', 'like', '%' . $this->search . '%')
+                        ->orWhere('id', 'like', '%' . $this->search . '%');
+                });
+            })
+            ->when(!empty($this->selectedDepartments), function ($query) {
+                $query->whereIn('department_id', $this->selectedDepartments);
+            })
+            ->when(!empty($this->selectedRoles), function ($query) {
+                $query->whereIn('role', $this->selectedRoles);
+            })
+            ->latest()
+
             ->orderBy($this->sortField, $this->sortDirection);
 
         $stats = [

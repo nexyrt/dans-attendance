@@ -10,6 +10,7 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
+<<<<<<< HEAD
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link rel="icon" href="{{ asset('images/dans.png') }}">
@@ -18,6 +19,16 @@
         <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
         @notifyCss
         @livewireStyles
+=======
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link rel="icon" href="{{ asset('images/dans.png') }}">
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+    @notifyCss
+
+>>>>>>> cdead03f82fb4c2bf24182257d62668ff4a2cbfd
 
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -266,6 +277,7 @@
             </div>
         </div>
 
+<<<<<<< HEAD
         <livewire:shared.check-in-modal />
 
         <x-notify::notify />
@@ -281,10 +293,32 @@
                 });
 
                 Livewire.on('error-checkin', () => {
+=======
+    {{-- <livewire:shared.check-in-modal /> --}}
+
+    <x-notify::notify />
+    {{-- @notifyJs --}}
+    @livewireScripts
+    @livewireCalendarScripts
+    {{-- <script>
+        document.addEventListener('livewire:initialized', () => {
+            Livewire.on('success-checkin', () => {
+                setTimeout(() => {
+>>>>>>> cdead03f82fb4c2bf24182257d62668ff4a2cbfd
                     Livewire.dispatch('closeModal');
                 });
             });
+<<<<<<< HEAD
         </script>
     </body>
+=======
+
+            Livewire.on('error-checkin', () => {
+                Livewire.dispatch('closeModal');
+            });
+        });
+    </script> --}}
+</body>
+>>>>>>> cdead03f82fb4c2bf24182257d62668ff4a2cbfd
 
 </html>

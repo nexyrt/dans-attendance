@@ -4,6 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
+[x-cloak] { 
+    display: none !important; 
+}
 
 body {
     font-family: 'Poppins', sans-serif;
