@@ -1,5 +1,5 @@
 <x-layouts.admin>
-    <livewire:admin.user-table />
+    <livewire:admin.users.user-table />
 
     <!-- Custom CSS to remove arrows from input[type=number] -->
     <style>

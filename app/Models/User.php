@@ -17,13 +17,13 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'department',
-        'image',
+        'department_id',
         'position',
         'salary',
         'address',
         'phone_number',
         'birthdate',
+        'image',
     ];
 
     protected $hidden = [
@@ -39,6 +39,11 @@ class User extends Authenticatable
     public function attendance()
     {
         return $this->hasMany(Attendance::class, 'user_id');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
     }
 
     public function leaveBalances()

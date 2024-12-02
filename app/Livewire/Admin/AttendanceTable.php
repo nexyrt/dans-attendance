@@ -14,6 +14,7 @@ class AttendanceTable extends Component
     public $department = '';
     public $selectedMonth;
 
+
     protected $queryString = ['search', 'department', 'selectedMonth'];
 
     // Tambahkan watchers untuk setiap properti
@@ -31,6 +32,7 @@ class AttendanceTable extends Component
     {
         $this->render();
     }
+    
 
     public function mount()
     {
@@ -60,7 +62,7 @@ class AttendanceTable extends Component
             ],
         ];
     }
-    
+
 
     public function render()
     {
@@ -83,9 +85,11 @@ class AttendanceTable extends Component
             ->latest('date')
             ->get();
 
-        $departments = User::distinct()
-            ->pluck('department')
+        $departments = User::with('department')
+            ->get()
+            ->pluck('department.name')
             ->filter()
+            ->unique()
             ->values();
 
         $availableMonths = collect(range(0, 11))->map(function ($i) {
