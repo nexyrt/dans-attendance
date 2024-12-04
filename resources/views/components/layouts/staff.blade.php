@@ -253,6 +253,8 @@
         <livewire:shared.check-out-modal />
 
         {{-- Scripts --}}
+        <x-notify::notify />
+        {{-- @notifyJs --}}
         @livewireScripts
         <script src="./node_modules/preline/dist/preline.js"></script>
         <script>

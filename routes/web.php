@@ -97,11 +97,6 @@ Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->grou
 });
 
 Route::middleware('auth')->group(function () {
-    Route::post('/check-in', [AttendanceController::class, 'checkIn'])->name('check-in');
-    Route::post('/check-out', [AttendanceController::class, 'checkOut'])->name('check-out');
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });
 

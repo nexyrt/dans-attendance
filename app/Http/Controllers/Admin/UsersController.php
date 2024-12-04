@@ -17,7 +17,7 @@ class UsersController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
-            'role' => 'required|string|in:manajer,admin,staff',
+            'role' => 'required|string|in:manager,admin,staff',
             'department' => 'required|string',
             'position' => 'required|string|in:direktur,manager,staff',
             'phone_number' => 'nullable|string|max:255',
@@ -87,7 +87,14 @@ class UsersController extends Controller
 
 
             if ($request->hasFile('image')) {
-                $data['image'] = $request->file('image')->store('images/users', 'public');
+                $imageName = str_replace(' ', '_', $request->name) . '_' . time() . '.' . $request->file('image')->getClientOriginalExtension();
+                $request->file('image')->move(public_path('images/users'), $imageName);
+                $data['image'] = 'images/users/' . $imageName;  // Use the same path format as in store method
+                
+                // Optional: Delete old image if exists
+                if ($user->image && file_exists(public_path($user->image))) {
+                    unlink(public_path($user->image));
+                }
             }
 
             if (!empty($data['password'])) {
@@ -100,6 +107,7 @@ class UsersController extends Controller
             notify()->success('Data berhasil diubah!', 'Sukses');
             return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
         } catch (\Exception $e) {
+            @dd($e->getMessage());
             notify()->error('Terjadi kesalahan saat memperbaharui data.' . $e, 'Error');
             return redirect()->back()->withErrors($e->getMessage());
         }
