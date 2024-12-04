@@ -254,7 +254,7 @@
                                 <div class="flex items-center space-x-4">
                                     <div class="flex-shrink-0">
                                         <img class="h-12 w-12 rounded-full object-cover ring-2 ring-gray-100"
-                                            src="{{ asset($user->image) }}" alt="{{ $user->name }} image">
+                                            src="{{ asset($user->image) }}" alt="{{ $user->name }}">
                                     </div>
                                     <div>
                                         <div class="text-sm font-semibold text-gray-900">{{ $user->name }}</div>
@@ -479,7 +479,7 @@
                                         <select name="role" required
                                             class="block w-full appearance-none rounded-md border-gray-200 bg-white pl-3 pr-10 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                                             <option value="admin">Admin</option>
-                                            <option value="manajer">Manager</option>
+                                            <option value="manager">Manager</option>
                                             <option value="staff">Staff</option>
                                         </select>
                                         <div
@@ -771,8 +771,8 @@
                                                         SVG,
                                                         PNG, JPG or GIF (MAX. 800x400px)</p>
                                                 </div>
-                                                <input id="dropzone-file-edit" name="image" type="file"
-                                                    class="hidden" accept="image/*" />
+                                                <input id="dropzone-file" name="image" type="file"
+                                                    class="hidden" accept="image/*"/>
                                             </label>
                                         </div>
                                     </div>

@@ -24,7 +24,7 @@
                             </div>
                             @if ($todayAttendance && $todayAttendance->check_in)
                                 <span
-                                    class="px-3 py-1 text-xs font-medium {{ $todayAttendance->status === 'present' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700' }} rounded-full">
+                                    class="px-3 py-1 text-xs font-medium {{ $todayAttendance->status === 'pending present' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700' }} rounded-full">
                                     {{ ucfirst($todayAttendance->status) }}
                                 </span>
                             @else

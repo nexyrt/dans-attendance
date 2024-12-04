@@ -254,7 +254,7 @@
 
         {{-- Scripts --}}
         <x-notify::notify />
-        @notifyJs
+        {{-- @notifyJs --}}
         @livewireScripts
         <script src="./node_modules/preline/dist/preline.js"></script>
 
