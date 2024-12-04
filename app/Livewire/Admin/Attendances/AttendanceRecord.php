@@ -244,6 +244,8 @@ class AttendanceRecord extends Component
         // Get the end date (current time)
         $endDate = Carbon::now();
 
+        // @dd(Attendance::whereBetween('date', [Carbon::now()->startOfMonth()->format('Y-m-d'), Carbon::now()->endOfMonth()->format('Y-m-d')])
+        //         ->where('status', 'late')->get());
         return [
             'total_present' => Attendance::whereBetween('date', [$date, $endDate])
                 ->where('status', 'present')

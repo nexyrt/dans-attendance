@@ -89,8 +89,8 @@
                                 <!-- Users -->
                                 <li>
                                     <a href="{{ route('admin.attendances.index') }}"
-                                        class="@if (request()->routeIs('admin.users.index')) bg-gray-200 @endif flex items-center p-2 text-sm text-gray-800 hover:bg-gray-100 rounded-lg">
-                                        <i class='bx bx-user text-xl text-gray-700 me-3 '></i>
+                                        class="@if (request()->routeIs('admin.attendances.index')) bg-gray-200 @endif flex items-center p-2 text-sm text-gray-800 hover:bg-gray-100 rounded-lg">
+                                        <i class='bx bx-time-five text-xl text-gray-700 me-3'></i>
                                         Attendance
                                     </a>
                                 </li>
