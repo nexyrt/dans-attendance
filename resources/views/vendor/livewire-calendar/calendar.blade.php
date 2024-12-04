@@ -3,7 +3,6 @@
     @elseif($pollMillis !== null)
         wire:poll.{{ $pollMillis }}ms @endif>
 
-
     <script>
         window.countdown = function(datetime) {
             return {

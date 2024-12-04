@@ -187,8 +187,9 @@
                                 alt="Avatar">
                         </button>
 
-                        <div
-                            class="hs-dropdown-menu transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 hidden min-w-60 bg-white shadow-md rounded-lg mt-2 dark:bg-neutral-800 dark:border dark:border-neutral-700 dark:divide-neutral-700 after:h-4 after:absolute after:-bottom-4 after:start-0 after:w-full before:h-4 before:absolute before:-top-4 before:start-0 before:w-full">
+                        <div class="hs-dropdown-menu transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 hidden min-w-60  bg-white shadow-md rounded-lg mt-2 dark:bg-neutral-800 dark:border dark:border-neutral-700 dark:divide-neutral-700 after:h-4 after:absolute after:-bottom-4 after:start-0 after:w-full before:h-4 before:absolute before:-top-4 before:start-0 before:w-full"
+                            role="menu" aria-orientation="vertical" aria-labelledby="hs-dropdown-account"
+                            style="position: absolute; z-index: 9999;">
                             <div class="py-3 px-5 bg-gray-100 rounded-t-lg dark:bg-neutral-700">
                                 <p class="text-sm text-gray-500 dark:text-neutral-500">Signed in as</p>
                                 <p class="text-sm font-medium text-gray-800 dark:text-neutral-200">james@site.com</p>
@@ -254,7 +255,7 @@
 
         {{-- Scripts --}}
         <x-notify::notify />
-        @notifyJs
+        {{-- @notifyJs --}}
         @livewireScripts
         <script src="./node_modules/preline/dist/preline.js"></script>
 
