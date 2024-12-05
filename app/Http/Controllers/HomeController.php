@@ -13,12 +13,12 @@ class HomeController extends Controller
             $user = Auth::user();
 
             if ($user->role == 'admin') {
-                return redirect('/admin/dashboard');
+                return redirect('/admin/dashboard')->with(['user', $user]);
             } elseif ($user->role == 'user') {
-                return redirect('/employee/dashboard');
+                return redirect('/employee/dashboard')->with('user', $user);
             } else {
                 // Handle other roles or default redirect
-                return redirect('/dashboard');
+                return redirect('/dashboard')->with('user', $user);
             }
         } else {
             return redirect('/login');

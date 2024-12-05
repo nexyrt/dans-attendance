@@ -8,6 +8,7 @@ export default {
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
+        'node_modules/preline/dist/*.js',
     ],
 
     theme: {
@@ -25,7 +26,7 @@ export default {
             },
             boxShadow: {
                 'blur-spread': '0 0 15px 5px rgba(59, 130, 246, 0.5)',
-              },
+            },
         },
         variants: {
             extend: {
@@ -33,10 +34,17 @@ export default {
                 boxShadow: ['focus'],
             },
         },
+        screens: {
+            'md': '640px',
+            'lg': '1024px',
+            'xl': '1280px',
+            '2xl': '1440px'
+        },
     },
 
     plugins: [
         forms,
-        require('flowbite/plugin')
+        require('flowbite/plugin'),
+        require('preline/plugin'),
     ],
 };

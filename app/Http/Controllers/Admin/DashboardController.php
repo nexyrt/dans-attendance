@@ -8,7 +8,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
-class AdminDashboardController extends Controller
+class DashboardController extends Controller
 {
     public function index()
     {
@@ -17,11 +17,10 @@ class AdminDashboardController extends Controller
         $user = auth()->user();
         $attendances = Attendance::with('user')->get();
 
-        // Check today's attendance
         $attendanceRecordExists = $this->checkAttendanceRecordExists($user->id);
         $hasCheckedOut = $this->hasCheckedOut($user->id);
 
-        return view('admin.index', compact(['attendances', 'attendanceRecordExists', 'hasCheckedOut', 'user']));
+        return view('admin.dashboard.index', compact(['attendances', 'attendanceRecordExists', 'hasCheckedOut', 'user']));
     }
 
     public function users()
@@ -32,19 +31,7 @@ class AdminDashboardController extends Controller
         $attendanceRecordExists = $this->checkAttendanceRecordExists($user->id);
         $hasCheckedOut = $this->hasCheckedOut($user->id);
 
-        return view('admin.user', compact(['attendanceRecordExists', 'hasCheckedOut', 'user']));
-    }
-
-
-    public function schedules()
-    {
-        $users = User::all();
-        // Check today's attendance
-        $user = auth()->user();
-        $attendanceRecordExists = $this->checkAttendanceRecordExists($user->id);
-        $hasCheckedOut = $this->hasCheckedOut($user->id);
-
-        return view('admin.schedule.index', compact(['attendanceRecordExists', 'hasCheckedOut', 'user']));
+        return view('admin.users.index', compact(['attendanceRecordExists', 'hasCheckedOut', 'user']));
     }
 
     public function checkAttendanceRecordExists($userId)

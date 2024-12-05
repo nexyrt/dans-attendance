@@ -18,6 +18,7 @@
     "dependencies": {
         "boxicons": "^2.1.4",
         "ckeditor4": "^4.24.0",
-        "flowbite": "^2.3.0"
+        "flowbite": "^2.5.2",
+        "preline": "^2.5.1"
     }
 }

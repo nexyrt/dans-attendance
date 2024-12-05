@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('schedule_exceptions', function (Blueprint $table) {
             $table->id();
+            $table->string('title')->nullable();
             $table->date('date');
             $table->time('start_time')->nullable();
             $table->time('end_time')->nullable();
