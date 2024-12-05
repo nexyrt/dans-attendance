@@ -95,7 +95,7 @@ class CheckInModal extends Component
             $toleranceLimit = $startTime->copy()->addMinutes($this->schedule->late_tolerance);
 
             // Determine status based on tolerance limit
-            $status = $now->gt($toleranceLimit) ? 'late' : 'j present';
+            $status = $now->gt($toleranceLimit) ? 'late' : 'present';
 
             Attendance::create([
                 'user_id' => auth()->id(),
