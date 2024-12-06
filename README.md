@@ -113,34 +113,6 @@ composer update
 ## 📝 Additional Notes
 - Leave balance is calculated based on the fiscal year
 - Managers must be designated in the system for leave approval
-- Dark mode is now fully supported across all new features
-
-## 📚 Documentation Updates
-- Updated API documentation: [Link to API docs]
-- New leave management guide: [Link to guide]
-- Updated date handling reference: [Link to reference]
-
-## 🤝 Support
-For support with this patch:
-- Technical support: support@dans.com
-- Issue tracker: [Link to issue tracker]
-- Emergency contact: [Emergency contact details]
-
-## ✅ Verification Checklist
-- [ ] Database backup created
-- [ ] Dependencies updated
-- [ ] Migrations completed
-- [ ] Leave management system functional
-- [ ] Date handling verified
-- [ ] Table designs updated
-- [ ] Dark mode tested
-- [ ] User permissions updated
-- [ ] Email notifications tested
-
----
-## 👥 Contributors
-- Development Team - Core features
-- UI/UX Team - Table redesign
 - QA Team - Testing and verification
 
 ## 📄 License
