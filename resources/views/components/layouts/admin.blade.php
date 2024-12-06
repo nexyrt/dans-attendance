@@ -95,6 +95,14 @@
                                     </a>
                                 </li>
 
+                                <li>
+                                    <a href="{{ route('admin.leave-request.index') }}"
+                                        class="@if (request()->routeIs('admin.attendances.index')) bg-gray-200 @endif flex items-center p-2 text-sm text-gray-800 hover:bg-gray-100 rounded-lg">
+                                        <i class='bx bx-calendar-exclamation text-xl text-gray-700 me-3'></i>
+                                        Leave Request
+                                    </a>
+                                </li>
+
                                 <!-- Schedule Management Dropdown -->
                                 <li x-data="{ open: false }">
                                     <button @click="open = !open"
@@ -274,6 +282,8 @@
                         </div>
                     </div>
                 </div>
+
+                <x-shared.flash-message />
                 {{ $slot }}
             </div>
         </div>

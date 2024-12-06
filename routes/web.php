@@ -1,6 +1,9 @@
 <?php
 
 use App\Exports\UsersExport;
+use App\Livewire\Admin\LeaveRequest\LeaveRequestsTable;
+use App\Models\LeaveRequest;
+
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Route;
@@ -49,6 +52,10 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
 
     Route::prefix('attendances')->name('attendances.')->group(function () {
         Route::get('/dashboard', AttendanceRecord::class)->name('index');
+    });
+
+    Route::prefix('leave-request')->name('leave-request.')->group(function () {
+        Route::get('/', LeaveRequestsTable::class)->name('index');
     });
 
     // Future Routes

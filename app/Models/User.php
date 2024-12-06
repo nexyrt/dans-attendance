@@ -66,6 +66,11 @@ class User extends Authenticatable
         return $this->hasMany(LeaveRequest::class);
     }
 
+    public function approvedLeaves()
+{
+    return $this->hasMany(LeaveRequest::class, 'approved_by');
+}
+
     /**
      * Get current year's leave balance
      */
