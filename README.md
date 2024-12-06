@@ -1,7 +1,7 @@
 # Dans Attendance Management - Patch v3.2
 
 ## Release Date
-2024-12-06
+2024-12-07
 
 ## Overview
 Patch 3.2 introduces significant improvements to the Dans Attendance Management system, including a comprehensive Leave Management feature, migration from Carbon to Chronos for better date handling, and enhanced table designs for improved user experience.
