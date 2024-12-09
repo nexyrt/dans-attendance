@@ -29,8 +29,8 @@ class ScheduleException extends Model
         'updated_at' => 'datetime'
     ];
 
-    public function department()
+    public function departments()
     {
-        return $this->belongsTo(Department::class);
+        return $this->belongsToMany(Department::class);
     }
 }

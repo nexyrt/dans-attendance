@@ -3,15 +3,11 @@
 namespace Database\Seeders;
 
 use App\Models\Department;
-use Illuminate\Database\Seeder;
 use App\Models\ScheduleException;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
 
 class ScheduleExceptionSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $titles = [
@@ -26,20 +22,24 @@ class ScheduleExceptionSeeder extends Seeder
             'Performance Review',
             'Strategy Meeting'
         ];
-        // Get all department IDs to assign them randomly
-        $departmentIds = Department::pluck('id')->toArray();
 
-        // Seed 10 schedule exceptions
-        foreach (range(1, 10) as $index) {
-            ScheduleException::create([
-                'title' =>  $titles[array_rand($titles)],
-                'date' => now()->addDays($index), // Example: Adds sequential dates starting today
-                'start_time' => '08:00:00', // Alternate between set and null
+        // Create 20 schedule exceptions using your specific data
+        foreach (range(1, 20) as $index) {
+            $exception = ScheduleException::create([
+                'title' => $titles[array_rand($titles)],
+                'date' => now()->addDays($index),
+                'start_time' => '08:00:00',
                 'end_time' => '16:00:00',
-                'department_id' => $departmentIds[array_rand($departmentIds)], // Random department
-                'status' => ['regular', 'wfh', 'halfday'][array_rand(['regular', 'wfh', 'halfday'])], // Random status
-                'note' => $index % 3 === 0 ? 'Special case for this day' : null, // Optional note
+                'status' => ['regular', 'wfh', 'halfday', 'holiday'][array_rand(['regular', 'wfh', 'halfday', 'holiday'])],
+                'note' => $index % 3 === 0 ? 'Special case for this day' : null,
             ]);
+
+            // Attach 1-3 random departments to each exception
+            $departments = Department::inRandomOrder()
+                ->take(rand(1, 3))
+                ->pluck('id');
+
+            $exception->departments()->attach($departments);
         }
     }
 }

@@ -86,6 +86,26 @@ class ScheduleCalendar extends LivewireCalendar
         $this->goToPreviousMonth();
     }
 
+    public function deleteEvent($eventId)
+    {
+        try {
+            $schedule = ScheduleException::findOrFail($eventId);
+
+            // Delete associated departments first
+            $schedule->departments()->detach();
+
+            // Delete the schedule
+            $schedule->delete();
+
+            $this->dispatch('eventDeleted');
+            notify()->success('Event has been deleted successfully.');
+
+            return redirect()->route('admin.schedules.dashboard');
+        } catch (\Exception $e) {
+            notify()->error('Error deleting event: ' . $e->getMessage());
+        }
+    }
+
     public function events(): Collection
     {
         return ScheduleException::query()

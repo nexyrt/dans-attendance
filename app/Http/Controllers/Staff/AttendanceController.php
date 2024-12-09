@@ -21,10 +21,10 @@ class AttendanceController extends Controller
         $schedule = Schedule::where('day_of_week', strtolower(Carbon::now()->format('l')))
             ->first();
 
-        // Set schedule times
+        // Set schedule times with default values
         $scheduleStart = $schedule ? Carbon::parse($schedule->start_time) : Carbon::parse('09:00');
         $scheduleEnd = $schedule ? Carbon::parse($schedule->end_time) : Carbon::parse('17:00');
-        $regularWorkHours = $scheduleStart->diffInHours($scheduleEnd);
+        $regularWorkHours = max($scheduleStart->diffInHours($scheduleEnd), 1); // Ensure minimum 1 hour
 
         // Set break times
         $breakStart = Carbon::parse('12:00');
@@ -41,10 +41,10 @@ class AttendanceController extends Controller
 
         // Adjust work hours for special schedules
         if ($scheduleException && $scheduleException->status === 'halfday') {
-            $regularWorkHours /= 2;
+            $regularWorkHours = max($regularWorkHours / 2, 1); // Ensure minimum 1 hour even for half days
         }
 
-        // Calculate work duration and progress
+        // Initialize default values
         $workDuration = '0h 0m';
         $currentProgress = 0;
         $remainingTime = 'Not started';
@@ -57,6 +57,8 @@ class AttendanceController extends Controller
 
             // Calculate duration excluding break time
             $durationInMinutes = $startTime->diffInMinutes($endTime);
+
+            // Only subtract break time if the work period spans the break
             if ($startTime->lt($breakStart) && $endTime->gt($breakEnd)) {
                 $durationInMinutes -= $breakStart->diffInMinutes($breakEnd);
             }
@@ -66,16 +68,22 @@ class AttendanceController extends Controller
             $minutes = $durationInMinutes % 60;
             $workDuration = "${hours}h ${minutes}m";
 
-            // Calculate progress
+            // Calculate progress with zero division protection
             $totalWorkMinutes = $regularWorkHours * 60;
-            $currentProgress = min(100, round(($durationInMinutes / $totalWorkMinutes) * 100));
+            $currentProgress = $totalWorkMinutes > 0
+                ? min(100, round(($durationInMinutes / $totalWorkMinutes) * 100))
+                : 0;
 
             // Calculate remaining time if not checked out
             if (!$todayAttendance->check_out) {
-                $remainingTime = now()->diffForHumans($scheduleEnd, [
-                    'parts' => 1,
-                    'syntax' => Carbon::DIFF_RELATIVE_TO_NOW
-                ]);
+                try {
+                    $remainingTime = now()->diffForHumans($scheduleEnd, [
+                        'parts' => 1,
+                        'syntax' => Carbon::DIFF_RELATIVE_TO_NOW
+                    ]);
+                } catch (\Exception $e) {
+                    $remainingTime = 'Time calculation error';
+                }
             }
         }
 
