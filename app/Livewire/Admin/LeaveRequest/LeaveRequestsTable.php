@@ -361,6 +361,15 @@ class LeaveRequestsTable extends Component
         ];
     }
 
+    public function deleteRequest($id)
+    {
+        $request = LeaveRequest::find($id);
+        if ($request) {
+            $request->delete();
+            session()->flash('message', 'Leave request deleted successfully.');
+        }
+    }
+
     public function render()
     {
         $statistics = $this->getStatistics();

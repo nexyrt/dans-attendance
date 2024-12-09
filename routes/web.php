@@ -26,7 +26,7 @@ Route::get('/kanban', App\Livewire\KanbanBoard::class)->name('kanban');
 // Admin routes
 Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->group(function () {
     // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     
     // Users Management
     Route::prefix('users')->name('users.')->group(function () {

@@ -14,7 +14,6 @@ class AttendanceRecord extends Component
     use WithPagination;
 
     public $selectedPeriod = 'today';
-
     public $startDate;
     public $endDate;
     public $showDetailModal = false;
@@ -24,15 +23,13 @@ class AttendanceRecord extends Component
     public $showDatePicker = false;
     protected $listeners = ['refresh' => '$refresh', 'dateSelected'];
 
-    public $page = 1; // Add this line
-
+    public $page = 1;
     protected $paginationTheme = 'tailwind';
     public $perPage = 10;
 
-
     public $filters = [
-        'department' => '',
-        'status' => '',
+        'department' => [],  // Changed to array for multi-select
+        'status' => [],      // Changed to array for multi-select
         'search' => '',
         'startDate' => '',
         'endDate' => '',
@@ -43,20 +40,75 @@ class AttendanceRecord extends Component
     protected $queryString = [
         'filters' => [
             'except' => [
-                'department' => '',
-                'status' => '',
+                'department' => [],
+                'status' => [],
                 'search' => '',
+                'startDate' => '',
+                'endDate' => '',
             ]
         ],
     ];
 
-    // Add method to get filtered data without pagination
+    // Add method to handle filter updates
+    public function updatedFilters($value, $key)
+    {
+        // Clear empty values from arrays
+        if (is_array($value)) {
+            $value = array_filter($value);
+        }
+
+        // Update activeFilters
+        if (empty($value)) {
+            unset($this->activeFilters[$key]);
+        } else {
+            $this->activeFilters[$key] = $value;
+        }
+
+        // Special handling for date range
+        if ($key === 'startDate' || $key === 'endDate') {
+            if (!empty($this->filters['startDate']) && !empty($this->filters['endDate'])) {
+                $this->activeFilters['startDate'] = $this->filters['startDate'];
+                $this->activeFilters['endDate'] = $this->filters['endDate'];
+            } else {
+                unset($this->activeFilters['startDate'], $this->activeFilters['endDate']);
+            }
+        }
+
+        $this->resetPage();
+    }
+
+    public function removeFilterValue($key, $value)
+    {
+        if (isset($this->filters[$key]) && is_array($this->filters[$key])) {
+            $this->filters[$key] = array_filter($this->filters[$key], function ($v) use ($value) {
+                return $v !== $value;
+            });
+
+            if (empty($this->filters[$key])) {
+                unset($this->activeFilters[$key]);
+            } else {
+                $this->activeFilters[$key] = $this->filters[$key];
+            }
+        }
+        $this->resetPage();
+    }
+
+    public function removeFilter($key)
+    {
+        if ($key === 'startDate' || $key === 'endDate') {
+            $this->filters['startDate'] = '';
+            $this->filters['endDate'] = '';
+            unset($this->activeFilters['startDate'], $this->activeFilters['endDate']);
+        } else {
+            $this->filters[$key] = is_array($this->filters[$key]) ? [] : '';
+            unset($this->activeFilters[$key]);
+        }
+        $this->resetPage();
+    }
+
     private function getFilteredData()
     {
-        return Attendance::query()
-            ->with(['user', 'user.department'])
-            ->latest('date')
-            ->get();
+        return $this->getFilteredAttendancesProperty()->get();
     }
 
     public function exportToCSV()
@@ -109,7 +161,6 @@ class AttendanceRecord extends Component
     {
         $attendances = $this->getFilteredData();
 
-        // Dispatch browser event with data
         $this->dispatch(
             'print-attendance',
             attendances: $attendances->map(function ($attendance) {
@@ -129,42 +180,27 @@ class AttendanceRecord extends Component
 
     public function setDateRange($range)
     {
-        $now = Carbon::now();
+        $this->filters['startDate'] = match ($range) {
+            'today' => now()->format('Y-m-d'),
+            'yesterday' => now()->subDay()->format('Y-m-d'),
+            'thisWeek' => now()->startOfWeek()->format('Y-m-d'),
+            'lastWeek' => now()->subWeek()->startOfWeek()->format('Y-m-d'),
+            'thisMonth' => now()->startOfMonth()->format('Y-m-d'),
+            'lastMonth' => now()->subMonth()->startOfMonth()->format('Y-m-d'),
+            'last30Days' => now()->subDays(30)->format('Y-m-d'),
+            'last90Days' => now()->subDays(90)->format('Y-m-d'),
+        };
 
-        switch ($range) {
-            case 'today':
-                $this->filters['startDate'] = $now->format('Y-m-d');
-                $this->filters['endDate'] = $now->format('Y-m-d');
-                break;
-            case 'yesterday':
-                $this->filters['startDate'] = $now->subDay()->format('Y-m-d');
-                $this->filters['endDate'] = $now->format('Y-m-d');
-                break;
-            case 'thisWeek':
-                $this->filters['startDate'] = $now->startOfWeek()->format('Y-m-d');
-                $this->filters['endDate'] = $now->endOfWeek()->format('Y-m-d');
-                break;
-            case 'lastWeek':
-                $this->filters['startDate'] = $now->subWeek()->startOfWeek()->format('Y-m-d');
-                $this->filters['endDate'] = $now->endOfWeek()->format('Y-m-d');
-                break;
-            case 'thisMonth':
-                $this->filters['startDate'] = $now->startOfMonth()->format('Y-m-d');
-                $this->filters['endDate'] = $now->endOfMonth()->format('Y-m-d');
-                break;
-            case 'lastMonth':
-                $this->filters['startDate'] = $now->subMonth()->startOfMonth()->format('Y-m-d');
-                $this->filters['endDate'] = $now->endOfMonth()->format('Y-m-d');
-                break;
-            case 'last30Days':
-                $this->filters['startDate'] = $now->subDays(30)->format('Y-m-d');
-                $this->filters['endDate'] = $now->addDays(30)->format('Y-m-d');
-                break;
-            case 'last90Days':
-                $this->filters['startDate'] = $now->subDays(90)->format('Y-m-d');
-                $this->filters['endDate'] = $now->addDays(90)->format('Y-m-d');
-                break;
-        }
+        $this->filters['endDate'] = match ($range) {
+            'today' => now()->format('Y-m-d'),
+            'yesterday' => now()->subDay()->format('Y-m-d'),
+            'thisWeek' => now()->endOfWeek()->format('Y-m-d'),
+            'lastWeek' => now()->subWeek()->endOfWeek()->format('Y-m-d'),
+            'thisMonth' => now()->endOfMonth()->format('Y-m-d'),
+            'lastMonth' => now()->subMonth()->endOfMonth()->format('Y-m-d'),
+            'last30Days' => now()->format('Y-m-d'),
+            'last90Days' => now()->format('Y-m-d'),
+        };
     }
 
     public function dateSelected($startDate, $endDate)
@@ -174,26 +210,23 @@ class AttendanceRecord extends Component
         $this->showDatePicker = false;
     }
 
-    public function applyFilters()
-    {
-        $this->activeFilters = array_filter($this->filters);
-    }
-
     public function resetFilters()
     {
-        $this->reset('filters');
+        $this->filters = [
+            'department' => [],
+            'status' => [],
+            'search' => '',
+            'startDate' => now()->format('Y-m-d'),
+            'endDate' => now()->format('Y-m-d'),
+        ];
         $this->activeFilters = [];
-    }
-
-    public function removeFilter($key)
-    {
-        $this->filters[$key] = '';
-        unset($this->activeFilters[$key]);
+        $this->resetPage();
+        $this->dispatch('reset-filters');
     }
 
     public function mount()
     {
-        // Set default date range to current month
+        // Set default date range to current day
         $this->filters['startDate'] = Carbon::now()->format('Y-m-d');
         $this->filters['endDate'] = Carbon::now()->format('Y-m-d');
     }
@@ -203,14 +236,16 @@ class AttendanceRecord extends Component
         $query = Attendance::query()
             ->with(['user', 'user.department']);
 
-        if ($this->filters['department']) {
+        // Handle multi-select department filter
+        if (!empty($this->filters['department'])) {
             $query->whereHas('user', function ($q) {
-                $q->where('department_id', $this->filters['department']);
+                $q->whereIn('department_id', $this->filters['department']);
             });
         }
 
-        if ($this->filters['status']) {
-            $query->where('status', $this->filters['status']);
+        // Handle multi-select status filter
+        if (!empty($this->filters['status'])) {
+            $query->whereIn('status', $this->filters['status']);
         }
 
         if ($this->filters['search']) {
@@ -223,15 +258,12 @@ class AttendanceRecord extends Component
         $query->when($this->filters['startDate'], function ($query) {
             $query->whereDate('date', '>=', $this->filters['startDate']);
         })
-            ->when($this->filters['endDate'], function ($query) {
-                $query->whereDate('date', '<=', $this->filters['endDate']);
-            })
-            ->latest('date');
+        ->when($this->filters['endDate'], function ($query) {
+            $query->whereDate('date', '<=', $this->filters['endDate']);
+        });
 
-        return $query->latest();
+        return $query->latest('date');
     }
-
-
 
     public function getStatistics()
     {
@@ -241,23 +273,20 @@ class AttendanceRecord extends Component
             default => Carbon::today()
         };
 
-        // Get the end date (current time)
         $endDate = Carbon::now();
 
-        // @dd(Attendance::whereBetween('date', [Carbon::now()->startOfMonth()->format('Y-m-d'), Carbon::now()->endOfMonth()->format('Y-m-d')])
-        //         ->where('status', 'late')->get());
         return [
             'total_present' => Attendance::whereBetween('date', [$date, $endDate])
                 ->where('status', 'present')
                 ->count(),
             'total_late' => Attendance::where('date', '>=', $date)
-                ->where('status', '=', 'late')
+                ->where('status', 'late')
                 ->count(),
             'average_check_in' => Attendance::where('date', '>=', $date)
                 ->whereNotNull('check_in')
                 ->avg('check_in'),
             'pending_checkouts' => Attendance::where('date', '>=', $date)
-                ->where('status', '=', 'pending present')
+                ->where('status', 'pending')
                 ->count(),
             'attendance_rate' => $this->calculateAttendanceRate($date),
         ];
@@ -283,12 +312,12 @@ class AttendanceRecord extends Component
                 ->take(5)
                 ->get(),
             'late' => Attendance::with('user')
-                ->where('status', '!=', 'present')
+                ->where('status', 'late')
                 ->latest()
                 ->take(5)
                 ->get(),
             'pending' => Attendance::with('user')
-                ->whereNull('check_out')
+                ->where('status', 'pending')
                 ->latest()
                 ->take(5)
                 ->get(),
@@ -301,7 +330,7 @@ class AttendanceRecord extends Component
     public function render()
     {
         return view('livewire.admin.attendances.attendance-record', [
-            'attendances' => $this->getFilteredAttendancesProperty()->latest('date')->paginate($this->perPage),
+            'attendances' => $this->getFilteredAttendancesProperty()->paginate($this->perPage),
             'departments' => Department::all(),
             'statistics' => $this->getStatistics()
         ]);

@@ -166,15 +166,63 @@
             <!-- Filter Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                 <!-- Department Filter -->
-                <div>
+                <div x-data="{ 
+                    open: false, 
+                    selected: [], 
+                    departments: @js($departments->map(fn($dept) => ['id' => $dept->id, 'name' => $dept->name])->toArray())
+                }" class="relative">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Department</label>
-                    <select wire:model="filters.department"
-                        class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">All Departments</option>
-                        @foreach ($departments as $dept)
-                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
-                        @endforeach
-                    </select>
+                    <div class="relative">
+                        <!-- Custom Select Button -->
+                        <button @click="open = !open" type="button"
+                            class="relative w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg py-2.5 px-4 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <span class="block truncate text-sm"
+                                x-text="selected.length ? selected.map(id => departments.find(d => d.id === parseInt(id))?.name).join(', ') : 'Select Department...'">
+                            </span>
+                            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                                <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                        </button>
+
+                        <!-- Dropdown Panel -->
+                        <div x-show="open" @click.away="open = false"
+                            x-transition:enter="transition ease-out duration-100"
+                            x-transition:enter-start="transform opacity-0 scale-95"
+                            x-transition:enter-end="transform opacity-100 scale-100"
+                            x-transition:leave="transition ease-in duration-75"
+                            x-transition:leave-start="transform opacity-100 scale-100"
+                            x-transition:leave-end="transform opacity-0 scale-95"
+                            class="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 shadow-lg rounded-lg py-1 text-base ring-1 ring-black ring-opacity-5 focus:outline-none">
+
+                            <!-- Options List -->
+                            <div class="max-h-60 overflow-auto">
+                                <div class="relative py-2 px-4">
+                                    <div class="space-y-1">
+                                        <template x-for="dept in departments" :key="dept.id">
+                                            <label
+                                                class="relative flex items-center p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                                                <input type="checkbox" :value="dept.id"
+                                                    :checked="selected.includes(dept.id.toString())" @change="
+                                                        $event.target.checked 
+                                                            ? selected.push(dept.id.toString()) 
+                                                            : selected = selected.filter(i => i !== dept.id.toString());
+                                                        $wire.set('filters.department', selected)
+                                                    "
+                                                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                                <span
+                                                    class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300 capitalize"
+                                                    x-text="dept.name"></span>
+                                            </label>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Date Range Filter Section -->
@@ -261,15 +309,54 @@
                 </div>
 
                 <!-- Status Filter -->
-                <div>
+                <div x-data="{ open: false, selected: [] }" class="relative">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-                    <select wire:model="filters.status"
-                        class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">All Status</option>
-                        <option value="present">On Time</option>
-                        <option value="late">Late</option>
-                        <option value="pending">Pending Checkout</option>
-                    </select>
+                    <div class="relative">
+                        <!-- Custom Select Button -->
+                        <button @click="open = !open" type="button"
+                            class="relative w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg py-2.5 px-4 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <span class="block truncate text-sm"
+                                x-text="selected.length ? selected.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ') : 'Select status...'">
+                            </span>
+                            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                                <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                        </button>
+
+                        <!-- Dropdown Panel -->
+                        <div x-show="open" @click.away="open = false"
+                            x-transition:enter="transition ease-out duration-100"
+                            x-transition:enter-start="transform opacity-0 scale-95"
+                            x-transition:enter-end="transform opacity-100 scale-100"
+                            x-transition:leave="transition ease-in duration-75"
+                            x-transition:leave-start="transform opacity-100 scale-100"
+                            x-transition:leave-end="transform opacity-0 scale-95"
+                            class="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 shadow-lg rounded-lg py-1 text-base ring-1 ring-black ring-opacity-5 focus:outline-none">
+
+                            <!-- Options List -->
+                            <div class="max-h-60 overflow-auto">
+                                <div class="relative py-2 px-4">
+                                    <div class="space-y-1">
+                                        <template x-for="status in ['present', 'late', 'pending']" :key="status">
+                                            <label
+                                                class="relative flex items-center p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                                                <input type="checkbox" :checked="selected.includes(status)" @change="$event.target.checked ? selected.push(status) : selected = selected.filter(i => i !== status);
+                                                        $wire.set('filters.status', selected)"
+                                                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                                <span
+                                                    class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300 capitalize"
+                                                    x-text="status"></span>
+                                            </label>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Search Filter -->
@@ -277,7 +364,7 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Search
                         Employee</label>
                     <div class="relative">
-                        <input type="text" wire:model.debounce.300ms="filters.search"
+                        <input type="text" wire:model.live.debounce.300ms="filters.search"
                             class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-blue-500 focus:border-blue-500 pl-10"
                             placeholder="Search name or email...">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -294,11 +381,36 @@
             <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
                 <div class="flex flex-wrap gap-2">
                     @if (!empty($activeFilters))
-                    @foreach ($activeFilters as $key => $value)
+                    <!-- Department Filters -->
+                    @if (!empty($activeFilters['department']))
+                    @foreach ((array)$activeFilters['department'] as $deptId)
+                    @php
+                    $dept = $departments->find($deptId);
+                    @endphp
+                    @if($dept)
                     <span
                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                        {{ ucfirst($key) }}: {{ $value }}
-                        <button wire:click="removeFilter('{{ $key }}')" class="ml-1 inline-flex items-center">
+                        Department: {{ $dept->name }}
+                        <button wire:click="removeFilterValue('department', '{{ $deptId }}')"
+                            class="ml-1 inline-flex items-center">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </span>
+                    @endif
+                    @endforeach
+                    @endif
+
+                    <!-- Status Filters -->
+                    @if (!empty($activeFilters['status']))
+                    @foreach ((array)$activeFilters['status'] as $status)
+                    <span
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                        Status: {{ ucfirst($status) }}
+                        <button wire:click="removeFilterValue('status', '{{ $status }}')"
+                            class="ml-1 inline-flex items-center">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M6 18L18 6M6 6l12 12" />
@@ -306,6 +418,36 @@
                         </button>
                     </span>
                     @endforeach
+                    @endif
+
+                    <!-- Date Range Filter -->
+                    @if (!empty($activeFilters['startDate']) && !empty($activeFilters['endDate']))
+                    <span
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                        Date: {{ Carbon\Carbon::parse($activeFilters['startDate'])->format('M d, Y') }} -
+                        {{ Carbon\Carbon::parse($activeFilters['endDate'])->format('M d, Y') }}
+                        <button wire:click="removeFilter('startDate')" class="ml-1 inline-flex items-center">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </span>
+                    @endif
+
+                    <!-- Search Filter -->
+                    @if (!empty($activeFilters['search']))
+                    <span
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                        Search: {{ $activeFilters['search'] }}
+                        <button wire:click="removeFilter('search')" class="ml-1 inline-flex items-center">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </span>
+                    @endif
                     @else
                     <span class="text-sm text-gray-500 dark:text-gray-400">No active filters</span>
                     @endif
