@@ -221,10 +221,7 @@
         {{-- Modals & Notifications --}}
         <livewire:shared.check-in-modal />
         <livewire:shared.check-out-modal />
-
-        {{-- Scripts --}}
-        <x-notify::notify />
-        {{-- @notifyJs --}}
+        
         @livewireScripts
 
         <script>

@@ -1,3 +1,7 @@
+@php
+    use App\Helpers\DateTimeHelper;
+@endphp
+
 <div>
     <div class="bg-white rounded-xl shadow-sm">
         {{-- Header Section --}}
@@ -132,21 +136,15 @@
         {{-- Table Section --}}
         <div class="overflow-x-auto">
             <table class="w-full">
-                <thead class="bg-gray-50 border-y border-gray-200">
-                    <tr>
-                        <th class="px-6 py-4 text-sm font-medium text-gray-500">Date</th>
-                        <th class="px-6 py-4 text-sm font-medium text-gray-500">Check In</th>
-                        <th class="px-6 py-4 text-sm font-medium text-gray-500">Check Out</th>
-                        <th class="px-6 py-4 text-sm font-medium text-gray-500">Status</th>
-                        <th class="px-6 py-4 text-sm font-medium text-gray-500">Working Hours</th>
-                    </tr>
-                </thead>
+                <!-- Header remains the same -->
                 <tbody class="divide-y divide-gray-200">
                     @forelse($attendances as $attendance)
                         <tr class="hover:bg-gray-50/50">
                             <td class="px-6 py-4 text-sm text-gray-600">
-                                <span class="font-medium">{{ $attendance->date->format('d M Y') }}</span>
-                                <span class="block text-xs text-gray-500">{{ $attendance->date->format('l') }}</span>
+                                <span
+                                    class="font-medium">{{ DateTimeHelper::parse($attendance->date)->format('d M Y') }}</span>
+                                <span
+                                    class="block text-xs text-gray-500">{{ DateTimeHelper::parse($attendance->date)->format('l') }}</span>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
@@ -157,17 +155,19 @@
                                         'bg-yellow-400' => $attendance->status === 'early_leave',
                                     ])></div>
                                     <span class="text-sm font-medium text-gray-900">
-                                        {{ $attendance->check_in?->format('H:i') ?? '--:--' }}
-                                        <span
-                                            class="text-xs text-gray-500">{{ $attendance->check_in?->format('A') ?? '' }}</span>
+                                        {{ $attendance->check_in ? DateTimeHelper::parse($attendance->check_in)->format('H:i') : '--:--' }}
+                                        <span class="text-xs text-gray-500">
+                                            {{ $attendance->check_in ? DateTimeHelper::parse($attendance->check_in)->format('A') : '' }}
+                                        </span>
                                     </span>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
                                 <span class="text-sm font-medium text-gray-900">
-                                    {{ $attendance->check_out?->format('H:i') ?? '--:--' }}
-                                    <span
-                                        class="text-xs text-gray-500">{{ $attendance->check_out?->format('A') ?? '' }}</span>
+                                    {{ $attendance->check_out ? DateTimeHelper::parse($attendance->check_out)->format('H:i') : '--:--' }}
+                                    <span class="text-xs text-gray-500">
+                                        {{ $attendance->check_out ? DateTimeHelper::parse($attendance->check_out)->format('A') : '' }}
+                                    </span>
                                 </span>
                             </td>
                             <td class="px-6 py-4">
