@@ -17,10 +17,8 @@ return new class extends Migration
             $table->date('date');
             $table->time('start_time')->nullable();
             $table->time('end_time')->nullable();
-            $table->enum('status', ['regular', 'wfh', 'halfday']);
+            $table->enum('status', ['regular', 'wfh', 'halfday','holiday']);
             $table->text('note')->nullable();
-
-            $table->foreignId('department_id')->constrained('departments')->onDelete('cascade')->nullable();
             $table->timestamps();
         });
     }

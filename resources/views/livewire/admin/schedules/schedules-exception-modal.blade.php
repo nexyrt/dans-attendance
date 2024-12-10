@@ -1,9 +1,9 @@
 <div>
-    <div x-data="{ showModal: @entangle('showModal') }" x-cloak x-show="showModal" x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0" class="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
-        @click="showModal = false">
+    <div x-data="{ showModal: @entangle('showModal') }" x-cloak x-show="showModal"
+        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-300"
+        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+        class="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50" @click="showModal = false">
 
         <div class="flex items-center justify-center min-h-screen p-4">
             <form wire:submit.prevent="save"
@@ -128,17 +128,100 @@
                     </div>
 
                     <!-- Department Section -->
-                    <div class="flex items-start justify-start space-x-4 py-3 border-t">
+                    <!-- Department Section -->
+                    <div class="flex items-start justify-start space-x-4 py-3 border-t" x-data="{
+                            open: false,
+                            search: '',
+                            selectedDepartments: @entangle('selectedDepartments'),
+                            selectedDepartmentNames: @entangle('selectedDepartmentNames'),
+                            filteredDepartments() {
+                                return this.departments.filter(dept => 
+                                    dept.name.toLowerCase().includes(this.search.toLowerCase())
+                                );
+                            }
+                        }" @click.away="open = false">
                         <div class="pt-1.5 w-5">
                             <i class='bx bx-building text-lg text-gray-400'></i>
                         </div>
-                        <select wire:model="department"
-                            class="text-xs mt-2 flex-1 border-0 p-2 rounded focus:ring-0 focus:border-0 placeholder-gray-400 hover:bg-gray-100 focus:bg-gray-100 transition-colors">
-                            <option value="">Select department</option>
-                            @foreach ($departments as $dept)
-                                <option value="{{ $dept->name }}">{{ $dept->name }}</option>
-                            @endforeach
-                        </select>
+                        <div class="flex-1">
+                            <!-- Selected Departments Tags -->
+                            <div class="relative">
+                                <div class="min-h-[42px] w-full px-3 py-2 bg-white border border-gray-200 rounded-lg cursor-pointer flex items-center flex-wrap gap-2"
+                                    @click="open = !open">
+                                    <template x-if="selectedDepartmentNames.length === 0">
+                                        <span class="text-sm text-gray-400">Select departments...</span>
+                                    </template>
+                                    <template x-for="(name, index) in selectedDepartmentNames" :key="index">
+                                        <span
+                                            class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-600 rounded-md text-sm">
+                                            <span x-text="name"></span>
+                                            <button type="button" @click.stop="
+                            $wire.removeDepartment(name);
+                            selectedDepartmentNames = selectedDepartmentNames.filter(n => n !== name);"
+                                                class="ml-1 hover:text-blue-800">
+                                                <i class='bx bx-x'></i>
+                                            </button>
+                                        </span>
+                                    </template>
+                                    <i class='bx bx-chevron-down ml-auto text-gray-400'
+                                        :class="{ 'transform rotate-180': open }"></i>
+                                </div>
+
+                                <!-- Dropdown Menu -->
+                                <div x-show="open" x-transition:enter="transition ease-out duration-200"
+                                    x-transition:enter-start="opacity-0 transform scale-95"
+                                    x-transition:enter-end="opacity-100 transform scale-100"
+                                    x-transition:leave="transition ease-in duration-150"
+                                    x-transition:leave-start="opacity-100 transform scale-100"
+                                    x-transition:leave-end="opacity-0 transform scale-95"
+                                    class="absolute z-50 w-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200">
+
+                                    <!-- Search Box -->
+                                    <div class="p-2 border-b">
+                                        <div class="relative">
+                                            <i
+                                                class='bx bx-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400'></i>
+                                            <input type="text" x-model="search"
+                                                class="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                                placeholder="Search departments...">
+                                        </div>
+                                    </div>
+
+                                    <!-- Options List -->
+                                    <div class="max-h-60 overflow-y-auto p-2">
+                                        @foreach($departments as $dept)
+                                        <div class="flex items-center px-3 py-2 text-sm hover:bg-gray-50 rounded-md cursor-pointer"
+                                            wire:key="dept-{{ $dept->id }}" @click.stop="
+                                if (selectedDepartments.includes('{{ $dept->id }}')) {
+                                    $wire.removeDepartment('{{ $dept->name }}');
+                                } else {
+                                    selectedDepartments.push('{{ $dept->id }}');
+                                    selectedDepartmentNames.push('{{ $dept->name }}');
+                                }">
+                                            <div class="flex items-center flex-1">
+                                                <div class="w-4 h-4 border-2 rounded mr-2 flex items-center justify-center"
+                                                    :class="{
+                                         'border-blue-500 bg-blue-500': selectedDepartments.includes('{{ $dept->id }}'),
+                                         'border-gray-300': !selectedDepartments.includes('{{ $dept->id }}')
+                                     }">
+                                                    <i class='bx bx-check text-white text-sm'
+                                                        x-show="selectedDepartments.includes('{{ $dept->id }}')"></i>
+                                                </div>
+                                                <span>{{ $dept->name }}</span>
+                                            </div>
+                                            <span class="text-xs text-gray-400">{{ $dept->code }}</span>
+                                        </div>
+                                        @endforeach
+                                    </div>
+
+                                    <!-- Empty State -->
+                                    <div x-show="search && !filteredDepartments.length"
+                                        class="p-4 text-center text-sm text-gray-500">
+                                        No departments found
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Status -->

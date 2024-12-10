@@ -18,7 +18,8 @@ class SchedulesExceptionModal extends Component
     public $start_time = '09:00';
     public $end_time = '10:00';
     public $selectedDate;
-    public $department = '';
+    public $selectedDepartments = []; // Changed from department to selectedDepartments
+    public $selectedDepartmentNames = []; // For displaying selected departments
     public $status = 'regular';
     public $description;
 
@@ -32,7 +33,7 @@ class SchedulesExceptionModal extends Component
         'start_time' => 'required',
         'end_time' => 'required',
         'selectedDate' => 'required|date',
-        'department' => 'required',
+        'selectedDepartments' => 'required|array|min:1', // Updated validation rule
         'status' => 'required',
         'description' => 'nullable'
     ];
@@ -45,7 +46,7 @@ class SchedulesExceptionModal extends Component
             'start_time',
             'end_time',
             'selectedDate',
-            'department',
+            'selectedDepartments',
             'status',
             'description'
         ]);
@@ -60,6 +61,22 @@ class SchedulesExceptionModal extends Component
         $this->isEditing = false;
         $this->selectedDate = now()->format('Y-m-d');
         $this->showModal = true;
+    }
+
+    public function updatedSelectedDepartments($value)
+    {
+        $this->selectedDepartmentNames = Department::whereIn('id', $this->selectedDepartments)
+            ->pluck('name')
+            ->toArray();
+    }
+
+    public function removeDepartment($departmentName)
+    {
+        $department = Department::where('name', $departmentName)->first();
+        if ($department) {
+            $this->selectedDepartments = array_values(array_diff($this->selectedDepartments, [$department->id]));
+            $this->selectedDepartmentNames = array_values(array_diff($this->selectedDepartmentNames, [$departmentName]));
+        }
     }
 
     public function render()
@@ -84,7 +101,11 @@ class SchedulesExceptionModal extends Component
         $this->status = $data['status'];
         $this->selectedDate = $data['date'];
         $this->description = $data['description'];
-        $this->department = $data['department'];
+
+        // Load existing departments
+        $schedule = ScheduleException::with('departments')->find($data['id']);
+        $this->selectedDepartments = $schedule->departments->pluck('id')->toArray();
+        $this->selectedDepartmentNames = $schedule->departments->pluck('name')->toArray();
 
         $this->showModal = true;
     }
@@ -102,53 +123,38 @@ class SchedulesExceptionModal extends Component
     public function save()
     {
         $this->validate();
-
-        $department = Department::where('name', $this->department)->first();
-        if ($department) {
-            $departmentId = $department->id;
-        } else {
-            $departmentId = null; // Handle the case when the department is not found
-        }
-
-        if ($this->isEditing) {
-            try {
+        try {
+            if ($this->isEditing) {
                 $schedule = ScheduleException::find($this->eventId);
-
                 $schedule->update([
                     'title' => $this->title,
                     'start_time' => $this->start_time,
                     'end_time' => $this->end_time,
                     'date' => $this->selectedDate,
-                    'department_id' => $departmentId,
                     'status' => $this->status,
                     'note' => $this->description,
                 ]);
-                notify()->success('Data berhasil diubah!', 'Sukses');
-                return redirect()->route('admin.schedules.dashboard');
-            } catch (\Exception $e) {
-                notify()->error('Terjadi kesalahan saat menambahkan data.' . $e, 'Error');
-                return redirect()->back()->withErrors($e->getMessage());
-            }
-        } else {
-            try{
+            } else {
                 $schedule = ScheduleException::create([
                     'title' => $this->title,
                     'start_time' => $this->start_time,
                     'end_time' => $this->end_time,
                     'date' => $this->selectedDate,
-                    'department_id' => $departmentId,
                     'status' => $this->status,
                     'note' => $this->description,
                 ]);
-                $this->dispatch('eventCreated', $schedule->id);
-                notify()->success('Data berhasil ditambahkan!', 'Sukses');
-                return redirect()->route('admin.schedules.dashboard');
-            }catch (\Exception $e) {
-                notify()->error('Terjadi kesalahan saat menambahkan data.' . $e, 'Error');
-                return redirect()->back()->withErrors($e->getMessage());
             }
-            
-        }
 
+            // Sync departments
+            $schedule->departments()->sync($this->selectedDepartments);
+
+            $this->dispatch('eventCreated', $schedule->id);
+            notify()->success($this->isEditing ? 'Data berhasil diubah!' : 'Data berhasil ditambahkan!', 'Sukses');
+            return redirect()->route('admin.schedules.dashboard');
+
+        } catch (\Exception $e) {
+            notify()->error('Terjadi kesalahan saat ' . ($this->isEditing ? 'mengubah' : 'menambahkan') . ' data.' . $e, 'Error');
+            return redirect()->back()->withErrors($e->getMessage());
+        }
     }
 }
