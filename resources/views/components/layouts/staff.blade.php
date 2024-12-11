@@ -27,6 +27,7 @@
                 display: none !important;
             }
         </style>
+        @laravelPWA
     </head>
 
     <body class="bg-gray-100 h-screen">

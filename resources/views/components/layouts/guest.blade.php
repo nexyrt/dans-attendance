@@ -15,7 +15,7 @@
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-
+    
     <style>
         @keyframes float {
             0% {
@@ -64,6 +64,7 @@
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
         }
     </style>
+    @laravelPWA
 </head>
 
 <body class="font-sans antialiased">
