@@ -59,7 +59,6 @@ class LeaveRequestsTable extends Component
             ->orderBy('name')
             ->get();
 
-        // Initialize default date range to current month
         $this->filters['startDate'] = now()->startOfMonth()->format('Y-m-d');
         $this->filters['endDate'] = now()->endOfMonth()->format('Y-m-d');
         $this->activeFilters = array_filter($this->filters, fn($value) => !empty ($value));
@@ -133,16 +132,62 @@ class LeaveRequestsTable extends Component
 
     public function updateStatus($newStatus)
     {
-        if ($this->selectedRequest) {
-            $this->selectedRequest->update([
-                'status' => $newStatus,
-                'approved_by' => auth()->id(),
-                'approved_at' => now(),
-            ]);
+        if (!$this->selectedRequest) {
+            return;
+        }
+
+        try {
+            if ($newStatus === 'approved' && $this->selectedRequest->type === 'annual') {
+                // Check leave balance
+                $balanceCheck = $this->checkLeaveBalance(
+                    $this->selectedRequest->user_id,
+                    $this->selectedRequest->start_date,
+                    $this->selectedRequest->end_date
+                );
+
+                if (!$balanceCheck['available']) {
+                    session()->flash('error', $balanceCheck['message']);
+                    return;
+                }
+
+                // Start a database transaction
+                \DB::beginTransaction();
+
+                try {
+                    // Update the leave request status
+                    $this->selectedRequest->update([
+                        'status' => $newStatus,
+                        'approved_by' => auth()->id(),
+                        'approved_at' => now(),
+                    ]);
+
+                    // Update leave balance
+                    $balance = $balanceCheck['balance'];
+                    $balance->used_balance += $balanceCheck['days'];
+                    $balance->remaining_balance -= $balanceCheck['days'];
+                    $balance->save();
+
+                    \DB::commit();
+                    session()->flash('message', 'Leave request status updated and balance adjusted successfully.');
+                } catch (\Exception $e) {
+                    \DB::rollBack();
+                    session()->flash('error', 'Error updating leave request: ' . $e->getMessage());
+                    return;
+                }
+            } else {
+                $this->selectedRequest->update([
+                    'status' => $newStatus,
+                    'approved_by' => auth()->id(),
+                    'approved_at' => now(),
+                ]);
+                session()->flash('message', 'Leave request status updated successfully.');
+            }
             $this->showStatusModal = false;
             $this->selectedRequest = null;
-            session()->flash('message', 'Leave request status updated successfully.');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error updating leave request: ' . $e->getMessage());
         }
+
     }
 
     public function editRequest($requestId)
@@ -166,16 +211,58 @@ class LeaveRequestsTable extends Component
             'editForm.reason' => 'required|string',
         ]);
 
-        $this->selectedRequest->update([
-            'type' => $this->editForm['type'],
-            'start_date' => $this->editForm['start_date'],
-            'end_date' => $this->editForm['end_date'],
-            'reason' => $this->editForm['reason'],
-        ]);
+        try {
+            // If it's an approved annual leave request
+            if ($this->selectedRequest->status === 'approved' && $this->selectedRequest->type === 'annual') {
+                // Start transaction
+                \DB::beginTransaction();
 
-        $this->showEditModal = false;
-        $this->selectedRequest = null;
-        $this->dispatch('request-updated');
+                // Restore old balance
+                $this->restoreLeaveBalance(
+                    $this->selectedRequest->user_id,
+                    $this->selectedRequest->start_date,
+                    $this->selectedRequest->end_date
+                );
+
+                // Check new balance
+                $balanceCheck = $this->checkLeaveBalance(
+                    $this->selectedRequest->user_id,
+                    $this->editForm['start_date'],
+                    $this->editForm['end_date']
+                );
+
+                if (!$balanceCheck['available']) {
+                    \DB::rollBack();
+                    session()->flash('error', $balanceCheck['message']);
+                    return;
+                }
+
+                // Update leave balance with new dates
+                $balance = $balanceCheck['balance'];
+                $balance->used_balance += $balanceCheck['days'];
+                $balance->remaining_balance -= $balanceCheck['days'];
+                $balance->save();
+            }
+
+            // Update the request
+            $this->selectedRequest->update([
+                'type' => $this->editForm['type'],
+                'start_date' => $this->editForm['start_date'],
+                'end_date' => $this->editForm['end_date'],
+                'reason' => $this->editForm['reason'],
+            ]);
+
+            \DB::commit();
+
+            $this->showEditModal = false;
+            $this->selectedRequest = null;
+            $this->dispatch('request-updated');
+            session()->flash('message', 'Leave request updated successfully.');
+
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            session()->flash('error', 'Error updating leave request: ' . $e->getMessage());
+        }
     }
 
     public function createRequest()
@@ -189,49 +276,15 @@ class LeaveRequestsTable extends Component
             'createForm.approved_by' => 'required|exists:users,id',
         ]);
 
-        // Check leave balance for annual leave type
-        if ($this->createForm['type'] === 'annual') {
-            $balanceCheck = $this->checkLeaveBalance(
-                $this->createForm['user_id'],
-                $this->createForm['start_date'],
-                $this->createForm['end_date']
-            );
-
-            if (!$balanceCheck['available']) {
-                session()->flash('error', $balanceCheck['message']);
-                return;
-            }
-
-            // Create leave request
-            $leaveRequest = LeaveRequest::create([
-                'user_id' => $this->createForm['user_id'],
-                'type' => $this->createForm['type'],
-                'start_date' => $this->createForm['start_date'],
-                'end_date' => $this->createForm['end_date'],
-                'reason' => $this->createForm['reason'],
-                'approved_by' => $this->createForm['approved_by'],
-                'status' => 'pending',
-            ]);
-
-            // Update leave balance
-            if ($leaveRequest) {
-                $balance = $balanceCheck['balance'];
-                $balance->used_balance += $balanceCheck['days'];
-                $balance->remaining_balance -= $balanceCheck['days'];
-                $balance->save();
-            }
-        } else {
-            // For non-annual leave types, create without balance check
-            LeaveRequest::create([
-                'user_id' => $this->createForm['user_id'],
-                'type' => $this->createForm['type'],
-                'start_date' => $this->createForm['start_date'],
-                'end_date' => $this->createForm['end_date'],
-                'reason' => $this->createForm['reason'],
-                'approved_by' => $this->createForm['approved_by'],
-                'status' => 'pending',
-            ]);
-        }
+        LeaveRequest::create([
+            'user_id' => $this->createForm['user_id'],
+            'type' => $this->createForm['type'],
+            'start_date' => $this->createForm['start_date'],
+            'end_date' => $this->createForm['end_date'],
+            'reason' => $this->createForm['reason'],
+            'approved_by' => $this->createForm['approved_by'],
+            'status' => 'pending',
+        ]);
 
         $this->showCreateModal = false;
         $this->reset('createForm');
@@ -242,6 +295,23 @@ class LeaveRequestsTable extends Component
     public function updatedFiltersSearch()
     {
         $this->resetPage();
+    }
+
+
+    // Add a method to handle balance restoration if needed
+    private function restoreLeaveBalance($userId, $startDate, $endDate)
+    {
+        $year = Carbon::parse($startDate)->year;
+        $leaveBalance = LeaveBalance::where('user_id', $userId)
+            ->where('year', $year)
+            ->first();
+
+        if ($leaveBalance) {
+            $days = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate)) + 1;
+            $leaveBalance->used_balance -= $days;
+            $leaveBalance->remaining_balance += $days;
+            $leaveBalance->save();
+        }
     }
 
     public function setDateRange($range)

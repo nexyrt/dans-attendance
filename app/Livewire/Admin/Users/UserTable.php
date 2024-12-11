@@ -3,8 +3,11 @@
 namespace App\Livewire\Admin\Users;
 
 use App\Models\User;
+use App\Models\Attendance;
 use Livewire\Component;
 use App\Models\Department;
+use Carbon\Carbon;
+
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 
@@ -103,6 +106,74 @@ class UserTable extends Component
         $this->sortField = $field;
     }
 
+    public function getUserStatus($user)
+    {
+        $lastAttendance = Attendance::where('user_id', $user->id)
+            ->latest()
+            ->first();
+
+        if (!$lastAttendance) {
+            return [
+                'status' => 'inactive',
+                'last_active' => 'Never attended',
+                'status_color' => 'gray'
+            ];
+        }
+
+        $now = Carbon::now();
+        $attendanceDate = Carbon::parse($lastAttendance->date);
+
+        // If attendance is today
+        if ($attendanceDate->isToday()) {
+            if (!$lastAttendance->check_out) {
+                return [
+                    'status' => 'active',
+                    'last_active' => 'Working now',
+                    'status_color' => 'green'
+                ];
+            }
+            return [
+                'status' => 'offline',
+                'last_active' => 'Today at ' . Carbon::parse($lastAttendance->check_out)->format('h:i A'),
+                'status_color' => 'yellow'
+            ];
+        }
+
+        // If attendance was yesterday
+        if ($attendanceDate->isYesterday()) {
+            return [
+                'status' => 'inactive',
+                'last_active' => 'Yesterday',
+                'status_color' => 'gray'
+            ];
+        }
+
+        // If within this week
+        if ($attendanceDate->isCurrentWeek()) {
+            return [
+                'status' => 'inactive',
+                'last_active' => $attendanceDate->format('l'), // Returns day name (e.g., Monday)
+                'status_color' => 'gray'
+            ];
+        }
+
+        // If within this month
+        if ($attendanceDate->isCurrentMonth()) {
+            return [
+                'status' => 'inactive',
+                'last_active' => $attendanceDate->format('M d'), // Returns like "Jan 15"
+                'status_color' => 'gray'
+            ];
+        }
+
+        // If older than a month
+        return [
+            'status' => 'inactive',
+            'last_active' => $attendanceDate->format('M d, Y'), // Returns like "Jan 15, 2024"
+            'status_color' => 'gray'
+        ];
+    }
+
 
     public function render()
     {
@@ -121,8 +192,15 @@ class UserTable extends Component
                 $query->whereIn('role', $this->selectedRoles);
             })
             ->latest()
-
             ->orderBy($this->sortField, $this->sortDirection);
+
+        $users = $query->paginate($this->perPage);
+
+        // Add status information to each user
+        $users->getCollection()->transform(function ($user) {
+            $user->status_info = $this->getUserStatus($user);
+            return $user;
+        });
 
         $stats = [
             'total_employees' => User::count(),
@@ -131,7 +209,7 @@ class UserTable extends Component
         ];
 
         return view('livewire.admin.users.user-management', [
-            'users' => $query->paginate($this->perPage),
+            'users' => $users,
             'stats' => $stats,
             'departments' => Department::orderBy('name')->get(),
         ]);
