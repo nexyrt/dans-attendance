@@ -22,6 +22,7 @@ class Department extends Model
     // Relationship with Schedule Exceptions
     public function scheduleExceptions()
     {
-        return $this->belongsToMany(ScheduleException::class);
+        return $this->belongsToMany(ScheduleException::class, 'department_schedule_exception')
+            ->withTimestamps();
     }
 }

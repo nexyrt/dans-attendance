@@ -12,6 +12,7 @@ use App\Models\Schedule;
 use App\Models\ScheduleException;
 use Cake\Chronos\Chronos;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -29,10 +30,13 @@ class DashboardController extends Controller
         $schedule = Schedule::where('day_of_week', strtolower($today->format('l')))
             ->first();
 
-        $scheduleException = ScheduleException::where('date', $today->format('Y-m-d'))
-            ->where(function ($query) use ($user) {
-                $query->where('department_id', $user->department_id)
-                    ->orWhereNull('department_id');
+        // Get schedule exception through the pivot table
+        $scheduleException = ScheduleException::whereDate('date', $today->format('Y-m-d'))
+            ->whereExists(function ($query) use ($user) {
+                $query->select(DB::raw(1))
+                    ->from('department_schedule_exception')
+                    ->whereColumn('schedule_exceptions.id', 'department_schedule_exception.schedule_exception_id')
+                    ->where('department_schedule_exception.department_id', $user->department_id);
             })
             ->first();
 
@@ -127,10 +131,10 @@ class DashboardController extends Controller
             return 0;
         }
 
-        $checkOut = $attendance->check_out ? 
-            Chronos::parse($attendance->check_out) : 
+        $checkOut = $attendance->check_out ?
+            Chronos::parse($attendance->check_out) :
             Chronos::now();
-        
+
         $checkIn = Chronos::parse($attendance->check_in);
         $hours = $checkIn->diffInMinutes($checkOut) / 60;
 

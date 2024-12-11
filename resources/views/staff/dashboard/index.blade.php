@@ -285,8 +285,10 @@
 
             <!-- Recent Activity -->
             <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <!-- Header -->
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center space-x-3">
+                        <!-- Icon -->
                         <div class="p-2 bg-indigo-50 rounded-lg">
                             <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-indigo-500" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
@@ -294,93 +296,146 @@
                                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
+                        <!-- Title -->
                         <div>
                             <h2 class="text-lg font-semibold text-gray-900">Recent Activity</h2>
                             <p class="text-sm text-gray-500">Your attendance history</p>
                         </div>
                     </div>
-                    <button class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">View All</button>
+                    <!-- View All Link -->
+                    <a href="{{ route('staff.attendance.index') }}"
+                        class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+                        View All
+                    </a>
                 </div>
 
+                <!-- Activity List -->
                 <div class="space-y-4">
-                    <!-- Activity Timeline -->
-                    <div class="relative pl-8 pb-6 border-l-2 border-gray-100 last:border-0">
-                        <div
-                            class="absolute -left-2 top-0 w-4 h-4 rounded-full bg-green-100 border-2 border-green-400">
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <p class="text-sm font-medium text-gray-900">Checked in</p>
-                            <span class="text-sm text-gray-500">Today, 08:30 AM</span>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">On time arrival at office location</p>
-                    </div>
+                    @forelse($recentActivity as $activity)
+                        <div class="relative pl-8 pb-6 border-l-2 border-gray-100 last:border-0">
+                            <!-- Status Indicator Dot -->
+                            <div @class([
+                                'absolute -left-2 top-0 w-4 h-4 rounded-full',
+                                'bg-yellow-100 border-2 border-yellow-400' =>
+                                    $activity['type'] === 'check_in' && $activity['status'] === 'late',
+                                'bg-green-100 border-2 border-green-400' =>
+                                    $activity['type'] === 'check_in' && $activity['status'] !== 'late',
+                                'bg-red-100 border-2 border-red-400' => $activity['type'] === 'check_out',
+                            ])></div>
 
-                    <div class="relative pl-8 pb-6 border-l-2 border-gray-100 last:border-0">
-                        <div class="absolute -left-2 top-0 w-4 h-4 rounded-full bg-red-100 border-2 border-red-400">
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <p class="text-sm font-medium text-gray-900">Checked out</p>
-                            <span class="text-sm text-gray-500">Yesterday, 05:30 PM</span>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">Completed 9 hours of work</p>
-                    </div>
+                            <!-- Activity Header -->
+                            <div class="flex items-center justify-between">
+                                <!-- Activity Type -->
+                                <p class="text-sm font-medium text-gray-900">
+                                    @if ($activity['type'] === 'check_in')
+                                        {{ $activity['status'] === 'late' ? 'Late Arrival' : 'Checked in' }}
+                                    @else
+                                        Checked out
+                                    @endif
+                                </p>
 
-                    <div class="relative pl-8 pb-6 border-l-2 border-gray-100 last:border-0">
-                        <div
-                            class="absolute -left-2 top-0 w-4 h-4 rounded-full bg-yellow-100 border-2 border-yellow-400">
+                                <!-- Timestamp -->
+                                <time class="text-sm text-gray-500">
+                                    {{ Cake\Chronos\Chronos::parse($activity['date'])->isToday()
+                                        ? 'Today'
+                                        : (Cake\Chronos\Chronos::parse($activity['date'])->isYesterday()
+                                            ? 'Yesterday'
+                                            : Cake\Chronos\Chronos::parse($activity['date'])->format('D, M j')) }},
+                                    {{ Cake\Chronos\Chronos::parse($activity['time'])->format('H:i') }}
+                                </time>
+                            </div>
+
+                            <!-- Activity Details -->
+                            <p class="text-sm text-gray-500 mt-1">
+                                @if ($activity['type'] === 'check_in')
+                                    {{ $activity['notes'] ?: ($activity['status'] === 'late' ? 'Late arrival to office' : 'On time arrival at office') }}
+                                @else
+                                    @if ($activity['early_leave_reason'])
+                                        Left early: {{ $activity['early_leave_reason'] }}
+                                    @else
+                                        Completed {{ $activity['working_hours'] }} hours of work
+                                    @endif
+                                @endif
+                            </p>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <p class="text-sm font-medium text-gray-900">Late arrival</p>
-                            <span class="text-sm text-gray-500">Yesterday, 09:15 AM</span>
+                    @empty
+                        <div class="text-center py-4">
+                            <p class="text-gray-500">No recent activity found</p>
                         </div>
-                        <p class="text-sm text-gray-500 mt-1">45 minutes late due to traffic</p>
-                    </div>
+                    @endforelse
                 </div>
             </div>
 
             <!-- Upcoming Tasks Preview -->
-            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="flex items-center space-x-3">
-                        <div class="p-2 bg-purple-50 rounded-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-purple-500" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h2 class="text-lg font-semibold text-gray-900">Upcoming Tasks</h2>
-                            <p class="text-sm text-gray-500">Your pending assignments</p>
-                        </div>
+            <div class="relative bg-white rounded-xl p-6 shadow-sm border border-gray-100 overflow-hidden">
+                <!-- Coming Soon Overlay -->
+                <div
+                    class="absolute inset-0 backdrop-blur-sm bg-gradient-to-br from-white/50 to-gray-900/30 z-10 flex flex-col items-center justify-center">
+                    <div class="transform -rotate-1">
+                        <span
+                            class="inline-flex items-center justify-center px-6 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-purple-600/90 to-indigo-600/90 text-white shadow-lg backdrop-blur-sm">
+                            Coming Soon
+                        </span>
+                        <p class="mt-3 text-base font-medium text-white text-center text-shadow">
+                            Task Management Features
+                        </p>
                     </div>
-                    <button class="text-sm text-purple-600 hover:text-purple-700 font-medium">View Board</button>
+
+                    <!-- Decorative Elements -->
+                    <div class="absolute top-1/4 -right-6 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
+                    <div class="absolute bottom-1/4 -left-6 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl"></div>
                 </div>
 
-                <div class="space-y-4">
-                    @forelse([1,2,3] as $task)
-                        <div
-                            class="p-4 bg-gray-50 rounded-lg border border-gray-100 hover:border-purple-200 transition-colors duration-300">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <input type="checkbox"
-                                        class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
-                                    <div>
-                                        <h3 class="text-sm font-medium text-gray-900">Complete project documentation
-                                        </h3>
-                                        <p class="text-sm text-gray-500">Due tomorrow at 5:00 PM</p>
-                                    </div>
-                                </div>
-                                <span
-                                    class="px-2.5 py-1 text-xs font-medium bg-yellow-50 text-yellow-800 rounded-full">In
-                                    Progress</span>
+                <!-- Blurred Content Background -->
+                <div class="opacity-50 select-none">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center space-x-3">
+                            <div class="p-2 bg-purple-50 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-purple-500" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-semibold text-gray-900">Upcoming Tasks</h2>
+                                <p class="text-sm text-gray-500">Your pending assignments</p>
                             </div>
                         </div>
-                    @empty
-                        <div class="text-center py-4">
-                            <p class="text-gray-500">No tasks available</p>
+                    </div>
+
+                    <!-- Placeholder Tasks -->
+                    <div class="space-y-4">
+                        <div class="p-4 bg-gray-50/80 rounded-lg border border-gray-100">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-4 h-4 rounded border border-gray-300"></div>
+                                <div class="flex-1 space-y-1">
+                                    <div class="h-4 bg-gray-200/80 rounded w-3/4"></div>
+                                    <div class="h-3 bg-gray-200/80 rounded w-1/2"></div>
+                                </div>
+                            </div>
                         </div>
-                    @endforelse
+
+                        <div class="p-4 bg-gray-50/80 rounded-lg border border-gray-100">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-4 h-4 rounded border border-gray-300"></div>
+                                <div class="flex-1 space-y-1">
+                                    <div class="h-4 bg-gray-200/80 rounded w-2/3"></div>
+                                    <div class="h-3 bg-gray-200/80 rounded w-2/5"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-gray-50/80 rounded-lg border border-gray-100">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-4 h-4 rounded border border-gray-300"></div>
+                                <div class="flex-1 space-y-1">
+                                    <div class="h-4 bg-gray-200/80 rounded w-1/2"></div>
+                                    <div class="h-3 bg-gray-200/80 rounded w-1/3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -604,56 +659,74 @@
                 </div>
             </div>
 
-            <!-- Upcoming Events -->
-            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="flex items-center space-x-3">
-                        <div class="p-2 bg-emerald-50 rounded-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-emerald-500" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h2 class="text-lg font-semibold text-gray-900">Upcoming Events</h2>
-                            <p class="text-sm text-gray-500">Next 7 days</p>
-                        </div>
+            <!-- Upcoming Tasks Preview -->
+            <div class="relative bg-white rounded-xl p-6 shadow-sm border border-gray-100 overflow-hidden">
+                <!-- Coming Soon Overlay -->
+                <div
+                    class="absolute inset-0 backdrop-blur-sm bg-gradient-to-br from-white/50 to-gray-900/30 z-10 flex flex-col items-center justify-center">
+                    <div class="transform -rotate-1">
+                        <span
+                            class="inline-flex items-center justify-center px-6 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-purple-600/90 to-indigo-600/90 text-white shadow-lg backdrop-blur-sm">
+                            Coming Soon
+                        </span>
+                        <p class="mt-3 text-base font-medium text-white text-center text-shadow">
+                            Task Management Features
+                        </p>
                     </div>
+
+                    <!-- Decorative Elements -->
+                    <div class="absolute top-1/4 -right-6 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
+                    <div class="absolute bottom-1/4 -left-6 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl"></div>
                 </div>
 
-                <div class="space-y-4">
-                    <!-- Sample Events -->
-                    <div class="flex items-center p-4 bg-emerald-50 rounded-lg">
-                        <div class="flex-shrink-0 w-12 text-center">
-                            <p class="text-lg font-bold text-emerald-600">15</p>
-                            <p class="text-xs text-emerald-600">DEC</p>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-900">Company Meeting</p>
-                            <p class="text-xs text-gray-500">10:00 AM - 11:30 AM</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center p-4 bg-purple-50 rounded-lg">
-                        <div class="flex-shrink-0 w-12 text-center">
-                            <p class="text-lg font-bold text-purple-600">17</p>
-                            <p class="text-xs text-purple-600">DEC</p>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-900">Project Deadline</p>
-                            <p class="text-xs text-gray-500">Website Redesign</p>
+                <!-- Blurred Content Background -->
+                <div class="opacity-50 select-none">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center space-x-3">
+                            <div class="p-2 bg-purple-50 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-purple-500" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-semibold text-gray-900">Upcoming Tasks</h2>
+                                <p class="text-sm text-gray-500">Your pending assignments</p>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="flex items-center p-4 bg-blue-50 rounded-lg">
-                        <div class="flex-shrink-0 w-12 text-center">
-                            <p class="text-lg font-bold text-blue-600">20</p>
-                            <p class="text-xs text-blue-600">DEC</p>
+                    <!-- Placeholder Tasks -->
+                    <div class="space-y-4">
+                        <div class="p-4 bg-gray-50/80 rounded-lg border border-gray-100">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-4 h-4 rounded border border-gray-300"></div>
+                                <div class="flex-1 space-y-1">
+                                    <div class="h-4 bg-gray-200/80 rounded w-3/4"></div>
+                                    <div class="h-3 bg-gray-200/80 rounded w-1/2"></div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-900">Team Building</p>
-                            <p class="text-xs text-gray-500">2:00 PM - 5:00 PM</p>
+
+                        <div class="p-4 bg-gray-50/80 rounded-lg border border-gray-100">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-4 h-4 rounded border border-gray-300"></div>
+                                <div class="flex-1 space-y-1">
+                                    <div class="h-4 bg-gray-200/80 rounded w-2/3"></div>
+                                    <div class="h-3 bg-gray-200/80 rounded w-2/5"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-gray-50/80 rounded-lg border border-gray-100">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-4 h-4 rounded border border-gray-300"></div>
+                                <div class="flex-1 space-y-1">
+                                    <div class="h-4 bg-gray-200/80 rounded w-1/2"></div>
+                                    <div class="h-3 bg-gray-200/80 rounded w-1/3"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
