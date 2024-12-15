@@ -1,66 +1,119 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Dans Attendance Management - Patch v3.2
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Release Date
+2024-12-07
 
-## About Laravel
+## Overview
+Patch 3.2 introduces significant improvements to the Dans Attendance Management system, including a comprehensive Leave Management feature, migration from Carbon to Chronos for better date handling, and enhanced table designs for improved user experience.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🔨 Major Changes
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 📅 Date Handling Migration
+- Migrated from Carbon to Chronos for improved date management
+- Updated all date-related functions and methods across the system
+- Enhanced timezone handling and date calculations
+- Optimized date formatting and parsing operations
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 🌟 New Leave Management System
+#### Features
+- Complete CRUD operations for leave requests
+- Automated leave balance synchronization
+- Leave types supported:
+  - Annual Leave
+  - Sick Leave
+  - Important Leave
+  - Other Leave
+- Real-time balance checking and validation
+- Approval workflow with manager designation
 
-## Learning Laravel
+#### Leave Balance Integration
+- Automatic balance calculation and updates
+- Year-based leave quota management
+- Visual indicators for remaining balance
+- Historical leave record tracking
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 🎨 UI/UX Improvements
+- Redesigned all data tables for better readability
+- Implemented responsive table layouts
+- Added new filtering and sorting capabilities
+- Enhanced dark mode compatibility
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## 📋 Installation Instructions
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+1. Backup your database
+```bash
+php artisan backup:run
+```
 
-## Laravel Sponsors
+2. Update dependencies in composer.json
+```json
+{
+    "require": {
+        "cakephp/chronos": "^2.4",
+        "laravel/framework": "^10.0"
+    }
+}
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+3. Install new dependencies
+```bash
+composer update
+```
 
-### Premium Partners
+4. Run migrations
+```bash
+php artisan migrate
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+5. Publish new assets
+```bash
+php artisan vendor:publish --tag="dans-attendance-assets"
+php artisan view:clear
+php artisan cache:clear
+```
 
-## Contributing
+## ⚠️ Breaking Changes
+1. Carbon to Chronos Migration
+   - All Carbon::now() calls need to be replaced with Chronos::now()
+   - Date formatting methods may have slightly different syntax
+   - Custom date macros need to be updated
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+2. Database Schema Updates
+   - New tables for leave management
+   - Modified attendance tables structure
+   - Added foreign key constraints
 
-## Code of Conduct
+## 🔍 Testing Instructions
+1. Leave Management Testing
+   - Create new leave request
+   - Verify balance calculation
+   - Test approval workflow
+   - Check email notifications
+   - Verify balance updates
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+2. Date Handling Testing
+   - Verify attendance records
+   - Check leave duration calculations
+   - Test timezone conversions
+   - Validate date displays
 
-## Security Vulnerabilities
+## 🔄 Rollback Procedure
+If you need to rollback this patch:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+1. Restore database from backup
+```bash
+php artisan backup:restore
+```
 
-## License
+2. Revert composer.json changes and update
+```bash
+composer update
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 📝 Additional Notes
+- Leave balance is calculated based on the fiscal year
+- Managers must be designated in the system for leave approval
+- QA Team - Testing and verification
+
+## 📄 License
+Copyright © 2024 Dans Digital. All rights reserved.

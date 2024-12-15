@@ -48,10 +48,10 @@ class LeaveRequest extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function approver()
-    {
-        return $this->belongsTo(User::class, 'approved_by');
-    }
+    public function approvedBy()
+{
+    return $this->belongsTo(User::class, 'approved_by');
+}
 
     public function getDurationInDays()
     {

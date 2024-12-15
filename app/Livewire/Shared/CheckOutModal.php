@@ -4,17 +4,21 @@ namespace App\Livewire\Shared;
 
 use App\Models\Attendance;
 use App\Models\Schedule;
-use Carbon\Carbon;
+use App\Helpers\DateTimeHelper;
+use App\Traits\DateTimeComparison;
+use Cake\Chronos\Chronos;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class CheckOutModal extends Component
 {
-    // Public Properties
+    use DateTimeComparison;
+
     public $showModal = false;
     public $currentTime;
     public $attendance;
+    public $todayAttendance; // Add this property to track completed attendance
     public $workingHours;
     public $earlyLeaveReason;
     public $showEarlyLeaveForm = false;
@@ -22,74 +26,86 @@ class CheckOutModal extends Component
     public $schedule;
     public $hasCompletedAttendance = false;
 
-    // Livewire Event Listeners
     protected $listeners = ['openCheckOutModal' => 'openModal'];
 
-    // Validation Rules
     protected $rules = [
         'earlyLeaveReason' => 'required_if:showEarlyLeaveForm,true|string|max:255'
     ];
 
     public function mount()
     {
-        $this->getCurrentAttendance();
+        $this->loadTodayAttendance();
         $this->loadSchedule();
     }
 
-    public function getCurrentAttendance()
+    protected function loadTodayAttendance()
     {
-        $todayAttendance = Attendance::where('user_id', auth()->id())
-            ->whereDate('date', Carbon::today())
+        $this->todayAttendance = Attendance::where('user_id', auth()->id())
+            ->whereDate('date', DateTimeHelper::today())
             ->first();
 
-        if (!$todayAttendance) {
-            $this->attendance = null;
-            $this->hasCompletedAttendance = false;
+        if (!$this->todayAttendance) {
+            $this->resetAttendanceState();
             return;
         }
 
-        if ($todayAttendance->check_out) {
-            $this->attendance = null;
-            $this->hasCompletedAttendance = true;
+        if ($this->todayAttendance->check_out) {
+            $this->setCompletedAttendanceState();
             return;
         }
 
-        $this->attendance = $todayAttendance;
+        $this->setActiveAttendanceState();
+    }
+
+    protected function setCompletedAttendanceState()
+    {
+        $this->attendance = $this->todayAttendance;
+        $this->hasCompletedAttendance = true;
+        $this->workingHours = $this->todayAttendance->working_hours;
+    }
+
+    protected function setActiveAttendanceState()
+    {
+        $this->attendance = $this->todayAttendance;
         $this->hasCompletedAttendance = false;
         $this->calculateWorkingHours();
     }
 
+    protected function resetAttendanceState()
+    {
+        $this->attendance = null;
+        $this->hasCompletedAttendance = false;
+        $this->workingHours = 0;
+    }
+
     public function loadSchedule()
     {
-        $today = strtolower(Carbon::now()->format('l'));
+        $today = DateTimeHelper::currentDayName();
         $this->schedule = Schedule::where('day_of_week', $today)->first();
 
-        if ($this->schedule && $this->attendance) {
-            $currentTime = Carbon::now();
-            $endTime = Carbon::parse($this->schedule->end_time);
-            $this->showEarlyLeaveForm = $currentTime->lt($endTime);
+        if ($this->schedule && $this->attendance && !$this->hasCompletedAttendance) {
+            $currentTime = DateTimeHelper::now();
+            $endTime = DateTimeHelper::parse($this->schedule->end_time);
+            $this->showEarlyLeaveForm = $currentTime->lessThan($endTime);
         }
     }
 
     public function calculateWorkingHours()
     {
-        if ($this->attendance) {
-            $checkIn = Carbon::parse($this->attendance->check_in);
-            $this->workingHours = round($checkIn->floatDiffInHours(Carbon::now()), 1);
+        if ($this->attendance && $this->attendance->check_in) {
+            $checkIn = DateTimeHelper::parse($this->attendance->check_in);
+            $this->workingHours = round($checkIn->diffInHours(DateTimeHelper::now(), true), 1);
         }
     }
 
     public function openModal()
     {
         $this->resetState();
-        $this->getCurrentAttendance();
+        $this->loadTodayAttendance();
         $this->loadSchedule();
 
         if ($this->hasCompletedAttendance) {
-            $this->dispatch('notify', [
-                'type' => 'error',
-                'message' => 'You have already checked out for today.'
-            ]);
+            $this->showModal = true;
             return;
         }
 
@@ -106,6 +122,11 @@ class CheckOutModal extends Component
 
     public function checkOut()
     {
+        if ($this->hasCompletedAttendance) {
+            $this->closeModal();
+            return;
+        }
+
         if ($this->showEarlyLeaveForm) {
             $this->validate();
         }
@@ -115,22 +136,21 @@ class CheckOutModal extends Component
                 throw new Exception('No active attendance record found.');
             }
 
-            $currentTime = Carbon::now();
+            $currentTime = DateTimeHelper::now();
             $updateData = [
                 'check_out' => $currentTime,
                 'working_hours' => $this->workingHours,
             ];
 
-            // Only update status if it's an early leave
             if ($this->showEarlyLeaveForm) {
                 $updateData['status'] = 'early_leave';
                 $updateData['early_leave_reason'] = $this->earlyLeaveReason;
             }
 
-            // Update attendance record
             $this->attendance->update($updateData);
-
+            $this->loadTodayAttendance(); // Reload attendance after update
             $this->isSuccess = true;
+            
             $this->dispatch('notify', [
                 'type' => 'success',
                 'message' => 'Check-out successful!'
@@ -138,7 +158,7 @@ class CheckOutModal extends Component
 
             $this->dispatch('success-checkout');
         } catch (Exception $e) {
-            logger()->error('Check-out error: ' . $e->getMessage(), [
+            Log::error('Check-out error: ' . $e->getMessage(), [
                 'user_id' => auth()->id(),
                 'attendance_id' => $this->attendance?->id
             ]);
@@ -155,13 +175,28 @@ class CheckOutModal extends Component
         $this->isSuccess = false;
         $this->earlyLeaveReason = '';
         $this->showEarlyLeaveForm = false;
-        $this->attendance = null;
-        $this->hasCompletedAttendance = false;
+        $this->resetAttendanceState();
+    }
+
+    public function closeModal()
+    {
+        $this->showModal = false;
+        $this->resetState();
+    }
+
+    public function formatDate($date)
+    {
+        return $date ? DateTimeHelper::parse($date)->format('H:i:s') : '--:--:--';
+    }
+
+    public function getCurrentDate()
+    {
+        return DateTimeHelper::now()->format('l, d F Y');
     }
 
     public function render()
     {
-        $this->currentTime = Carbon::now()->format('H:i:s');
+        $this->currentTime = DateTimeHelper::now()->format('H:i:s');
         return view('livewire.shared.check-out-modal');
     }
 }

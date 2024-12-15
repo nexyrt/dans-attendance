@@ -1,4 +1,5 @@
 <div>
+    {{-- Alpine.js data initialization for modal handling and timer --}}
     <div x-data="{
         show: @entangle('showModal').live,
         isSuccess: false,
@@ -18,27 +19,29 @@
             this.isSuccess = false;
         }
     }" x-init="startTimer()" @success-checkin.window="isSuccess = true">
-        {{-- Modal Backdrop --}}
+        {{-- Semi-transparent backdrop overlay --}}
         <div x-show="show" x-cloak class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-[99]"
             x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
             x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         </div>
 
-        {{-- Modal Panel --}}
+        {{-- Modal Content Container --}}
         <div x-show="show" x-cloak class="fixed inset-0 z-[100] overflow-y-auto">
             <div class="flex min-h-screen items-center justify-center p-4">
                 <div
                     class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+
+                    {{-- Check-in Form State --}}
                     <div x-show="!isSuccess">
-                        {{-- Clock Display --}}
+                        {{-- Digital Clock Display --}}
                         <div class="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-indigo-100">
                             <div class="text-center">
                                 <div class="text-2xl font-semibold text-indigo-600" x-text="time"></div>
                             </div>
                         </div>
 
-                        {{-- Modal Content --}}
+                        {{-- Welcome Message and Schedule Information --}}
                         <div class="mt-3 text-center sm:mt-5">
                             <h3 class="text-xl font-semibold leading-6 text-gray-900">
                                 Selamat Datang!
@@ -47,14 +50,18 @@
                                 <p class="text-sm text-gray-500">
                                     @if ($schedule)
                                         @php
-                                            $startTime = \Carbon\Carbon::parse($schedule->start_time)->format('H:i');
-                                            $currentTime = \Carbon\Carbon::now();
-                                            $toleranceTime = \Carbon\Carbon::parse($schedule->start_time)
+                                            $startTime = \App\Helpers\DateTimeHelper::parse(
+                                                $schedule->start_time,
+                                            )->format('H:i');
+                                            $currentTime = \App\Helpers\DateTimeHelper::now();
+                                            $toleranceTime = \App\Helpers\DateTimeHelper::parse($schedule->start_time)
                                                 ->addMinutes($schedule->late_tolerance)
                                                 ->format('H:i');
                                         @endphp
 
-                                        @if ($currentTime->gt(\Carbon\Carbon::parse($schedule->start_time)->addMinutes($schedule->late_tolerance)))
+                                        @if (
+                                            $currentTime->greaterThan(
+                                                \App\Helpers\DateTimeHelper::parse($schedule->start_time)->addMinutes($schedule->late_tolerance)))
                                             <span class="text-red-500">
                                                 Anda terlambat. Check-in setelah {{ $toleranceTime }} akan dihitung
                                                 sebagai keterlambatan.
@@ -72,11 +79,13 @@
                             </div>
                         </div>
 
-                        {{-- Action Button --}}
+                        {{-- Check-in Button --}}
                         <div class="mt-5 sm:mt-6">
                             <button type="button" wire:click="checkIn" wire:loading.attr="disabled"
                                 class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50">
+                                {{-- Button text state --}}
                                 <span wire:loading.remove>Check In Sekarang</span>
+                                {{-- Loading spinner state --}}
                                 <span wire:loading class="flex items-center justify-center">
                                     <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -92,8 +101,9 @@
                         </div>
                     </div>
 
-                    {{-- Success State --}}
+                    {{-- Success State Display --}}
                     <div x-show="isSuccess">
+                        {{-- Success Icon --}}
                         <div class="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-green-100">
                             <svg class="h-16 w-16 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor">
@@ -101,6 +111,7 @@
                                     d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
+                        {{-- Success Message --}}
                         <div class="mt-3 text-center sm:mt-5">
                             <h3 class="text-lg font-medium leading-6 text-gray-900">
                                 Check In Berhasil!

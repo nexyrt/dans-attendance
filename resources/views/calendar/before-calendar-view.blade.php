@@ -49,8 +49,7 @@
                 {{-- Search with Loading States --}}
                 <div class="relative flex-1 w-full">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class='bx bx-search text-gray-400' wire:loading.remove wire:target="search"></i>
-                        <i class='bx bx-loader-alt animate-spin text-gray-400' wire:loading wire:target="search"></i>
+                        <i class='bx bx-search text-gray-400'></i>
                     </div>
                     <input type="text" wire:model.live.debounce.300ms="search"
                         placeholder="Search events by title..."
