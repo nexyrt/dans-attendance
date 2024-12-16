@@ -36,6 +36,15 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::created(function ($user) {
+            $user->initializeYearlyLeaveBalance();
+        });
+    }
+
     public function attendance()
     {
         return $this->hasMany(Attendance::class, 'user_id');
@@ -67,9 +76,9 @@ class User extends Authenticatable
     }
 
     public function approvedLeaves()
-{
-    return $this->hasMany(LeaveRequest::class, 'approved_by');
-}
+    {
+        return $this->hasMany(LeaveRequest::class, 'approved_by');
+    }
 
     /**
      * Get current year's leave balance

@@ -40,7 +40,7 @@
 
             <!-- Mobile Overlay -->
             <div x-show="open" x-transition.opacity @click="open = false"
-                class="fixed inset-0 bg-white rounded-xl backdrop-blur-sm z-0 lg:hidden"> 
+                class="fixed inset-0 bg-white rounded-xl backdrop-blur-sm z-0 lg:hidden">
             </div>
 
             <!-- Sidebar Content -->
@@ -116,12 +116,47 @@
                             <span>Attendance</span>
                         </a>
 
-                        <!-- Leave Requests -->
-                        <a href="{{ route('admin.leave-request.index') }}"
-                            class="flex items-center px-3 py-2 mt-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.leave-request.*') ? 'text-blue-700 bg-blue-50 dark:text-white dark:bg-gray-700' : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700' }}">
-                            <i class='bx bx-calendar-exclamation text-xl mr-3'></i>
-                            <span>Leave Requests</span>
-                        </a>
+                        <!-- Leave Section -->
+                        <p class="px-3 mt-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            Leave
+                        </p>
+                        <div x-data="{ open: {{ request()->routeIs('admin.leave.*') ? 'true' : 'false' }} }">
+                            <button @click="open = !open"
+                                class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                                :class="{'text-blue-700 bg-blue-50 dark:text-white dark:bg-gray-700': {{ request()->routeIs('admin.leave.*') ? 'true' : 'false' }} }">
+                                <div class="flex items-center">
+                                    <i class='bx bx-calendar-exclamation text-xl mr-3'></i>
+                                    <span>Leave Management</span>
+                                </div>
+                                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 transition-transform" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            <div x-show="open" x-transition:enter="transition ease-out duration-100"
+                                x-transition:enter-start="transform opacity-0 scale-95"
+                                x-transition:enter-end="transform opacity-100 scale-100" class="mt-1 pl-10 space-y-1">
+                                <a href=""
+                                    class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.schedules.dashboard') ? 'text-blue-700 bg-blue-50 dark:text-white dark:bg-gray-700' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700' }}">
+                                    Dashboard
+                                </a>
+
+                                <!-- Leave Requests -->
+                                <a href="{{ route('admin.leave.leave-request') }}"
+                                    class="flex items-center px-3 py-2 mt-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.leave.leave-request') ? 'text-blue-700 bg-blue-50 dark:text-white dark:bg-gray-700' : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700' }}">
+                                    <span>Leave Requests</span>
+                                </a>
+
+                                <!-- Leave Balance -->
+                                <a href="{{ route('admin.leave.leave-balance') }}"
+                                    class="flex items-center px-3 py-2 mt-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.leave.leave-balance') ? 'text-blue-700 bg-blue-50 dark:text-white dark:bg-gray-700' : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700' }}">
+                                    <span>Leave Balance</span>
+                                </a>
+                            </div>
+                        </div>
+
 
                         <!-- Schedule Section -->
                         <p class="px-3 mt-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">
