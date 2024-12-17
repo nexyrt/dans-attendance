@@ -1,5 +1,3 @@
-<!-- resources/views/layouts/admin.blade.php -->
-
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
@@ -20,9 +18,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     @notifyCss
-    @laravelPWA
-
-
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
