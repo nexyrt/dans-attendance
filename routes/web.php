@@ -1,8 +1,11 @@
 <?php
 
 use App\Exports\UsersExport;
-use App\Livewire\Admin\LeaveRequest\LeaveRequestsTable;
+use App\Http\Controllers\Admin\Leave\LeaveDashboard;
+use App\Livewire\Admin\Leave\LeaveBalance;
+
 use App\Models\LeaveRequest;
+use App\Livewire\Admin\Leave\LeaveRequestsTable;
 
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -41,7 +44,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
             return Excel::download(new UsersExport($department, $position, $name), 'users.xlsx');
         })->name('export');
 
-        Route::get('/{user}/detail', UserDetail::class)->name('detail');
+        Route::get('/{user}', UserDetail::class)->name('detail');
     });
 
     //Schedules
@@ -51,11 +54,15 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
     });
 
     Route::prefix('attendances')->name('attendances.')->group(function () {
-        Route::get('/dashboard', AttendanceRecord::class)->name('index');
+        Route::get('/', AttendanceRecord::class)->name('index');
     });
 
-    Route::prefix('leave-request')->name('leave-request.')->group(function () {
-        Route::get('/', LeaveRequestsTable::class)->name('index');
+
+
+    Route::prefix('leave')->name('leave.')->group(function () {
+        Route::get('/', [LeaveDashboard::class, 'index'])->name('dashboard');
+        Route::get('/leave-request', LeaveRequestsTable::class)->name('leave-request');
+        Route::get('/leave-balance', LeaveBalance::class)->name('leave-balance');
     });
 
     // Future Routes
@@ -101,6 +108,10 @@ Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->grou
     //     Route::patch('/password', [Staff\ProfileController::class, 'updatePassword'])->name('password.update');
     //     Route::patch('/photo', [Staff\ProfileController::class, 'updatePhoto'])->name('photo.update');
     // });
+});
+
+Route::middleware(['auth', 'role:manager'])->prefix('manager')->name('manager.')->group(function () {
+    Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
 });
 
 Route::middleware('auth')->group(function () {

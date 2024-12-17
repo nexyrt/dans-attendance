@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Admin\LeaveRequest;
+namespace App\Livewire\Admin\Leave;
 
 use App\Models\Department;
 use App\Models\LeaveBalance;
@@ -444,7 +444,7 @@ class LeaveRequestsTable extends Component
     {
         $statistics = $this->getStatistics();
         $departments = Department::all();
-        return view('livewire.admin.leave-request.leave-requests-table', [
+        return view('livewire.admin.leave.leave-requests-table', [
             'leaveRequests' => $this->getLeaveRequests(),
             'statistics' => $statistics,
             'departments' => $departments
