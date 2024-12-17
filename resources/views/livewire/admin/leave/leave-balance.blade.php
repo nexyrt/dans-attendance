@@ -1,40 +1,4 @@
 <div>
-
-    <style>
-        .range-slider {
-            @apply appearance-none bg-transparent cursor-pointer;
-            height: 1rem;
-        }
-
-        .range-slider::-webkit-slider-thumb {
-            @apply appearance-none w-4 h-4 rounded-full bg-white border-2 border-blue-500 shadow;
-            margin-top: -0.5rem;
-        }
-
-        .range-slider::-moz-range-thumb {
-            @apply w-4 h-4 rounded-full bg-white border-2 border-blue-500 shadow;
-        }
-
-        .dark .range-slider::-webkit-slider-thumb {
-            @apply bg-gray-800 border-blue-400;
-        }
-
-        .dark .range-slider::-moz-range-thumb {
-            @apply bg-gray-800 border-blue-400;
-        }
-
-        /* Hide default track */
-        .range-slider::-webkit-slider-runnable-track {
-            @apply appearance-none bg-transparent;
-            height: 0.5rem;
-        }
-
-        .range-slider::-moz-range-track {
-            @apply bg-transparent;
-            height: 0.5rem;
-        }
-    </style>
-
     {{-- Care about people's approval and you will be their prisoner. --}}
     <x-layouts.admin>
         <!-- Statistics Cards -->
@@ -162,14 +126,14 @@
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Leave Balances</h3>
             </div>
 
-            <!-- Filters Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
-                <!-- Left Column: Search and Year -->
-                <div class="space-y-4">
+            <!-- Filters Section -->
+            <div class="w-full p-4">
+                <div class="flex flex-col sm:flex-row gap-4">
                     <!-- Search Employee -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Search
-                            Employee</label>
+                    <div class="w-full sm:w-2/3">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Search Employee
+                        </label>
                         <div class="relative">
                             <input type="text" wire:model.live.debounce.300ms="filters.search"
                                 class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-blue-500 focus:border-blue-500 pl-10"
@@ -185,8 +149,10 @@
                     </div>
 
                     <!-- Year Select -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Year</label>
+                    <div class="w-full sm:w-1/3">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Year
+                        </label>
                         <select wire:model.live="filters.year"
                             class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-blue-500 focus:border-blue-500">
                             @foreach($years as $year)
@@ -195,10 +161,7 @@
                         </select>
                     </div>
                 </div>
-
-                
             </div>
-
 
             <!-- Table -->
             <div class="overflow-x-auto">

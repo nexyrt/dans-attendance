@@ -1,7 +1,9 @@
 <?php
 
 use App\Exports\UsersExport;
+use App\Http\Controllers\Admin\Leave\LeaveDashboard;
 use App\Livewire\Admin\Leave\LeaveBalance;
+
 use App\Models\LeaveRequest;
 use App\Livewire\Admin\Leave\LeaveRequestsTable;
 
@@ -58,6 +60,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
 
 
     Route::prefix('leave')->name('leave.')->group(function () {
+        Route::get('/', [LeaveDashboard::class, 'index'])->name('dashboard');
         Route::get('/leave-request', LeaveRequestsTable::class)->name('leave-request');
         Route::get('/leave-balance', LeaveBalance::class)->name('leave-balance');
     });
