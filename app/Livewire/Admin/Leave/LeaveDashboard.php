@@ -12,6 +12,7 @@ class LeaveDashboard extends Component
     public $selectedStatus = null;
     public $selectedRequest;
     public $showStatusModal = false;
+    public $timeFilter = 'month'; // Default time filter
     public $actionType = null; // Track which action was initiated
 
 
@@ -19,6 +20,23 @@ class LeaveDashboard extends Component
     protected $listeners = [
         'refreshComponent' => '$refresh'
     ];
+
+    public function setTimeFilter($period)
+    {
+        $this->timeFilter = $period;
+    }
+
+    private function getTimeFilterQuery($query)
+    {
+        return match ($this->timeFilter) {
+            'today' => $query->whereDate('created_at', Carbon::today()),
+            'week' => $query->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]),
+            'month' => $query->whereMonth('created_at', Carbon::now()->month)
+                ->whereYear('created_at', Carbon::now()->year),
+            'year' => $query->whereYear('created_at', Carbon::now()->year),
+            default => $query
+        };
+    }
 
     public function setStatusFilter($status)
     {
@@ -32,15 +50,46 @@ class LeaveDashboard extends Component
 
     private function getChartData($status)
     {
-        // Get last 7 months of data
+        $period = match ($this->timeFilter) {
+            'today' => 24,
+            'week' => 7,
+            'month' => Carbon::now()->daysInMonth,
+            'year' => 12,
+            default => 7
+        };
+
         $data = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
-            $data[] = LeaveRequest::where('status', $status)
-                ->whereYear('created_at', $date->year)
-                ->whereMonth('created_at', $date->month)
-                ->count();
+        $query = LeaveRequest::where('status', $status);
+
+        for ($i = $period - 1; $i >= 0; $i--) {
+            $date = match ($this->timeFilter) {
+                'today' => now()->subHours($i),
+                'week' => now()->subDays($i),
+                'month' => now()->subDays($i),
+                'year' => now()->subMonths($i),
+                default => now()->subDays($i)
+            };
+
+            $count = match ($this->timeFilter) {
+                'today' => $query->clone()
+                    ->whereDate('created_at', $date->format('Y-m-d'))
+                    ->whereRaw('HOUR(created_at) = ?', [$date->hour])
+                    ->count(),
+                'week', 'month' => $query->clone()
+                    ->whereDate('created_at', $date->format('Y-m-d'))
+                    ->count(),
+                'year' => $query->clone()
+                    ->whereYear('created_at', $date->year)
+                    ->whereMonth('created_at', $date->month)
+                    ->count(),
+                default => $query->clone()
+                    ->whereDate('created_at', $date->format('Y-m-d'))
+                    ->count()
+            };
+
+            $data[] = $count;
         }
+
         return $data;
     }
 
@@ -53,14 +102,19 @@ class LeaveDashboard extends Component
         foreach ($types as $type) {
             $query = LeaveRequest::where('type', $type);
 
+            // Apply time filter
+            $query = $this->getTimeFilterQuery($query);
+
             // Apply status filter if selected
             if ($this->selectedStatus) {
                 $query->where('status', $this->selectedStatus);
             }
 
             // Get counts by status
-            $statusCounts = LeaveRequest::where('type', $type)
-                ->selectRaw('status, count(*) as count')
+            $statusQuery = LeaveRequest::where('type', $type);
+            $statusQuery = $this->getTimeFilterQuery($statusQuery);
+
+            $statusCounts = $statusQuery->selectRaw('status, count(*) as count')
                 ->groupBy('status')
                 ->pluck('count', 'status')
                 ->toArray();
@@ -203,6 +257,7 @@ class LeaveDashboard extends Component
         return round((($currentValue - $previousValue) / $previousValue) * 100, 1);
     }
 
+
     private function getCurrentLeaves()
     {
         return LeaveRequest::where('status', 'approved')
@@ -221,27 +276,27 @@ class LeaveDashboard extends Component
     {
         $leaveStats = [
             'approved' => [
-                'count' => LeaveRequest::where('status', 'approved')->count(),
+                'count' => $this->getTimeFilterQuery(LeaveRequest::where('status', 'approved'))->count(),
                 'chartData' => $this->getChartData('approved'),
                 'growth' => $this->calculateGrowth(
-                    LeaveRequest::where('status', 'approved')->whereMonth('created_at', now()->month)->count(),
-                    LeaveRequest::where('status', 'approved')->whereMonth('created_at', now()->subMonth()->month)->count()
+                    $this->getTimeFilterQuery(LeaveRequest::where('status', 'approved'))->count(),
+                    $this->getTimeFilterQuery(LeaveRequest::where('status', 'approved'))->where('created_at', '<', now()->subMonth())->count()
                 )
             ],
             'pending' => [
-                'count' => LeaveRequest::where('status', 'pending')->count(),
+                'count' => $this->getTimeFilterQuery(LeaveRequest::where('status', 'pending'))->count(),
                 'chartData' => $this->getChartData('pending'),
                 'growth' => $this->calculateGrowth(
-                    LeaveRequest::where('status', 'pending')->whereMonth('created_at', now()->month)->count(),
-                    LeaveRequest::where('status', 'pending')->whereMonth('created_at', now()->subMonth()->month)->count()
+                    $this->getTimeFilterQuery(LeaveRequest::where('status', 'pending'))->count(),
+                    $this->getTimeFilterQuery(LeaveRequest::where('status', 'pending'))->where('created_at', '<', now()->subMonth())->count()
                 )
             ],
             'rejected' => [
-                'count' => LeaveRequest::where('status', 'rejected')->count(),
+                'count' => $this->getTimeFilterQuery(LeaveRequest::where('status', 'rejected'))->count(),
                 'chartData' => $this->getChartData('rejected'),
                 'growth' => $this->calculateGrowth(
-                    LeaveRequest::where('status', 'rejected')->whereMonth('created_at', now()->month)->count(),
-                    LeaveRequest::where('status', 'rejected')->whereMonth('created_at', now()->subMonth()->month)->count()
+                    $this->getTimeFilterQuery(LeaveRequest::where('status', 'rejected'))->count(),
+                    $this->getTimeFilterQuery(LeaveRequest::where('status', 'rejected'))->where('created_at', '<', now()->subMonth())->count()
                 )
             ]
         ];
@@ -249,7 +304,7 @@ class LeaveDashboard extends Component
         $leaveTypeStats = $this->getLeaveTypeStats();
         $currentLeaves = $this->getCurrentLeaves();
 
-        $pendingLeaves = LeaveRequest::where('status', 'pending')
+        $pendingLeaves = $this->getTimeFilterQuery(LeaveRequest::where('status', 'pending'))
             ->with([
                 'user' => function ($query) {
                     $query->with('department');

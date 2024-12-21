@@ -322,110 +322,215 @@
 
                 {{-- Leave Types Overview Section --}}
                 <div class="px-4 mt-8">
-                    <div class="bg-white/80 backdrop-blur-lg rounded-2xl shadow-sm border border-gray-100">
-                        <div class="p-6 border-b border-gray-100">
-                            <!-- Header with Filter Pills -->
-                            <div class="flex flex-col space-y-4">
-                                <div class="flex items-center justify-between">
-                                    <h2 class="text-lg font-semibold text-gray-900">Leave Types Overview</h2>
+                    <div
+                        class="relative bg-white/80 backdrop-blur-lg rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <!-- Decorative background elements -->
+                        <div
+                            class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-gradient-to-br from-violet-100/40 to-violet-50/40 rounded-full blur-2xl">
+                        </div>
+                        <div
+                            class="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-gradient-to-tr from-emerald-100/40 to-emerald-50/40 rounded-full blur-2xl">
+                        </div>
+
+                        <!-- Header Section -->
+                        <div class="relative p-6 border-b border-gray-100">
+                            <div class="flex flex-col space-y-6">
+                                <!-- Title and Summary -->
+                                <div class="flex items-start justify-between">
+                                    <div class="space-y-1">
+                                        <h2 class="text-xl font-semibold text-gray-900">Leave Types Overview</h2>
+                                        <p class="text-sm text-gray-500">Track and analyze different types of leave
+                                            requests</p>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <!-- Time Filter Dropdown -->
+                                        <div x-data="{ open: false }" class="relative">
+                                            <button @click="open = !open"
+                                                class="flex items-center px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-colors group">
+                                                <svg class="w-4 h-4 text-gray-500 group-hover:text-violet-500 mr-2"
+                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                {{ ucfirst($timeFilter) }}
+                                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+
+                                            <!-- Dropdown Menu -->
+                                            <div x-show="open" @click.away="open = false"
+                                                x-transition:enter="transition ease-out duration-200"
+                                                x-transition:enter-start="opacity-0 scale-95"
+                                                x-transition:enter-end="opacity-100 scale-100"
+                                                x-transition:leave="transition ease-in duration-150"
+                                                x-transition:leave-start="opacity-100 scale-100"
+                                                x-transition:leave-end="opacity-0 scale-95"
+                                                class="absolute right-0 mt-2 w-40 rounded-xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 z-50">
+                                                <div class="py-1">
+                                                    @foreach(['today', 'week', 'month', 'year', 'all'] as $period)
+                                                    <button wire:click="setTimeFilter('{{ $period }}')"
+                                                        @click="open = false"
+                                                        class="group flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-violet-50 hover:text-violet-700">
+                                                        <span class="w-8">
+                                                            @if($timeFilter === $period)
+                                                            <svg class="w-4 h-4 text-violet-500" fill="none"
+                                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2" d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                            @endif
+                                                        </span>
+                                                        {{ ucfirst($period) }}
+                                                    </button>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Total Requests Badge -->
+                                        <span
+                                            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-violet-50 text-violet-700 ring-1 ring-violet-100/75">
+                                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                            </svg>
+                                            {{ array_sum(array_column($leaveTypeStats, 'count')) }} Total
+                                        </span>
+                                    </div>
                                 </div>
 
-                                <!-- Status Filter Pills -->
-                                <div class="flex flex-wrap gap-2">
-                                    <button wire:click="setStatusFilter(null)" class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
-                            {{ is_null($selectedStatus) 
-                                ? 'bg-violet-100 text-violet-800 ring-2 ring-violet-200' 
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                                        All Status
-                                        @if(is_null($selectedStatus))
-                                        <span
-                                            class="ml-2 text-xs bg-violet-200 text-violet-800 px-2 py-0.5 rounded-full">
-                                            {{ array_sum(array_column($leaveTypeStats, 'count')) }}
-                                        </span>
-                                        @endif
+                                <!-- Enhanced Filter Pills -->
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <div class="flex items-center pr-3 border-r border-gray-200">
+                                        <span class="text-sm font-medium text-gray-600">Filter by:</span>
+                                    </div>
+                                    <button wire:click="setStatusFilter(null)" class="relative inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105
+                                            {{ is_null($selectedStatus) 
+                                                ? 'bg-violet-100 text-violet-800 ring-2 ring-violet-200 shadow-sm' 
+                                                : 'bg-gray-50 text-gray-700 hover:bg-gray-100' }}">
+                                        <div class="flex items-center">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                            </svg>
+                                            All Status
+                                            @if(is_null($selectedStatus))
+                                            <span
+                                                class="ml-2 px-2 py-0.5 text-xs rounded-md bg-violet-200 text-violet-800">
+                                                {{ array_sum(array_column($leaveTypeStats, 'count')) }}
+                                            </span>
+                                            @endif
+                                        </div>
                                     </button>
                                     @foreach(['approved', 'pending', 'rejected'] as $status)
-                                    <button wire:click="setStatusFilter('{{ $status }}')" class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
-                            {{ $selectedStatus === $status 
-                                ? 'bg-' . ($status === 'approved' ? 'emerald' : ($status === 'pending' ? 'amber' : 'rose')) . '-100 
-                                   text-' . ($status === 'approved' ? 'emerald' : ($status === 'pending' ? 'amber' : 'rose')) . '-800
-                                   ring-2 ring-' . ($status === 'approved' ? 'emerald' : ($status === 'pending' ? 'amber' : 'rose')) . '-200' 
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                                        {{ ucfirst($status) }}
-                                        @if($selectedStatus === $status)
-                                        <span class="ml-2 text-xs bg-{{ ($status === 'approved' ? 'emerald' : ($status === 'pending' ? 'amber' : 'rose')) }}-200 
-                                   text-{{ ($status === 'approved' ? 'emerald' : ($status === 'pending' ? 'amber' : 'rose')) }}-800 
-                                   px-2 py-0.5 rounded-full">
-                                            {{ array_sum(array_column($leaveTypeStats, 'count')) }}
-                                        </span>
-                                        @endif
+                                    <button wire:click="setStatusFilter('{{ $status }}')" class="relative inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105
+                                            {{ $selectedStatus === $status 
+                                                ? 'bg-' . ($status === 'approved' ? 'emerald' : ($status === 'pending' ? 'amber' : 'rose')) . '-100 
+                                                   text-' . ($status === 'approved' ? 'emerald' : ($status === 'pending' ? 'amber' : 'rose')) . '-800
+                                                   ring-2 ring-' . ($status === 'approved' ? 'emerald' : ($status === 'pending' ? 'amber' : 'rose')) . '-200 shadow-sm' 
+                                                : 'bg-gray-50 text-gray-700 hover:bg-gray-100' }}">
+                                        <div class="flex items-center">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                @if($status === 'approved')
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                @elseif($status === 'pending')
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                @else
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                @endif
+                                            </svg>
+                                            {{ ucfirst($status) }}
+                                            @if($selectedStatus === $status)
+                                            <span
+                                                class="ml-2 px-2 py-0.5 text-xs rounded-md 
+                                                       bg-{{ ($status === 'approved' ? 'emerald' : ($status === 'pending' ? 'amber' : 'rose')) }}-200 
+                                                       text-{{ ($status === 'approved' ? 'emerald' : ($status === 'pending' ? 'amber' : 'rose')) }}-800">
+                                                {{ array_sum(array_column($leaveTypeStats, 'count')) }}
+                                            </span>
+                                            @endif
+                                        </div>
                                     </button>
                                     @endforeach
                                 </div>
                             </div>
                         </div>
 
-                        <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Stats Grid -->
+                        <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                             @foreach($leaveTypeStats as $type => $stats)
                             <div
-                                class="group relative rounded-xl border border-gray-100 p-4 hover:shadow-md transition-all duration-200">
-                                <div class="flex items-center justify-between mb-2">
-                                    <div class="flex items-center space-x-3">
-                                        <div
-                                            class="p-2 bg-{{ $stats['color'] }}-50 rounded-lg group-hover:scale-110 transition-transform duration-300">
-                                            <svg class="w-4 h-4 text-{{ $stats['color'] }}-500" fill="none"
-                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="{{ $stats['icon'] }}" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <span class="text-sm font-medium text-gray-900">{{ $stats['label'] }}</span>
-                                            <div class="flex items-center mt-0.5 space-x-2">
-                                                @foreach(['approved', 'pending', 'rejected'] as $status)
-                                                <span class="inline-flex items-center text-xs
-                                            {{ $selectedStatus === $status || is_null($selectedStatus) 
-                                                ? 'text-' . ($status === 'approved' ? 'emerald' : ($status === 'pending' ? 'amber' : 'rose')) . '-600' 
-                                                : 'text-gray-400' }}">
-                                                    {{ $stats['status_counts'][$status] ?? 0 }}
-                                                    {{ ucfirst($status) }}
-                                                </span>
-                                                @if(!$loop->last)
-                                                <span class="text-gray-300">•</span>
-                                                @endif
-                                                @endforeach
+                                class="group relative rounded-xl border border-gray-100/80 bg-white/50 p-5 hover:shadow-lg hover:border-violet-100/50 transition-all duration-300">
+                                <!-- Card Gradient Overlay -->
+                                <div
+                                    class="absolute inset-0 rounded-xl bg-gradient-to-br from-{{ $stats['color'] }}-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                                </div>
+
+                                <!-- Content -->
+                                <div class="relative">
+                                    <div class="flex items-center justify-between">
+                                        <!-- Icon and Label -->
+                                        <div class="flex items-center space-x-3">
+                                            <div
+                                                class="p-2.5 bg-{{ $stats['color'] }}-50 rounded-xl group-hover:scale-110 transition-transform duration-300 ring-1 ring-{{ $stats['color'] }}-100/50">
+                                                <svg class="w-5 h-5 text-{{ $stats['color'] }}-500" fill="none"
+                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="{{ $stats['icon'] }}" />
+                                                </svg>
+                                            </div>
+                                            <div class="space-y-1">
+                                                <h3
+                                                    class="text-sm font-semibold text-gray-900 group-hover:text-{{ $stats['color'] }}-700 transition-colors">
+                                                    {{ $stats['label'] }}
+                                                </h3>
+                                                <p class="text-xs text-gray-500">{{ $stats['count'] }} total requests
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div class="mt-3">
-                                    <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                    <!-- Status Counts -->
+                                    <div class="mt-4 grid grid-cols-3 gap-2">
                                         @foreach(['approved', 'pending', 'rejected'] as $status)
-                                        @php
-                                        $width = $stats['count'] > 0
-                                        ? (($stats['status_counts'][$status] ?? 0) / $stats['count']) * 100
-                                        : 0;
-                                        $color = $status === 'approved' ? 'emerald' : ($status === 'pending' ? 'amber' :
-                                        'rose');
-                                        @endphp
-                                        <div class="float-left h-full bg-{{ $color }}-500 transition-all duration-300"
-                                            style="width: {{ $width }}%">
+                                        <div
+                                            class="flex flex-col items-center p-2 rounded-lg 
+                                                  {{ $selectedStatus === $status ? 'bg-' . ($status === 'approved' ? 'emerald' : ($status === 'pending' ? 'amber' : 'rose')) . '-50' : 'bg-gray-50' }}">
+                                            <span class="text-lg font-semibold 
+                                                       {{ $selectedStatus === $status || is_null($selectedStatus) 
+                                                           ? 'text-' . ($status === 'approved' ? 'emerald' : ($status === 'pending' ? 'amber' : 'rose')) . '-600' 
+                                                           : 'text-gray-600' }}">
+                                                {{ $stats['status_counts'][$status] ?? 0 }}
+                                            </span>
+                                            <span class="text-xs text-gray-500">{{ ucfirst($status) }}</span>
                                         </div>
                                         @endforeach
                                     </div>
 
-                                    <div class="mt-2 flex items-center justify-between text-xs">
-                                        <div class="flex items-center space-x-3">
-                                            @foreach(['approved' => 'emerald', 'pending' => 'amber', 'rejected' =>
-                                            'rose'] as $status => $color)
-                                            <div class="flex items-center space-x-1">
-                                                <div class="w-2 h-2 rounded-full bg-{{ $color }}-500"></div>
-                                                <span class="text-gray-500">{{ ucfirst($status) }}</span>
+                                    <!-- Progress Bar -->
+                                    <div class="mt-4">
+                                        <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                            @foreach(['approved', 'pending', 'rejected'] as $status)
+                                            @php
+                                            $width = $stats['count'] > 0 ? (($stats['status_counts'][$status] ?? 0) /
+                                            $stats['count']) * 100 : 0;
+                                            $color = $status === 'approved' ? 'emerald' : ($status === 'pending' ?
+                                            'amber' : 'rose');
+                                            @endphp
+                                            <div class="float-left h-full bg-{{ $color }}-500 transition-all duration-300"
+                                                style="width: {{ $width }}%">
                                             </div>
                                             @endforeach
                                         </div>
-                                        <span class="text-gray-500">Total: {{ $stats['count'] }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -437,7 +542,6 @@
                 {{-- Main Grid Section --}}
                 <div class="px-4 mt-8">
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <!-- Left Section: Pending Leaves -->
                         <!-- Left Section: Pending Leaves -->
                         <div class="lg:col-span-2">
                             <div class="bg-white/80 backdrop-blur-lg rounded-2xl shadow-sm border border-gray-100">
