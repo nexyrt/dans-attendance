@@ -20,9 +20,9 @@ class DatabaseSeeder extends Seeder
             ScheduleSeeder::class,
             HolidaySeeder::class,
             ScheduleExceptionSeeder::class,
+            LeaveBalanceSeeder::class,
             LeaveRequestSeeder::class,
         ]);
-        LeaveBalance::factory()->count(20)->create();
 
     }
 }
