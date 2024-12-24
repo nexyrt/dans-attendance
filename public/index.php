@@ -56,8 +56,4 @@ $response = $kernel->handle(
     $request = Request::capture()
 )->send();
 
-if (app()->environment('local')) {
-    error_reporting(E_ALL & ~E_DEPRECATED);
-}
-
 $kernel->terminate($request, $response);
