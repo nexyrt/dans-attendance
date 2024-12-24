@@ -5,8 +5,9 @@ namespace App\Livewire\Shared;
 use App\Models\Attendance;
 use App\Models\Schedule;
 use App\Helpers\DateTimeHelper;
+use App\Models\Holiday;
+use App\Models\ScheduleException;
 use App\Traits\DateTimeComparison;
-use Cake\Chronos\Chronos;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
@@ -18,98 +19,133 @@ class CheckInModal extends Component
     public $showModal = false;
     public $currentTime;
     public $schedule;
+    public $holidayInfo = null;
 
     protected $listeners = ['closeModal' => 'closeModal'];
 
     public function mount()
     {
-        // Add debugging logs
         Log::info('CheckInModal mounted');
         $this->checkAttendance();
+    }
+
+    public function isHoliday()
+    {
+        try {
+            $today = now();
+            
+            // Check holidays table
+            $holiday = Holiday::query()
+                ->whereDate('start_date', '<=', $today)
+                ->whereDate('end_date', '>=', $today)
+                ->first();
+
+            if ($holiday) {
+                Log::info('Found holiday in holidays table');
+                $this->holidayInfo = [
+                    'type' => 'holiday',
+                    'title' => $holiday->title,
+                    'description' => $holiday->description
+                ];
+                return true;
+            }
+
+            // Check schedule exceptions
+            $exception = ScheduleException::query()
+                ->where('date', $today->toDateString())
+                ->where('status', 'holiday')
+                ->first();
+
+            if ($exception) {
+                Log::info('Found holiday in schedule exceptions');
+                $this->holidayInfo = [
+                    'type' => 'exception',
+                    'title' => $exception->title,
+                    'description' => $exception->note
+                ];
+                return true;
+            }
+
+            $this->holidayInfo = null;
+            return false;
+        } catch (Exception $e) {
+            Log::error('Error checking holiday status: ' . $e->getMessage());
+            return false;
+        }
     }
 
     public function checkAttendance()
     {
         try {
-            // Reset modal state
             $this->showModal = false;
-
-            // Debug logs
-            Log::info('Checking attendance...');
-
+            
             if ($this->isHoliday()) {
                 Log::info('Today is a holiday');
                 return;
             }
+
+            // Get current day name in lowercase to match database
+            $today = strtolower(now()->format('l'));
+            
+            Log::info('Checking schedule:', [
+                'day' => $today,
+                'current_time' => now()->format('H:i:s')
+            ]);
 
             if ($this->hasCheckedInToday()) {
                 Log::info('User already checked in today');
                 return;
             }
 
-            $today = DateTimeHelper::currentDayName();
-            Log::info('Current day: ' . $today);
-
+            // Find today's schedule
             $this->schedule = Schedule::where('day_of_week', $today)->first();
-
+            
             if (!$this->schedule) {
                 Log::info('No schedule found for today');
                 return;
             }
 
-            $currentTime = DateTimeHelper::now();
-            $startTime = DateTimeHelper::parse($this->schedule->start_time);
-            $endTime = DateTimeHelper::parse($this->schedule->end_time);
-            $toleranceStart = $startTime->subMinutes($this->schedule->late_tolerance);
-
-            Log::info('Time checks:', [
-                'current' => $currentTime->toDateTimeString(),
-                'start' => $startTime->toDateTimeString(),
-                'end' => $endTime->toDateTimeString(),
-                'tolerance' => $toleranceStart->toDateTimeString()
+            Log::info('Found schedule:', [
+                'start_time' => $this->schedule->start_time,
+                'end_time' => $this->schedule->end_time
             ]);
 
-            if ($this->isTimeInRange($currentTime, $toleranceStart, $endTime)) {
-                Log::info('Setting showModal to true');
+            $currentTime = now();
+            $startTime = now()->setTimeFromTimeString($this->schedule->start_time);
+            $endTime = now()->setTimeFromTimeString($this->schedule->end_time);
+            
+            // Check-in window starts 30 minutes before schedule
+            $checkInWindowStart = $startTime->copy()->subMinutes(30);
+            
+            Log::info('Time checks:', [
+                'current' => $currentTime->format('H:i:s'),
+                'window_start' => $checkInWindowStart->format('H:i:s'),
+                'start' => $startTime->format('H:i:s'),
+                'end' => $endTime->format('H:i:s')
+            ]);
+
+            // Check if current time is within the check-in window
+            if ($currentTime->between($checkInWindowStart, $endTime)) {
+                Log::info('Current time is within check-in window');
                 $this->showModal = true;
             } else {
-                Log::info('Current time not in range');
+                Log::info('Current time is outside check-in window');
             }
+
         } catch (Exception $e) {
-            Log::error('Error in checkAttendance: ' . $e->getMessage());
-            // You might want to throw the exception here to see it in development
+            Log::error('Error in checkAttendance:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
             throw $e;
-        }
-    }
-
-    public function isHoliday()
-    {
-        try {
-            $today = DateTimeHelper::now();
-
-            // Check if today is in the holidays table
-            $holiday = \App\Models\Holiday::query()
-                ->where('start_date', '<=', $today)
-                ->where('end_date', '>=', $today)
-                ->exists();
-
-            // Check if today is in schedule_exceptions with status 'holiday'
-            $scheduleException = \App\Models\ScheduleException::query()
-                ->where('date', $today->toDateString())
-                ->where('status', 'holiday')
-                ->exists();
-
-            return $holiday || $scheduleException;
-        } catch (Exception $e) {
-            Log::error('Error checking holiday status: ' . $e->getMessage());
-            return false; // Return false on error to allow check-in
         }
     }
 
     public function hasCheckedInToday()
     {
         return Attendance::where('user_id', auth()->id())
-            ->whereDate('date', DateTimeHelper::today())
+            ->whereDate('date', now()->toDateString())
             ->exists();
     }
 
@@ -120,9 +156,9 @@ class CheckInModal extends Component
                 throw new Exception('No schedule found for today.');
             }
 
-            $now = DateTimeHelper::now();
-            $startTime = DateTimeHelper::parse($this->schedule->start_time);
-            $endTime = DateTimeHelper::parse($this->schedule->end_time);
+            $now = now();
+            $startTime = now()->setTimeFromTimeString($this->schedule->start_time);
+            $endTime = now()->setTimeFromTimeString($this->schedule->end_time);
 
             if ($now->greaterThan($endTime)) {
                 $this->dispatch('notify', [
@@ -133,7 +169,8 @@ class CheckInModal extends Component
                 return;
             }
 
-            $toleranceLimit = $this->getToleranceLimit($startTime, $this->schedule->late_tolerance);
+            // Calculate status based on tolerance
+            $toleranceLimit = $startTime->copy()->addMinutes($this->schedule->late_tolerance);
             $status = $now->greaterThan($toleranceLimit) ? 'late' : 'present';
 
             Attendance::create([
@@ -144,18 +181,28 @@ class CheckInModal extends Component
             ]);
 
             $this->dispatch('success-checkin');
+            
         } catch (Exception $e) {
-            Log::error('Error during check-in process', [
-                'error' => $e->getMessage(),
+            Log::error('Error during check-in:', [
+                'message' => $e->getMessage(),
                 'user_id' => auth()->id()
+            ]);
+            
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Failed to check in. Please try again.'
             ]);
         }
     }
 
+    public function closeModal()
+    {
+        $this->showModal = false;
+    }
+
     public function render()
     {
-        $this->currentTime = DateTimeHelper::now()->format('H:i:s');
-        Log::info('Rendering with showModal: ' . ($this->showModal ? 'true' : 'false'));
+        $this->currentTime = now()->format('H:i:s');
         return view('livewire.shared.check-in-modal');
     }
 }
