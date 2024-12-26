@@ -63,7 +63,7 @@ Route::prefix('admin')
                     'users.xlsx'
                 );
             })->name('export');
-            Route::get('/{user}', UserDetail::class)->name('detail');
+            Route::get('/{user}', [UsersController::class, 'detail'])->name('detail');
         });
 
         // Schedules
