@@ -110,7 +110,7 @@
                 <div class="flex items-center justify-between mb-3">
                     <h3
                         class="text-sm font-medium text-gray-600 dark:text-gray-300 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
-                        Pending Checkouts</h3>
+                        Early Leave Checkouts</h3>
                     <div
                         class="p-2 bg-red-50 dark:bg-red-900/30 rounded-lg group-hover:bg-red-100 dark:group-hover:bg-red-900/50 transition-colors">
                         <svg class="w-4 h-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor"
@@ -123,11 +123,11 @@
                 <div class="flex items-center justify-between">
                     <span
                         class="text-2xl font-semibold text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
-                        {{ $statistics['pending_checkouts'] }}
+                        {{ $statistics['early_leave_checkouts'] }}
                     </span>
                     <span class="text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2.5 py-0.5 rounded-full
                          group-hover:bg-red-100 dark:group-hover:bg-red-900/50 transition-colors">
-                        Pending
+                        Early Leave
                     </span>
                 </div>
             </div>
@@ -309,14 +309,23 @@
                 </div>
 
                 <!-- Status Filter -->
-                <div x-data="{ open: false, selected: [] }" class="relative">
+                <div x-data="{ open: false, selected: [], 
+                formatStatus: (status) => {
+                    const formats = {
+                        'present': 'Present',
+                        'late': 'Late',
+                        'early_leave': 'Early Leave'
+                    };
+                    return formats[status] || status;
+                }
+           }" class="relative">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
                     <div class="relative">
                         <!-- Custom Select Button -->
                         <button @click="open = !open" type="button"
                             class="relative w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg py-2.5 px-4 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                             <span class="block truncate text-sm"
-                                x-text="selected.length ? selected.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ') : 'Select status...'">
+                                x-text="selected.length ? selected.map(s => formatStatus(s)).join(', ') : 'Select status...'">
                             </span>
                             <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                                 <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
@@ -341,15 +350,14 @@
                             <div class="max-h-60 overflow-auto">
                                 <div class="relative py-2 px-4">
                                     <div class="space-y-1">
-                                        <template x-for="status in ['present', 'late', 'pending']" :key="status">
+                                        <template x-for="status in ['present', 'late', 'early_leave']" :key="status">
                                             <label
                                                 class="relative flex items-center p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
                                                 <input type="checkbox" :checked="selected.includes(status)" @change="$event.target.checked ? selected.push(status) : selected = selected.filter(i => i !== status);
-                                                        $wire.set('filters.status', selected)"
+                                                   $wire.set('filters.status', selected)"
                                                     class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                                <span
-                                                    class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300 capitalize"
-                                                    x-text="status"></span>
+                                                <span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300"
+                                                    x-text="formatStatus(status)"></span>
                                             </label>
                                         </template>
                                     </div>
@@ -573,6 +581,15 @@
                                             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                     On Time
+                                </span>
+                                @elseif ($attendance->status === 'early_leave')
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                                    </svg>
+                                    Early Leave
                                 </span>
                                 @else
                                 <span

@@ -285,8 +285,8 @@ class AttendanceRecord extends Component
             'average_check_in' => Attendance::where('date', '>=', $date)
                 ->whereNotNull('check_in')
                 ->avg('check_in'),
-            'pending_checkouts' => Attendance::where('date', '>=', $date)
-                ->where('status', 'pending')
+            'early_leave_checkouts' => Attendance::where('date', '>=', $date)
+                ->where('status', 'early_leave')
                 ->count(),
             'attendance_rate' => $this->calculateAttendanceRate($date),
         ];
@@ -316,8 +316,8 @@ class AttendanceRecord extends Component
                 ->latest()
                 ->take(5)
                 ->get(),
-            'pending' => Attendance::with('user')
-                ->where('status', 'pending')
+            'early_leave' => Attendance::with('user')
+                ->where('status', 'early_leave')
                 ->latest()
                 ->take(5)
                 ->get(),
