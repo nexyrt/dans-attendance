@@ -14,19 +14,14 @@ class ScheduleException extends Model
         'date',
         'start_time',
         'end_time',
-        'department',
-        'department_id',
         'status',
-        'note',
-        'created_by'
+        'note'
     ];
 
     protected $casts = [
         'date' => 'date',
-        'start_time' => 'datetime:H:i',
-        'end_time' => 'datetime:H:i',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime'
+        'start_time' => 'datetime',
+        'end_time' => 'datetime'
     ];
 
     public function departments()
