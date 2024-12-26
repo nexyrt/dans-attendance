@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable
 {
@@ -78,6 +79,11 @@ class User extends Authenticatable
     public function approvedLeaves()
     {
         return $this->hasMany(LeaveRequest::class, 'approved_by');
+    }
+
+    public function financialDetails(): HasOne
+    {
+        return $this->hasOne(EmployeeFinancialDetail::class);
     }
 
     /**
