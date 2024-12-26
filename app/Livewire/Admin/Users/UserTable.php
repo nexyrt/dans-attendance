@@ -10,7 +10,7 @@ use Carbon\Carbon;
 
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
-
+use App\Exports\UsersExport;
 class UserTable extends Component
 {
     use WithPagination;
@@ -173,6 +173,15 @@ class UserTable extends Component
             'status_color' => 'gray'
         ];
     }
+
+    public function export()
+{
+    return (new UsersExport(
+        $this->search,
+        $this->selectedDepartments,
+        $this->selectedRoles
+    ))->download('users.xlsx');
+}
 
 
     public function render()

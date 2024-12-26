@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\User;
+use App\Models\LeaveRequest;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -18,25 +18,21 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Color;
 use Carbon\Carbon;
 
-class UsersExport implements FromQuery, WithHeadings, WithMapping, WithColumnWidths, WithStyles, WithTitle, WithCustomStartCell
+class LeaveRequestsExport implements FromQuery, WithHeadings, WithMapping, WithColumnWidths, WithStyles, WithTitle, WithCustomStartCell
 {
     use Exportable;
 
-    protected $search;
-    protected $selectedDepartments;
-    protected $selectedRoles;
+    protected $filters;
     protected $totalRecords;
 
-    public function __construct($search = null, $selectedDepartments = [], $selectedRoles = [])
+    public function __construct(array $filters = [])
     {
-        $this->search = $search;
-        $this->selectedDepartments = $selectedDepartments;
-        $this->selectedRoles = $selectedRoles;
+        $this->filters = $filters;
     }
 
     public function title(): string
     {
-        return 'Employee Records';
+        return 'Leave Requests';
     }
 
     public function startCell(): string
@@ -47,16 +43,16 @@ class UsersExport implements FromQuery, WithHeadings, WithMapping, WithColumnWid
     public function styles(Worksheet $sheet)
     {
         $this->totalRecords = $this->query()->count();
-
+        
         // Set column widths
         foreach ($this->columnWidths() as $column => $width) {
             $sheet->getColumnDimension($column)->setWidth($width);
         }
 
         // Top logo section with colored background
-        $sheet->mergeCells('A1:J2');
+        $sheet->mergeCells('A1:H2');
         $sheet->setCellValue('A1', 'JKB EMPLOYEE MANAGEMENT');
-        $sheet->getStyle('A1:J2')->applyFromArray([
+        $sheet->getStyle('A1:H2')->applyFromArray([
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
                 'startColor' => ['rgb' => '1A56DB']
@@ -81,8 +77,8 @@ class UsersExport implements FromQuery, WithHeadings, WithMapping, WithColumnWid
         $sheet->getRowDimension(2)->setRowHeight(0);
 
         // Report Title Section
-        $sheet->mergeCells('A3:J3');
-        $sheet->setCellValue('A3', 'Employee Records');
+        $sheet->mergeCells('A3:H3');
+        $sheet->setCellValue('A3', 'Leave Requests Report');
         $sheet->getStyle('A3')->applyFromArray([
             'font' => [
                 'bold' => true,
@@ -106,20 +102,13 @@ class UsersExport implements FromQuery, WithHeadings, WithMapping, WithColumnWid
         ]);
         $sheet->getRowDimension(3)->setRowHeight(30);
 
-        // Filter info with left border accent
-        $filterInfo = [];
-        if (!empty($this->selectedDepartments)) {
-            $filterInfo[] = "Departments: " . count($this->selectedDepartments);
-        }
-        if (!empty($this->selectedRoles)) {
-            $filterInfo[] = "Roles: " . count($this->selectedRoles);
-        }
-        if (!empty($this->search)) {
-            $filterInfo[] = "Search: " . $this->search;
-        }
+        // Period and Records info with side borders
+        $startDate = $this->filters['startDate'] ? Carbon::parse($this->filters['startDate'])->format('d M Y') : 'All time';
+        $endDate = $this->filters['endDate'] ? Carbon::parse($this->filters['endDate'])->format('d M Y') : 'Present';
 
-        $sheet->mergeCells('A4:J4');
-        $sheet->setCellValue('A4', !empty($filterInfo) ? "Filters: " . implode(', ', $filterInfo) : "No filters applied");
+        // Period info with left border accent
+        $sheet->mergeCells('A4:H4');
+        $sheet->setCellValue('A4', "Period: {$startDate} - {$endDate}");
         $sheet->getStyle('A4')->applyFromArray([
             'font' => [
                 'size' => 11,
@@ -138,7 +127,7 @@ class UsersExport implements FromQuery, WithHeadings, WithMapping, WithColumnWid
         ]);
 
         // Total records with right border accent
-        $sheet->mergeCells('A5:J5');
+        $sheet->mergeCells('A5:H5');
         $sheet->setCellValue('A5', "Total Records: {$this->totalRecords}");
         $sheet->getStyle('A5')->applyFromArray([
             'font' => [
@@ -161,7 +150,7 @@ class UsersExport implements FromQuery, WithHeadings, WithMapping, WithColumnWid
         $sheet->getRowDimension(6)->setRowHeight(15);
 
         // Table Headers with gradient-like effect
-        $headerRange = 'A7:J7';
+        $headerRange = 'A7:H7';
         $sheet->getStyle($headerRange)->applyFromArray([
             'font' => [
                 'bold' => true,
@@ -181,8 +170,8 @@ class UsersExport implements FromQuery, WithHeadings, WithMapping, WithColumnWid
 
         // Data rows styling
         $lastRow = $sheet->getHighestRow();
-        $dataRange = 'A8:J' . $lastRow;
-
+        $dataRange = 'A8:H' . $lastRow;
+        
         // Basic styling for all data rows
         $sheet->getStyle($dataRange)->applyFromArray([
             'borders' => [
@@ -196,39 +185,39 @@ class UsersExport implements FromQuery, WithHeadings, WithMapping, WithColumnWid
             ]
         ]);
 
-        // Zebra striping and role colors
+        // Zebra striping and status colors
         for ($row = 8; $row <= $lastRow; $row++) {
             if ($row % 2 == 0) {
-                $sheet->getStyle('A' . $row . ':J' . $row)->getFill()
+                $sheet->getStyle('A' . $row . ':H' . $row)->getFill()
                     ->setFillType(Fill::FILL_SOLID)
                     ->getStartColor()->setRGB('F9FAFB');
             }
-
+            
             $sheet->getRowDimension($row)->setRowHeight(18);
 
-            // Role color coding
-            $role = $sheet->getCell('D' . $row)->getValue();
-            $roleStyle = $sheet->getStyle('D' . $row);
-
-            switch (strtolower($role)) {
-                case 'admin':
-                    $color = '059669'; // Green
+            // Status color coding with background
+            $status = $sheet->getCell('G' . $row)->getValue();
+            $statusStyle = $sheet->getStyle('G' . $row);
+            
+            switch ($status) {
+                case 'Approved':
+                    $color = '059669'; // Deep green
                     $bgColor = 'ECFDF5';
                     break;
-                case 'manager':
-                    $color = '1D4ED8'; // Blue
-                    $bgColor = 'EFF6FF';
+                case 'Rejected':
+                    $color = 'DC2626'; // Deep red
+                    $bgColor = 'FEF2F2';
                     break;
-                case 'staff':
-                    $color = '6B7280'; // Gray
-                    $bgColor = 'F3F4F6';
+                case 'Pending':
+                    $color = 'D97706'; // Deep yellow
+                    $bgColor = 'FFFBEB';
                     break;
                 default:
                     $color = '6B7280';
                     $bgColor = 'F3F4F6';
             }
 
-            $roleStyle->applyFromArray([
+            $statusStyle->applyFromArray([
                 'font' => ['color' => ['rgb' => $color]],
                 'fill' => [
                     'fillType' => Fill::FILL_SOLID,
@@ -239,10 +228,8 @@ class UsersExport implements FromQuery, WithHeadings, WithMapping, WithColumnWid
         }
 
         // Center align specific columns
-        $sheet->getStyle('A8:A' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER); // ID
-        $sheet->getStyle('D8:E' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER); // Role, Department
-        $sheet->getStyle('G8:G' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT); // Salary
-        $sheet->getStyle('I8:J' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER); // Phone, Date
+        $sheet->getStyle('A8:A' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('D8:G' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         // Freeze panes
         $sheet->freezePane('A8');
@@ -250,84 +237,72 @@ class UsersExport implements FromQuery, WithHeadings, WithMapping, WithColumnWid
         return $sheet;
     }
 
+    // Rest of the methods remain the same...
     public function query()
     {
-        $query = User::query()
+        return LeaveRequest::query()
+            ->with(['user', 'approvedBy'])
             ->select([
-                'users.id',
-                'users.name',
-                'users.email',
-                'users.role',
-                'users.position',
-                'users.salary',
-                'users.address',
-                'users.phone_number',
-                'users.created_at',
-                'departments.name as department_name'
+                'leave_requests.*',
+                'users.name as user_name',
+                'users.email as user_email',
+                'approver.name as approver_name'
             ])
-            ->leftJoin('departments', 'users.department_id', '=', 'departments.id')
-            ->when($this->search, function ($q) {
-                $q->where(function ($query) {
-                    $query->where('users.name', 'like', '%' . $this->search . '%')
-                        ->orWhere('users.email', 'like', '%' . $this->search . '%')
-                        ->orWhere('users.id', 'like', '%' . $this->search . '%');
-                });
-            })
-            ->when(!empty($this->selectedDepartments), function ($q) {
-                $q->whereIn('users.department_id', $this->selectedDepartments);
-            })
-            ->when(!empty($this->selectedRoles), function ($q) {
-                $q->whereIn('users.role', $this->selectedRoles);
-            });
-
-        return $query;
+            ->join('users', 'leave_requests.user_id', '=', 'users.id')
+            ->leftJoin('users as approver', 'leave_requests.approved_by', '=', 'approver.id')
+            ->when($this->filters['startDate'] ?? null, fn($q) => $q->where('start_date', '>=', $this->filters['startDate']))
+            ->when($this->filters['endDate'] ?? null, fn($q) => $q->where('end_date', '<=', $this->filters['endDate']))
+            ->when($this->filters['leavetype'] ?? null, fn($q) => $q->whereIn('type', $this->filters['leavetype']))
+            ->when($this->filters['status'] ?? null, fn($q) => $q->whereIn('status', $this->filters['status']))
+            ->when($this->filters['search'] ?? null, fn($q) => 
+                $q->where(fn($query) => 
+                    $query->where('users.name', 'like', '%' . $this->filters['search'] . '%')
+                        ->orWhere('users.email', 'like', '%' . $this->filters['search'] . '%')
+                )
+            )
+            ->orderBy('start_date', 'desc');
     }
 
-    public function map($user): array
+    public function map($request): array
     {
         return [
-            $user->id,
-            $user->name,
-            $user->email,
-            ucfirst($user->role),
-            $user->department_name,
-            $user->position,
-            'Rp ' . number_format($user->salary, 0, ',', '.'),
-            $user->address,
-            $user->phone_number,
-            $user->created_at ? Carbon::parse($user->created_at)->format('d M Y') : '-',
+            Carbon::parse($request->start_date)->format('d M Y'),
+            $request->user_name,
+            $request->user_email,
+            ucfirst($request->type),
+            Carbon::parse($request->start_date)->format('d M Y') . ' - ' . 
+            Carbon::parse($request->end_date)->format('d M Y'),
+            $request->approver_name ?: 'Pending',
+            ucfirst($request->status),
+            $request->reason ?: '-',
         ];
     }
 
     public function headings(): array
     {
         return [
-            'ID',
-            'NAME',
+            'DATE',
+            'EMPLOYEE NAME',
             'EMAIL',
-            'ROLE',
-            'DEPARTMENT',
-            'POSITION',
-            'SALARY',
-            'ADDRESS',
-            'PHONE NUMBER',
-            'JOINED DATE'
+            'LEAVE TYPE',
+            'PERIOD',
+            'APPROVED BY',
+            'STATUS',
+            'REASON'
         ];
     }
 
     public function columnWidths(): array
     {
         return [
-            'A' => 8,     // ID
-            'B' => 25,    // Name
-            'C' => 35,    // Email
-            'D' => 15,    // Role
-            'E' => 20,    // Department
-            'F' => 20,    // Position
-            'G' => 20,    // Salary
-            'H' => 35,    // Address
-            'I' => 20,    // Phone Number
-            'J' => 15,    // Joined Date
+            'A' => 15,  // Date
+            'B' => 25,  // Employee Name
+            'C' => 35,  // Email
+            'D' => 15,  // Leave Type
+            'E' => 25,  // Period
+            'F' => 20,  // Approved By
+            'G' => 15,  // Status
+            'H' => 40,  // Reason
         ];
     }
 }

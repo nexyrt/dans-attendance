@@ -53,16 +53,6 @@ Route::prefix('admin')
             Route::post('/store', [UsersController::class, 'store'])->name('store');
             Route::put('/{user}', [UsersController::class, 'update'])->name('update');
             Route::delete('/{user}', [UsersController::class, 'destroy'])->name('destroy');
-            Route::get('/export', function (Request $request) {
-                return Excel::download(
-                    new UsersExport(
-                        $request->input('department'),
-                        $request->input('position'),
-                        $request->input('name')
-                    ),
-                    'users.xlsx'
-                );
-            })->name('export');
             Route::get('/{user}', [UsersController::class, 'detail'])->name('detail');
         });
 

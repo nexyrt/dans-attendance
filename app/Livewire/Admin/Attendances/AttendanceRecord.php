@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Attendances;
 
+use App\Exports\AttendancesExport;
 use Carbon\Carbon;
 use Livewire\Component;
 use App\Models\Attendance;
@@ -111,50 +112,17 @@ class AttendanceRecord extends Component
         return $this->getFilteredAttendancesProperty()->get();
     }
 
-    public function exportToCSV()
+    public function exportToExcell()
     {
-        $attendances = $this->getFilteredData();
-
-        $csvData = [];
-        $csvData[] = [
-            'Employee Name',
-            'Email',
-            'Position',
-            'Department',
-            'Date',
-            'Check In',
-            'Check Out',
-            'Status'
+        $filters = [
+            'startDate' => $this->filters['startDate'] ?? null,
+            'endDate' => $this->filters['endDate'] ?? null,
+            'department' => $this->filters['department'] ?? null,
+            'status' => $this->filters['status'] ?? null,
+            'search' => $this->filters['search'] ?? null
         ];
 
-        foreach ($attendances as $attendance) {
-            $csvData[] = [
-                $attendance->user->name,
-                $attendance->user->email,
-                $attendance->user->position,
-                $attendance->user->department->name,
-                Carbon::parse($attendance->date)->format('M d, Y'),
-                Carbon::parse($attendance->check_in)->format('h:i A'),
-                $attendance->check_out ? Carbon::parse($attendance->check_out)->format('h:i A') : 'Not checked out',
-                ucfirst($attendance->status)
-            ];
-        }
-
-        $timestamp = Carbon::now()->format('Y-m-d-H-i-s');
-        $filename = "attendance-records-{$timestamp}.csv";
-
-        $callback = function () use ($csvData) {
-            $file = fopen('php://output', 'w');
-            foreach ($csvData as $row) {
-                fputcsv($file, $row);
-            }
-            fclose($file);
-        };
-
-        return Response::stream($callback, 200, [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename={$filename}",
-        ]);
+        return (new AttendancesExport($filters))->download('attendance-records-' . now()->format('Y-m-d') . '.xlsx');
     }
 
     public function printData()

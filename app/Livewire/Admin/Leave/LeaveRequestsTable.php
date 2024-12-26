@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Leave;
 
+use App\Exports\LeaveRequestsExport;
 use App\Models\Department;
 use App\Models\LeaveBalance;
 use App\Models\LeaveRequest;
@@ -439,6 +440,20 @@ class LeaveRequestsTable extends Component
             session()->flash('message', 'Leave request deleted successfully.');
         }
     }
+
+    public function exportToExcell()
+{
+    $filters = [
+        'startDate' => $this->filters['startDate'] ?? null,
+        'endDate' => $this->filters['endDate'] ?? null,
+        'leavetype' => $this->filters['leavetype'] ?? null,
+        'status' => $this->filters['status'] ?? null,
+        'search' => $this->filters['search'] ?? null
+    ];
+
+    return (new LeaveRequestsExport($filters))
+        ->download('leave-requests-' . now()->format('Y-m-d') . '.xlsx');
+}
 
     public function render()
     {
