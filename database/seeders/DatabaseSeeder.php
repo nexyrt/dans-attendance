@@ -22,6 +22,11 @@ class DatabaseSeeder extends Seeder
             ScheduleExceptionSeeder::class,
             LeaveBalanceSeeder::class,
             LeaveRequestSeeder::class,
+            EmployeeFinancialDetailSeeder::class,
+            SalaryDetailSeeder::class,
+            PayrollSeeder::class,
+            AllowanceSeeder::class,
+            DeductionSeeder::class,
         ]);
 
     }

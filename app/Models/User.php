@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable
 {
@@ -80,6 +81,29 @@ class User extends Authenticatable
         return $this->hasMany(LeaveRequest::class, 'approved_by');
     }
 
+    public function financialDetails(): HasOne
+    {
+        return $this->hasOne(EmployeeFinancialDetail::class);
+    }
+
+    public function deductions()
+    {
+        return $this->hasMany(Deduction::class);
+    }
+
+    public function allowances()
+    {
+        return $this->hasMany(Allowance::class);
+    }
+
+    public function payrolls(){
+        return $this->hasMany(Payroll::class);
+    }
+
+    public function payrollBatches(){
+        return $this->hasMany(PayrollBatch::class);
+    }
+
     /**
      * Get current year's leave balance
      */
@@ -88,36 +112,6 @@ class User extends Authenticatable
         return $this->leaveBalances()
             ->where('year', now()->year)
             ->first();
-    }
-
-    /**
-     * Get leave balance for a specific year
-     */
-    public function getLeaveBalance($year)
-    {
-        return $this->leaveBalances()
-            ->where('year', $year)
-            ->first();
-    }
-
-    /**
-     * Check if user has enough leave balance
-     */
-    public function hasEnoughLeaveBalance($days)
-    {
-        $balance = $this->currentLeaveBalance();
-        return $balance && $balance->remaining_balance >= $days;
-    }
-
-    /**
-     * Update leave balance after approved leave
-     */
-    public function updateLeaveBalance($days)
-    {
-        $balance = $this->currentLeaveBalance();
-        if ($balance) {
-            $balance->updateBalance($balance->used_balance + $days);
-        }
     }
 
     /**
