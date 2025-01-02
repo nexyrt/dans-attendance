@@ -1,40 +1,4 @@
 <div>
-
-    <style>
-        .range-slider {
-            @apply appearance-none bg-transparent cursor-pointer;
-            height: 1rem;
-        }
-
-        .range-slider::-webkit-slider-thumb {
-            @apply appearance-none w-4 h-4 rounded-full bg-white border-2 border-blue-500 shadow;
-            margin-top: -0.5rem;
-        }
-
-        .range-slider::-moz-range-thumb {
-            @apply w-4 h-4 rounded-full bg-white border-2 border-blue-500 shadow;
-        }
-
-        .dark .range-slider::-webkit-slider-thumb {
-            @apply bg-gray-800 border-blue-400;
-        }
-
-        .dark .range-slider::-moz-range-thumb {
-            @apply bg-gray-800 border-blue-400;
-        }
-
-        /* Hide default track */
-        .range-slider::-webkit-slider-runnable-track {
-            @apply appearance-none bg-transparent;
-            height: 0.5rem;
-        }
-
-        .range-slider::-moz-range-track {
-            @apply bg-transparent;
-            height: 0.5rem;
-        }
-    </style>
-
     {{-- Care about people's approval and you will be their prisoner. --}}
     <x-layouts.admin>
         <!-- Statistics Cards -->
@@ -162,14 +126,14 @@
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Leave Balances</h3>
             </div>
 
-            <!-- Filters Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
-                <!-- Left Column: Search and Year -->
-                <div class="space-y-4">
+            <!-- Filters Section -->
+            <div class="w-full p-4">
+                <div class="flex flex-col sm:flex-row gap-4">
                     <!-- Search Employee -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Search
-                            Employee</label>
+                    <div class="w-full sm:w-2/3">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Search Employee
+                        </label>
                         <div class="relative">
                             <input type="text" wire:model.live.debounce.300ms="filters.search"
                                 class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-blue-500 focus:border-blue-500 pl-10"
@@ -185,8 +149,10 @@
                     </div>
 
                     <!-- Year Select -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Year</label>
+                    <div class="w-full sm:w-1/3">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Year
+                        </label>
                         <select wire:model.live="filters.year"
                             class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-blue-500 focus:border-blue-500">
                             @foreach($years as $year)
@@ -195,10 +161,35 @@
                         </select>
                     </div>
                 </div>
-
-                
             </div>
 
+            <div>
+                <div
+                    class="flex flex-col md:flex-row items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Leave Balance</h3>
+                    <div class="flex items-center gap-3">
+                        <!-- Export Button -->
+                        <button wire:click="exportToExcell" wire:loading.attr="disabled"
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            <span wire:loading.remove wire:target="exportToExcell">Export</span>
+                        </button>
+
+                        <!-- Print Button -->
+                        <button wire:click="printData" wire:loading.attr="disabled"
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            <span wire:loading.remove wire:target="printData">Print</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             <!-- Table -->
             <div class="overflow-x-auto">

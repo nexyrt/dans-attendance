@@ -90,7 +90,7 @@ class UsersController extends Controller
                 $imageName = str_replace(' ', '_', $request->name) . '_' . time() . '.' . $request->file('image')->getClientOriginalExtension();
                 $request->file('image')->move(public_path('images/users'), $imageName);
                 $data['image'] = 'images/users/' . $imageName;  // Use the same path format as in store method
-                
+
                 // Optional: Delete old image if exists
                 if ($user->image && file_exists(public_path($user->image))) {
                     unlink(public_path($user->image));
@@ -134,5 +134,12 @@ class UsersController extends Controller
             return redirect()->back()->withErrors($e->getMessage());
         }
 
+    }
+
+    public function detail(User $user)
+    {
+        return view('admin.users.detail', [
+            'user' => $user
+        ]);
     }
 }

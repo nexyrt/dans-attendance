@@ -1,5 +1,3 @@
-<!-- resources/views/layouts/admin.blade.php -->
-
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
@@ -20,9 +18,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     @notifyCss
-    @laravelPWA
-
-
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -138,8 +133,8 @@
                             <div x-show="open" x-transition:enter="transition ease-out duration-100"
                                 x-transition:enter-start="transform opacity-0 scale-95"
                                 x-transition:enter-end="transform opacity-100 scale-100" class="mt-1 pl-10 space-y-1">
-                                <a href=""
-                                    class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.schedules.dashboard') ? 'text-blue-700 bg-blue-50 dark:text-white dark:bg-gray-700' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700' }}">
+                                <a href="{{ route('admin.leave.dashboard') }}"
+                                    class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.leave.dashboard') ? 'text-blue-700 bg-blue-50 dark:text-white dark:bg-gray-700' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700' }}">
                                     Dashboard
                                 </a>
 

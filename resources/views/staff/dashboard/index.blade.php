@@ -444,171 +444,195 @@
         <div class="lg:col-span-4 space-y-5">
             <!-- Schedule Overview -->
             <div
-                class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="flex items-center space-x-3">
-                        <div class="p-2.5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-blue-600" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
+                class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-500 group">
+                <!-- Header Section -->
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center space-x-4">
+                        <!-- Animated Icon Container -->
+                        <div class="relative">
+                            <div
+                                class="absolute inset-0 bg-blue-500/20 rounded-xl blur-xl group-hover:scale-150 transition-transform duration-700">
+                            </div>
+                            <div
+                                class="relative p-3 bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-xl shadow-sm group-hover:scale-105 transition-all duration-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-6 text-blue-600" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
                         </div>
                         <div>
-                            <h2 class="text-lg font-semibold text-gray-900">Today's Schedule</h2>
-                            <p class="text-sm text-gray-500">{{ \Cake\Chronos\Chronos::now()->format('l, F j, Y') }}
+                            <h2
+                                class="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                                Today's Schedule
+                            </h2>
+                            <p class="text-sm text-gray-500 mt-0.5">
+                                {{ \Cake\Chronos\Chronos::now()->format('l, F j, Y') }}
                             </p>
                         </div>
                     </div>
 
-                    <!-- Current Status Badge -->
-                    <span
-                        class="px-3 py-1 text-xs font-medium rounded-full {{ $scheduleException ? 'bg-amber-50 text-amber-700 border border-amber-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100' }}">
-                        {{ $scheduleException ? ($scheduleException->status === 'wfh' ? 'Work From Home' : ($scheduleException->status === 'halfday' ? 'Half Day' : 'Modified Schedule')) : 'Regular Schedule' }}
-                    </span>
+                    <!-- Status Badge with Animation -->
+                    <div class="relative">
+                        <div
+                            class="absolute inset-0 {{ $scheduleException ? 'bg-amber-500/20' : 'bg-emerald-500/20' }} rounded-full blur group-hover:blur-md transition-all duration-300">
+                        </div>
+                        <span
+                            class="relative px-4 py-1.5 text-xs font-medium rounded-full inline-flex items-center space-x-1
+                {{ $scheduleException
+                    ? 'bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 border border-amber-100/50'
+                    : 'bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 border border-emerald-100/50' }} shadow-sm">
+                            <span
+                                class="size-1.5 rounded-full {{ $scheduleException ? 'bg-amber-500' : 'bg-emerald-500' }} animate-pulse"></span>
+                            <span>{{ $scheduleException
+                                ? ($scheduleException->status === 'wfh'
+                                    ? 'Work From Home'
+                                    : ($scheduleException->status === 'halfday'
+                                        ? 'Half Day'
+                                        : 'Modified Schedule'))
+                                : 'Regular Schedule' }}</span>
+                        </span>
+                    </div>
                 </div>
 
-                <div class="space-y-5">
-                    <!-- Time Card -->
+                <div class="space-y-6">
+                    <!-- Time Card with Glassmorphism -->
                     <div
-                        class="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 via-blue-50 to-indigo-50 p-5">
-                        <div class="absolute top-0 right-0 -mt-4 -mr-4 size-24 rounded-full bg-blue-100/50"></div>
-                        <div class="absolute bottom-0 right-0 -mb-8 -mr-8 size-40 rounded-full bg-indigo-100/30"></div>
+                        class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-6 group/card">
+                        <!-- Animated Background Elements -->
+                        <div
+                            class="absolute top-0 right-0 -mt-8 -mr-8 size-40 rounded-full bg-blue-200/30 blur-2xl group-hover/card:scale-150 transition-transform duration-700">
+                        </div>
+                        <div
+                            class="absolute bottom-0 left-0 -mb-8 -ml-8 size-40 rounded-full bg-indigo-200/30 blur-2xl group-hover/card:scale-150 transition-transform duration-700">
+                        </div>
 
                         <div class="relative">
-                            <div class="flex items-center mb-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-blue-600 mr-2"
-                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <h3 class="font-medium text-gray-900">Working Hours</h3>
+                            <div class="flex items-center mb-6">
+                                <div class="p-2 bg-blue-100/50 rounded-lg mr-3 shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-blue-600"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900">Working Hours</h3>
                             </div>
 
-                            <div class="grid grid-cols-3 gap-4">
-                                <div class="bg-white/60 backdrop-blur-sm rounded-lg p-3">
-                                    <p class="text-sm text-gray-500 mb-1">Start Time</p>
-                                    <p class="text-lg font-semibold text-gray-900">
-                                        {{ $scheduleException && $scheduleException->start_time
-                                            ? \Cake\Chronos\Chronos::parse($scheduleException->start_time)->format('H:i')
+                            <!-- Time Grid with Hover Effects -->
+                            <div class="grid grid-cols-3 gap-5">
+                                @php
+                                    $startTime =
+                                        $scheduleException && $scheduleException->start_time
+                                            ? \Cake\Chronos\Chronos::parse($scheduleException->start_time)
                                             : ($schedule
-                                                ? \Cake\Chronos\Chronos::parse($schedule->start_time)->format('H:i')
-                                                : '08:00') }}
-                                    </p>
-                                </div>
-                                <div class="bg-white/60 backdrop-blur-sm rounded-lg p-3">
-                                    <p class="text-sm text-gray-500 mb-1">Duration</p>
-                                    <p class="text-lg font-semibold text-gray-900">
-                                        @php
-                                            $startTime =
-                                                $scheduleException && $scheduleException->start_time
-                                                    ? \Cake\Chronos\Chronos::parse($scheduleException->start_time)
-                                                    : ($schedule
-                                                        ? \Cake\Chronos\Chronos::parse($schedule->start_time)
-                                                        : \Cake\Chronos\Chronos::parse('08:00'));
+                                                ? \Cake\Chronos\Chronos::parse($schedule->start_time)
+                                                : \Cake\Chronos\Chronos::parse('08:00'));
 
-                                            $endTime =
-                                                $scheduleException && $scheduleException->end_time
-                                                    ? \Cake\Chronos\Chronos::parse($scheduleException->end_time)
-                                                    : ($schedule
-                                                        ? \Cake\Chronos\Chronos::parse($schedule->end_time)
-                                                        : \Cake\Chronos\Chronos::parse('17:00'));
-
-                                            $duration = $endTime->diffInHours($startTime);
-                                        @endphp
-                                        {{ $duration }}h
-                                    </p>
-                                </div>
-                                <div class="bg-white/60 backdrop-blur-sm rounded-lg p-3">
-                                    <p class="text-sm text-gray-500 mb-1">End Time</p>
-                                    <p class="text-lg font-semibold text-gray-900">
-                                        {{ $scheduleException && $scheduleException->end_time
-                                            ? \Cake\Chronos\Chronos::parse($scheduleException->end_time)->format('H:i')
+                                    $endTime =
+                                        $scheduleException && $scheduleException->end_time
+                                            ? \Cake\Chronos\Chronos::parse($scheduleException->end_time)
                                             : ($schedule
-                                                ? \Cake\Chronos\Chronos::parse($schedule->end_time)->format('H:i')
-                                                : '17:00') }}
-                                    </p>
-                                </div>
+                                                ? \Cake\Chronos\Chronos::parse($schedule->end_time)
+                                                : \Cake\Chronos\Chronos::parse('17:00'));
+
+                                    $duration = $endTime->diffInHours($startTime);
+                                @endphp
+
+                                @foreach ([['Start Time', $startTime->format('H:i')], ['Duration', $duration . 'h'], ['End Time', $endTime->format('H:i')]] as [$label, $value])
+                                    <div class="group/time relative overflow-hidden">
+                                        <div
+                                            class="absolute inset-0 bg-white/60 backdrop-blur-sm rounded-xl transition-transform duration-300 group-hover/time:scale-105">
+                                        </div>
+                                        <div class="relative p-4 rounded-xl border border-white/50">
+                                            <p class="text-sm text-gray-500">{{ $label }}</p>
+                                            <p
+                                                class="text-2xl font-bold text-gray-900 mt-1 group-hover/time:text-blue-600 transition-colors duration-300">
+                                                {{ $value }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
                     </div>
 
-                    <!-- Schedule Details -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <!-- Left Column -->
-                        <div class="space-y-4">
-                            <div class="bg-gray-50 rounded-xl p-4">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-2">
-                                        <div class="p-1.5 bg-gray-100 rounded-lg">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-gray-600"
-                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
+                    <!-- Schedule Details Grid -->
+                    <div class="grid grid-cols-2 gap-5">
+                        <!-- Info Cards -->
+                        @foreach ([['Late Tolerance', $schedule ? $schedule->late_tolerance . ' minutes' : '30 minutes', 'clock'], ['Department', $user->department->name, 'building'], ['Schedule Type', $scheduleException ? 'Modified' : 'Regular', 'calendar']] as [$title, $value, $icon])
+                            <div class="group/info relative overflow-hidden">
+                                <div
+                                    class="absolute inset-0 bg-gray-50 rounded-xl transition-all duration-300 group-hover/info:bg-gray-100/50">
+                                </div>
+                                <div class="relative p-4 rounded-xl">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <div
+                                                class="p-2 bg-white rounded-lg shadow-sm group-hover/info:scale-110 transition-transform duration-300">
+                                                @if ($icon === 'clock')
+                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                        class="size-4 text-gray-600" fill="none"
+                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                @elseif($icon === 'building')
+                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                        class="size-4 text-gray-600" fill="none"
+                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                    </svg>
+                                                @else
+                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                        class="size-4 text-gray-600" fill="none"
+                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                                    </svg>
+                                                @endif
+                                            </div>
+                                            <span class="text-sm font-medium text-gray-900">{{ $title }}</span>
                                         </div>
-                                        <span class="text-sm font-medium text-gray-900">Late Tolerance</span>
+                                        <span
+                                            class="text-sm text-gray-600 group-hover/info:text-gray-900 transition-colors duration-300">{{ $value }}</span>
                                     </div>
-                                    <span
-                                        class="text-sm text-gray-600">{{ $schedule ? $schedule->late_tolerance : 30 }}
-                                        minutes</span>
                                 </div>
                             </div>
+                        @endforeach
 
-                            <div class="bg-gray-50 rounded-xl p-4">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-2">
-                                        <div class="p-1.5 bg-gray-100 rounded-lg">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-gray-600"
-                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                            </svg>
-                                        </div>
-                                        <span class="text-sm font-medium text-gray-900">Department</span>
+                        <!-- Schedule Note (if exists) -->
+                        @if ($scheduleException && $scheduleException->note)
+                            <div class="col-span-2">
+                                <div class="relative overflow-hidden">
+                                    <div
+                                        class="absolute inset-0 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl">
                                     </div>
-                                    <span class="text-sm text-gray-600">{{ $user->department->name }}</span>
+                                    <div class="relative p-4 rounded-xl">
+                                        <div class="flex items-start space-x-3">
+                                            <div class="p-2 bg-amber-100 rounded-lg shrink-0">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-amber-600"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-amber-900">Schedule Note</p>
+                                                <p class="text-sm text-amber-700 mt-1">{{ $scheduleException->note }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- Right Column -->
-                        <div class="space-y-4">
-                            <div class="bg-gray-50 rounded-xl p-4">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-2">
-                                        <div class="p-1.5 bg-gray-100 rounded-lg">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-gray-600"
-                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                            </svg>
-                                        </div>
-                                        <span class="text-sm font-medium text-gray-900">Schedule Type</span>
-                                    </div>
-                                    <span
-                                        class="text-sm text-gray-600">{{ $scheduleException ? 'Modified' : 'Regular' }}</span>
-                                </div>
-                            </div>
-
-                            @if ($scheduleException && $scheduleException->note)
-                                <div class="bg-amber-50 rounded-xl p-4">
-                                    <div class="flex space-x-2">
-                                        <div class="p-1.5 bg-amber-100 rounded-lg flex-shrink-0">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-amber-600"
-                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                        </div>
-                                        <div class="flex-1">
-                                            <p class="text-sm font-medium text-amber-800 mb-0.5">Note</p>
-                                            <p class="text-sm text-amber-600">{{ $scheduleException->note }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
+                        @endif
                     </div>
                 </div>
             </div>

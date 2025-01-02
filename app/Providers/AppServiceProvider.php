@@ -24,5 +24,6 @@ class AppServiceProvider extends ServiceProvider
     {
         Blade::component('notification', \App\View\Components\Shared\Notification::class);
         Livewire::component('shared.check-out-modal', CheckOutModal::class);
+        Livewire::component('shared.check-in-modal', \App\Livewire\Shared\CheckInModal::class);
     }
 }
