@@ -1,6 +1,7 @@
 <?php
 
 // Framework & Package Imports
+use App\Http\Controllers\Staff\LeaveController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\Facades\Excel;
@@ -76,22 +77,21 @@ Route::prefix('admin')
     });
 
 // Staff Routes
-Route::middleware(['auth', 'role:staff'])
-    ->prefix('staff')
-    ->name('staff.')
-    ->group(function () {
-        Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
+Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->group(function () {
+    Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
 
-        // Attendance
-        Route::prefix('attendance')->name('attendance.')->group(function () {
-            Route::get('/', [AttendanceController::class, 'index'])->name('index');
-        });
-
-        // Leave Management - Commented routes preserved for future implementation
-        Route::prefix('leave')->name('leave.')->group(function () {
-            // Future implementation
-        });
+    // Attendance
+    Route::prefix('attendance')->name('attendance.')->group(function () {
+        Route::get('/', [AttendanceController::class, 'index'])->name('index');
     });
+
+    // Leave Management Routes
+    Route::prefix('leave')->name('leave.')->group(function () {
+        Route::get('/', [LeaveController::class, 'index'])->name('index');
+        Route::post('/store', [LeaveController::class, 'store'])->name('store');
+        Route::post('/{leaveRequest}/cancel', [LeaveController::class, 'cancel'])->name('cancel');
+    });
+});
 
 // Manager Routes
 Route::middleware(['auth', 'role:manager'])
