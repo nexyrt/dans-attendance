@@ -2,20 +2,44 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Cake\Chronos\Chronos;
 
 class LeaveRequest extends Model
 {
-    use HasFactory;
+    // Status Constants - Matching database enum values exactly
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_REJECTED = 'rejected';
+    public const STATUS_CANCEL = 'cancel';
+
+    // Leave Type Constants
+    public const TYPE_SICK = 'sick';
+    public const TYPE_ANNUAL = 'annual';
+    public const TYPE_IMPORTANT = 'important';
+    public const TYPE_OTHER = 'other';
+
+    // Arrays for Validation
+    public const STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_APPROVED,
+        self::STATUS_REJECTED,
+        self::STATUS_CANCEL
+    ];
+
+    public const TYPES = [
+        self::TYPE_SICK,
+        self::TYPE_ANNUAL,
+        self::TYPE_IMPORTANT,
+        self::TYPE_OTHER
+    ];
 
     protected $fillable = [
         'user_id',
         'type',
         'start_date',
         'end_date',
-        'duration_type',
         'reason',
         'status',
         'approved_by',
@@ -31,155 +55,85 @@ class LeaveRequest extends Model
         'updated_at' => 'datetime'
     ];
 
-    public const TYPES = [
-        'sick',
-        'annual',
-        'important',
-        'other'
-    ];
-
-    public const STATUSES = [
-        'pending',
-        'approved',
-        'rejected',
-        'cancelled'
-    ];
-
-    public const DURATION_TYPES = [
-        'full_day',
-        'first_half',
-        'second_half'
-    ];
-
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function approvedBy()
+    public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
 
-    public function getDurationInDays(): float
-    {
-        if ($this->duration_type && $this->duration_type !== 'full_day') {
-            return 0.5;
-        }
-
-        return $this->start_date->diffInDays($this->end_date) + 1;
-    }
-
     public function isPending(): bool
     {
-        return $this->status === 'pending';
+        return $this->status === self::STATUS_PENDING;
     }
 
     public function isApproved(): bool
     {
-        return $this->status === 'approved';
+        return $this->status === self::STATUS_APPROVED;
     }
 
     public function isRejected(): bool
     {
-        return $this->status === 'rejected';
+        return $this->status === self::STATUS_REJECTED;
     }
 
     public function isCancelled(): bool
     {
-        return $this->status === 'cancelled';
+        return $this->status === self::STATUS_CANCEL;
     }
 
     public function canBeCancelled(): bool
     {
-        return $this->status === 'pending';
-    }
-
-    public function approve($approverId)
-    {
-        if ($this->isPending()) {
-            $this->update([
-                'status' => 'approved',
-                'approved_by' => $approverId,
-                'approved_at' => now()
-            ]);
-
-            return true;
-        }
-
-        return false;
-    }
-
-    public function reject($approverId)
-    {
-        if ($this->isPending()) {
-            $this->update([
-                'status' => 'rejected',
-                'approved_by' => $approverId,
-                'approved_at' => now()
-            ]);
-
-            return true;
-        }
-
-        return false;
-    }
-
-    public function cancel()
-    {
-        if ($this->canBeCancelled()) {
-            $this->update([
-                'status' => 'cancelled',
-                'updated_at' => now()
-            ]);
-
-            return true;
-        }
-
-        return false;
+        return $this->isPending();
     }
 
     public function getStatusBadgeAttribute(): string
     {
         return match ($this->status) {
-            'pending' => 'bg-yellow-100 text-yellow-800',
-            'approved' => 'bg-green-100 text-green-800',
-            'rejected' => 'bg-red-100 text-red-800',
-            'cancelled' => 'bg-gray-100 text-gray-800',
+            self::STATUS_PENDING => 'bg-yellow-100 text-yellow-800',
+            self::STATUS_APPROVED => 'bg-green-100 text-green-800',
+            self::STATUS_REJECTED => 'bg-red-100 text-red-800',
+            self::STATUS_CANCEL => 'bg-gray-100 text-gray-800',
             default => 'bg-gray-100 text-gray-800'
         };
     }
 
-    public function getFormattedDurationAttribute(): string
+    public function cancel(): bool
     {
-        if ($this->duration_type === 'full_day') {
-            return $this->start_date->format('M d, Y') . ' - ' . $this->end_date->format('M d, Y');
+        if ($this->canBeCancelled()) {
+            return $this->update([
+                'status' => self::STATUS_CANCEL
+            ]);
+        }
+        return false;
+    }
+
+    public function getDurationInDays(): float
+    {
+        $start = Chronos::parse($this->start_date);
+        $end = Chronos::parse($this->end_date);
+
+        $duration = 0;
+        for ($date = $start; $date->lessThanOrEquals($end); $date = $date->addDays(1)) {
+            if (!$date->isWeekend()) {
+                $duration++;
+            }
         }
 
-        $period = $this->duration_type === 'first_half' ? 'Morning' : 'Afternoon';
-        return $this->start_date->format('M d, Y') . ' (' . $period . ')';
+        return $duration;
     }
 
     public function scopePending($query)
     {
-        return $query->where('status', 'pending');
+        return $query->where('status', self::STATUS_PENDING);
     }
 
     public function scopeActive($query)
     {
-        return $query->whereIn('status', ['pending', 'approved'])
+        return $query->whereIn('status', [self::STATUS_PENDING, self::STATUS_APPROVED])
             ->where('end_date', '>=', now());
-    }
-
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($leaveRequest) {
-            // Set end_date same as start_date for half-day leaves
-            if ($leaveRequest->duration_type !== 'full_day') {
-                $leaveRequest->end_date = $leaveRequest->start_date;
-            }
-        });
     }
 }

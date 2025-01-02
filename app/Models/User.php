@@ -40,7 +40,7 @@ class User extends Authenticatable
     protected static function boot()
     {
         parent::boot();
-        
+
         static::created(function ($user) {
             $user->initializeYearlyLeaveBalance();
         });
@@ -59,6 +59,11 @@ class User extends Authenticatable
     public function leaveBalances()
     {
         return $this->hasMany(LeaveBalance::class);
+    }
+
+    public function leaveBalance()
+    {
+        return $this->hasOne(LeaveBalance::class);
     }
 
     public function isAdmin($role)
@@ -96,11 +101,13 @@ class User extends Authenticatable
         return $this->hasMany(Allowance::class);
     }
 
-    public function payrolls(){
+    public function payrolls()
+    {
         return $this->hasMany(Payroll::class);
     }
 
-    public function payrollBatches(){
+    public function payrollBatches()
+    {
         return $this->hasMany(PayrollBatch::class);
     }
 

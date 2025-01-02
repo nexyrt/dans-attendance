@@ -89,7 +89,7 @@ Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->grou
     Route::prefix('leave')->name('leave.')->group(function () {
         Route::get('/', [LeaveController::class, 'index'])->name('index');
         Route::post('/store', [LeaveController::class, 'store'])->name('store');
-        Route::post('/{leaveRequest}/cancel', [LeaveController::class, 'cancel'])->name('cancel');
+        Route::post('/{leaveRequest}/cancel', [LeaveController::class, 'cancel'])->name('cancel');  // CORRECTED
     });
 });
 
