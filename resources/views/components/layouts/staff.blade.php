@@ -98,17 +98,23 @@
 
                                 {{-- Users --}}
                                 <li>
-                                    <a class="p-2 flex items-center mt-2 gap-x-3.5 text-sm text-gray-800 hover:bg-gray-100 rounded-lg"
-                                        href="#users">
+                                    <a class="p-2 flex items-center mt-2 gap-x-3.5 text-sm text-gray-800 hover:bg-gray-100 rounded-lg {{ request()->routeIs('staff.leave.*') ? 'bg-gray-100' : '' }}"
+                                        href="{{ route('staff.leave.index') }}">
                                         <svg class="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg"
                                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                             stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                            <circle cx="9" cy="7" r="4" />
-                                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                            <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+                                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                                            <path d="M8 14h.01"></path>
+                                            <path d="M12 14h.01"></path>
+                                            <path d="M16 14h.01"></path>
+                                            <path d="M8 18h.01"></path>
+                                            <path d="M12 18h.01"></path>
+                                            <path d="M16 18h.01"></path>
                                         </svg>
-                                        Leave's Management
+                                        Leave Management
                                     </a>
                                 </li>
                             </ul>
