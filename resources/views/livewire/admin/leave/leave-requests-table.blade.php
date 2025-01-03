@@ -445,13 +445,13 @@
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Leave Requests</h3>
                     <div class="flex items-center gap-3">
                         <!-- Export Button -->
-                        <button wire:click="exportToCSV" wire:loading.attr="disabled"
+                        <button wire:click="exportToExcell" wire:loading.attr="disabled"
                             class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
-                            <span wire:loading.remove wire:target="exportToCSV">Export</span>
+                            <span wire:loading.remove wire:target="exportToExcell">Export</span>
                         </button>
 
                         <!-- Print Button -->
@@ -572,42 +572,71 @@
                             </td>
                             <!-- Add this cell to your table row -->
                             <td class="px-6 py-4 text-right">
-                                <div class="flex items-center justify-end gap-2">
-                                    <!-- Status Change Button -->
-                                    <button wire:click="changeStatus({{ $request->id }})" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg
-                                            @if($request->status === 'pending')
-                                                text-yellow-700 bg-yellow-50 hover:bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50
-                                            @elseif($request->status === 'approved')
-                                                text-green-700 bg-green-50 hover:bg-green-100 dark:text-green-400 dark:bg-green-900/30 dark:hover:bg-green-900/50
-                                            @else
-                                                text-red-700 bg-red-50 hover:bg-red-100 dark:text-red-400 dark:bg-red-900/30 dark:hover:bg-red-900/50
-                                            @endif">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                <div class="relative" x-data="{ open: false }">
+                                    <!-- Three dots button -->
+                                    <button @click="open = !open" @click.away="open = false"
+                                        class="inline-flex items-center justify-center w-8 h-8 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-full transition-colors">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                d="M12 3c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 14c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-7c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
                                         </svg>
-                                        {{ ucfirst($request->status) }}
                                     </button>
 
-                                    <!-- Edit Button -->
-                                    <button wire:click="editRequest({{ $request->id }})"
-                                        class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30 dark:hover:bg-blue-900/50">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                        Edit
-                                    </button>
+                                    <!-- Dropdown menu -->
+                                    <div x-show="open" x-transition:enter="transition ease-out duration-100"
+                                        x-transition:enter-start="transform opacity-0 scale-95"
+                                        x-transition:enter-end="transform opacity-100 scale-100"
+                                        x-transition:leave="transition ease-in duration-75"
+                                        x-transition:leave-start="transform opacity-100 scale-100"
+                                        x-transition:leave-end="transform opacity-0 scale-95"
+                                        class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none divide-y divide-gray-100 dark:divide-gray-700">
 
-                                    <!-- Delete Button -->
-                                    <button @click="$dispatch('open-delete-modal', { id: {{ $request->id }} })"
-                                        class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 dark:text-red-400 dark:bg-red-900/30 dark:hover:bg-red-900/50">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                        Delete
-                                    </button>
+                                        <!-- Status Change -->
+                                        <div class="py-1">
+                                            <button wire:click="changeStatus({{ $request->id }})" @click="open = false"
+                                                class="group flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50">
+                                                <svg class="mr-3 h-5 w-5 
+                                                    @if($request->status === 'pending')
+                                                        text-yellow-500 dark:text-yellow-400
+                                                    @elseif($request->status === 'approved')
+                                                        text-green-500 dark:text-green-400
+                                                    @else
+                                                        text-red-500 dark:text-red-400
+                                                    @endif" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                </svg>
+                                                {{ ucfirst($request->status) }}
+                                            </button>
+                                        </div>
+
+                                        <!-- Edit & Delete -->
+                                        <div class="py-1">
+                                            <button wire:click="editRequest({{ $request->id }})" @click="open = false"
+                                                class="group flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50">
+                                                <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
+                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                                Edit
+                                            </button>
+
+                                            <button
+                                                @click="$dispatch('open-delete-modal', { id: {{ $request->id }} }); open = false"
+                                                class="group flex w-full items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700/50">
+                                                <svg class="mr-3 h-5 w-5 text-red-400 group-hover:text-red-500"
+                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </td>
                         </tr>

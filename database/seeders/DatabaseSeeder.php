@@ -20,9 +20,14 @@ class DatabaseSeeder extends Seeder
             ScheduleSeeder::class,
             HolidaySeeder::class,
             ScheduleExceptionSeeder::class,
+            LeaveBalanceSeeder::class,
             LeaveRequestSeeder::class,
+            EmployeeFinancialDetailSeeder::class,
+            SalaryDetailSeeder::class,
+            PayrollSeeder::class,
+            AllowanceSeeder::class,
+            DeductionSeeder::class,
         ]);
-        LeaveBalance::factory()->count(20)->create();
 
     }
 }

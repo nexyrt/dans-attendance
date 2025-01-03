@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Livewire\Admin\LeaveRequest;
+namespace App\Livewire\Admin\Leave;
 
+use App\Exports\LeaveRequestsExport;
 use App\Models\Department;
 use App\Models\LeaveBalance;
 use App\Models\LeaveRequest;
@@ -440,11 +441,25 @@ class LeaveRequestsTable extends Component
         }
     }
 
+    public function exportToExcell()
+{
+    $filters = [
+        'startDate' => $this->filters['startDate'] ?? null,
+        'endDate' => $this->filters['endDate'] ?? null,
+        'leavetype' => $this->filters['leavetype'] ?? null,
+        'status' => $this->filters['status'] ?? null,
+        'search' => $this->filters['search'] ?? null
+    ];
+
+    return (new LeaveRequestsExport($filters))
+        ->download('leave-requests-' . now()->format('Y-m-d') . '.xlsx');
+}
+
     public function render()
     {
         $statistics = $this->getStatistics();
         $departments = Department::all();
-        return view('livewire.admin.leave-request.leave-requests-table', [
+        return view('livewire.admin.leave.leave-requests-table', [
             'leaveRequests' => $this->getLeaveRequests(),
             'statistics' => $statistics,
             'departments' => $departments
