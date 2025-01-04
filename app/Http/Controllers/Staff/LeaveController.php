@@ -52,74 +52,67 @@ class LeaveController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'type' => ['required', 'in:annual,sick,important,other'],
+            'type' => ['required', 'in:' . implode(',', LeaveRequest::TYPES)],
             'start_date' => ['required', 'date', 'after_or_equal:today'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
-            'reason' => ['required', 'string', 'min:5', 'max:1000'],
-            'attachment' => ['nullable', 'file', 'max:10240'], // 10MB max
+            'reason' => ['required', 'string', 'max:1000'],
+            'attachment' => ['nullable', 'file', 'max:10240'],
         ]);
 
+        $user = auth()->user();
+        $startDate = $validated['start_date'];
+        $endDate = $validated['end_date'];
+
+        // Check for overlapping leave requests
+        $overlappingRequest = LeaveRequest::where('user_id', $user->id)
+            ->whereIn('status', ['pending', 'approved'])
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->where(function ($q) use ($startDate, $endDate) {
+                    $q->where('start_date', '<=', $startDate)
+                        ->where('end_date', '>=', $startDate);
+                })->orWhere(function ($q) use ($startDate, $endDate) {
+                    $q->where('start_date', '<=', $endDate)
+                        ->where('end_date', '>=', $endDate);
+                })->orWhere(function ($q) use ($startDate, $endDate) {
+                    $q->where('start_date', '>=', $startDate)
+                        ->where('end_date', '<=', $endDate);
+                });
+            })
+            ->first();
+
+        if ($overlappingRequest) {
+            return redirect()
+                ->route('staff.leave.index')
+                ->with('error', sprintf(
+                    'Leave request cannot be created. You already have a %s leave request from %s to %s.',
+                    $overlappingRequest->status,
+                    Chronos::parse($overlappingRequest->start_date)->format('M d, Y'),
+                    Chronos::parse($overlappingRequest->end_date)->format('M d, Y')
+                ));
+        }
+
         try {
-            // Check for overlapping leave requests
-            $hasOverlap = LeaveRequest::where('user_id', Auth::id())
-                ->where('status', '!=', 'cancelled')
-                ->where(function ($query) use ($validated) {
-                    $query->whereBetween('start_date', [$validated['start_date'], $validated['end_date']])
-                        ->orWhereBetween('end_date', [$validated['start_date'], $validated['end_date']]);
-                })->exists();
+            $leaveRequest = new LeaveRequest();
+            $leaveRequest->user_id = $user->id;
+            $leaveRequest->type = $validated['type'];
+            $leaveRequest->start_date = $startDate;
+            $leaveRequest->end_date = $endDate;
+            $leaveRequest->reason = $validated['reason'];
+            $leaveRequest->status = 'pending';
 
-            if ($hasOverlap) {
-                return back()->with('error', 'You already have a leave request for these dates.');
-            }
-
-            // Handle file upload if present
-            $attachmentPath = null;
             if ($request->hasFile('attachment')) {
-                $attachmentPath = $request->file('attachment')->store('leave-attachments', 'public');
+                $leaveRequest->attachment_path = $request->file('attachment')->store('leave-attachments', 'public');
             }
 
-            // Calculate leave duration
-            $startDate = Chronos::parse($validated['start_date']);
-            $endDate = Chronos::parse($validated['end_date']);
-            $duration = 0;
+            $leaveRequest->save();
 
-            for ($date = $startDate; $date->lessThanOrEquals($endDate); $date = $date->addDays(1)) {
-                if (!$date->isWeekend()) {
-                    $duration++;
-                }
-            }
-
-            // Check leave balance for annual leave
-            if ($validated['type'] === 'annual') {
-                $leaveBalance = LeaveBalance::where('user_id', Auth::id())
-                    ->where('year', now()->year)
-                    ->first();
-
-                if (!$leaveBalance || $leaveBalance->remaining_balance < $duration) {
-                    return back()->with('error', 'Insufficient annual leave balance.');
-                }
-            }
-
-            // Create leave request
-            $leaveRequest = LeaveRequest::create([
-                'user_id' => Auth::id(),
-                'type' => $validated['type'],
-                'start_date' => $validated['start_date'],
-                'end_date' => $validated['end_date'],
-                'reason' => $validated['reason'],
-                'status' => 'pending',
-                'attachment_path' => $attachmentPath
-            ]);
-
-            return redirect()->route('staff.leave.index')
-                ->with('success', 'Leave request submitted successfully.');
+            return redirect()
+                ->route('staff.leave.index')
+                ->with('success', 'Your leave request has been submitted successfully.');
         } catch (\Exception $e) {
-            // Clean up uploaded file if request creation fails
-            if (isset($attachmentPath)) {
-                Storage::disk('public')->delete($attachmentPath);
-            }
-
-            return back()->with('error', 'Failed to submit leave request. Please try again.');
+            return redirect()
+                ->route('staff.leave.index')
+                ->with('error', 'An error occurred while submitting your leave request. Please try again.');
         }
     }
 

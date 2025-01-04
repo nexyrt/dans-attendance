@@ -76,7 +76,7 @@ class User extends Authenticatable
         return $role === 'user';
     }
 
-    public function leaveRequests()
+    public function leaveRequests() 
     {
         return $this->hasMany(LeaveRequest::class);
     }
