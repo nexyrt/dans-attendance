@@ -2,78 +2,94 @@
 
 namespace App\Livewire\Admin\Office;
 
+
 use Livewire\Component;
-use App\Models\Office;
 
 class OfficeLocation extends Component
 {
-    public $selectedLocation = null;
-    public $latitude = -6.2088;
-    public $longitude = 106.8456;
-    public $radius = 200;
-    public $locations;
-    public $search = '';
+    public $search;
+    public $selectedLocation;
+    public $name;
+    public $address;
+    public $latitude;
+    public $longitude;
+    public $radius;
+
+    protected $listeners = ['updateCoordinates'];
+
+    public function updateCoordinates($data)
+    {
+        $this->latitude = $data['lat'];
+        $this->longitude = $data['lng'];
+    }
+    protected $rules = [
+        'name' => 'required|string|max:255',
+        'address' => 'required|string',
+        'latitude' => 'required|numeric',
+        'longitude' => 'required|numeric',
+        'radius' => 'required|numeric|min:10'
+    ];
 
     public function mount()
     {
-        $this->locations = \App\Models\OfficeLocation::all();
+        $this->latitude = -0.49475;
+        $this->longitude = 117.14883;
+        $this->radius = 50;
 
-        if ($this->locations->isNotEmpty()) {
-            $this->selectedLocation = $this->locations->first();
-            $this->latitude = $this->selectedLocation->latitude;
-            $this->longitude = $this->selectedLocation->longitude;
-            $this->radius = $this->selectedLocation->radius;
-        }
+        // Dispatch initial office locations
+        $this->dispatchAllOffices();
     }
 
-    public function selectLocation($locationId)
+    public function dispatchAllOffices()
     {
-        $this->selectedLocation = \App\Models\OfficeLocation::find($locationId);
-        if ($this->selectedLocation) {
-            $this->latitude = $this->selectedLocation->latitude;
-            $this->longitude = $this->selectedLocation->longitude;
-            $this->radius = $this->selectedLocation->radius;
-
-            $this->dispatch('updateMarker', [
-                'latitude' => $this->latitude,
-                'longitude' => $this->longitude,
-                'radius' => $this->radius
-            ]);
-        }
+        $locations = \App\Models\OfficeLocation::all();
+        $this->dispatch('loadOfficeLocations', $locations);
     }
+
+    public function updateFilter($status)
+    {
+        $this->filterStatus = $status;
+        $this->dispatchAllOffices();
+    }
+
+    public function saveLocation()
+    {
+        $this->validate();
+
+        \App\Models\OfficeLocation::create([
+            'name' => $this->name,
+            'address' => $this->address,
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
+            'radius' => $this->radius
+        ]);
+
+        $this->reset(['name', 'address', 'latitude', 'longitude', 'radius']);
+        session()->flash('message', 'Office location saved successfully!');
+    }
+
 
     public function updatedRadius($value)
     {
-        if ($this->selectedLocation) {
-            $this->selectedLocation->update(['radius' => $value]);
-            $this->dispatch('updateMarker', [
-                'latitude' => $this->latitude,
-                'longitude' => $this->longitude,
-                'radius' => $value
-            ]);
-        }
+        $this->dispatch('radiusUpdated', $value);
     }
 
-
-    public function updatedLatitude($value)
+    public function selectLocation($id)
     {
-        if ($this->selectedLocation) {
-            $this->selectedLocation->update([
-                'latitude' => $value,
-                'longitude' => $this->longitude
-            ]);
-        }
+        $location = \App\Models\OfficeLocation::find($id);
+        $this->selectedLocation = $location;
+
+        // Update form fields
+        $this->name = $location->name;
+        $this->address = $location->address;
+        $this->latitude = $location->latitude;
+        $this->longitude = $location->longitude;
+        $this->radius = $location->radius;
+
+        // Dispatch event to update map
+        $this->dispatch('locationSelected', $location);
     }
 
-    public function updatedLongitude($value)
-    {
-        if ($this->selectedLocation) {
-            $this->selectedLocation->update([
-                'latitude' => $this->latitude,
-                'longitude' => $value
-            ]);
-        }
-    }
 
     public function render()
     {
