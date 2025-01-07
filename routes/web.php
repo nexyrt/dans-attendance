@@ -3,6 +3,7 @@
 // Framework & Package Imports
 
 use App\Http\Controllers\Office\OfficeLocation;
+use App\Http\Controllers\Staff\LeaveController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\Facades\Excel;
