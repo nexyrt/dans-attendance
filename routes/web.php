@@ -1,6 +1,8 @@
 <?php
 
 // Framework & Package Imports
+
+use App\Http\Controllers\Office\OfficeLocation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\Facades\Excel;
@@ -72,6 +74,11 @@ Route::prefix('admin')
             Route::get('/', [LeaveDashboard::class, 'index'])->name('dashboard');
             Route::get('/leave-request', LeaveRequestsTable::class)->name('leave-request');
             Route::get('/leave-balance', LeaveBalance::class)->name('leave-balance');
+        });
+
+        // Office
+        Route::prefix('office')->name('office.')->group(function () {
+            Route::get('/', [OfficeLocation::class, 'index'])->name('index');
         });
     });
 

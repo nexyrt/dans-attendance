@@ -111,6 +111,12 @@
                             <span>Attendance</span>
                         </a>
 
+                        <a href="{{ route('admin.office.index') }}"
+                            class="flex items-center px-3 py-2 mt-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.office.*') ? 'text-blue-700 bg-blue-50 dark:text-white dark:bg-gray-700' : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700' }}">
+                            <i class='bx bx-map text-xl mr-3'></i>
+                            <span>Office</span>
+                        </a>
+
                         <!-- Leave Section -->
                         <p class="px-3 mt-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                             Leave
