@@ -296,7 +296,7 @@
 
                                 <!-- Cancel Request Modal -->
                                 <x-modals.modal name="cancel-leave-{{ $request->id }}" :show="false">
-                                    <div class="p-6">
+                                    <div class="p-8">
                                         <!-- Warning Icon -->
                                         <div
                                             class="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-6">
@@ -307,33 +307,32 @@
                                             </svg>
                                         </div>
 
-                                        <h3 class="text-xl font-bold text-gray-900 text-center mb-2">Cancel Leave
-                                            Request</h3>
-                                        <p class="text-sm text-gray-500 text-center mb-6">
-                                            Are you sure you want to cancel this leave request? This action cannot be
-                                            undone.
+                                        <h3 class="text-xl font-semibold text-gray-900 text-center">Cancel Leave
+                                            Request?</h3>
+                                        <p class="mt-2 text-sm text-gray-500 text-center">This action cannot be undone.
                                         </p>
 
                                         <!-- Request Summary -->
-                                        <div class="bg-gray-50 rounded-xl p-4 mb-6">
+                                        <div class="mt-6 bg-gray-50 rounded-xl p-4">
                                             <div class="space-y-3">
-                                                <div class="flex justify-between items-center">
-                                                    <span class="text-sm font-medium text-gray-500">Leave Type</span>
+                                                <div class="flex items-center justify-between">
+                                                    <span class="text-sm text-gray-500">Type</span>
                                                     <span
-                                                        class="text-sm font-medium text-gray-900 capitalize">{{ $request->type }}</span>
+                                                        class="text-sm font-medium text-gray-900 capitalize">{{ $request->type }}
+                                                        Leave</span>
                                                 </div>
-                                                <div class="flex justify-between items-center">
-                                                    <span class="text-sm font-medium text-gray-500">Duration</span>
+                                                <div class="flex items-center justify-between">
+                                                    <span class="text-sm text-gray-500">Duration</span>
                                                     <span
                                                         class="text-sm font-medium text-gray-900">{{ $request->getDurationInDays() }}
                                                         days</span>
                                                 </div>
-                                                <div class="flex justify-between items-center">
-                                                    <span class="text-sm font-medium text-gray-500">Period</span>
+                                                <div class="flex items-center justify-between">
+                                                    <span class="text-sm text-gray-500">Period</span>
                                                     <span class="text-sm font-medium text-gray-900">
-                                                        {{ \Cake\Chronos\Chronos::parse($request->start_date)->format('M d') }}
+                                                        {{ \Carbon\Carbon::parse($request->start_date)->format('M d') }}
                                                         -
-                                                        {{ \Cake\Chronos\Chronos::parse($request->end_date)->format('M d, Y') }}
+                                                        {{ \Carbon\Carbon::parse($request->end_date)->format('M d, Y') }}
                                                     </span>
                                                 </div>
                                             </div>
@@ -341,10 +340,10 @@
 
                                         <!-- Action Buttons -->
                                         <form method="POST" action="{{ route('staff.leave.cancel', $request) }}"
-                                            class="space-y-3">
+                                            class="mt-8 space-y-3">
                                             @csrf
                                             <button type="submit"
-                                                class="w-full inline-flex justify-center items-center px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                                                class="w-full inline-flex justify-center items-center px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200">
                                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor"
                                                     viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -355,7 +354,7 @@
                                             </button>
                                             <button type="button"
                                                 @click="$dispatch('close-modal', 'cancel-leave-{{ $request->id }}')"
-                                                class="w-full inline-flex justify-center items-center px-4 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
+                                                class="w-full inline-flex justify-center items-center px-4 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-200">
                                                 No, Keep It
                                             </button>
                                         </form>
@@ -533,118 +532,190 @@
 
             {{-- Create Leave Request --}}
             <x-modals.modal name="create-leave" :show="false" maxWidth="md">
-                <div class="p-6">
-                    <div class="mb-6">
-                        <h2 class="text-2xl font-bold text-gray-900">Create Leave Request</h2>
-                        <p class="mt-2 text-sm text-gray-600">Please fill in the details for your leave request</p>
-                    </div>
+                <!-- Added my-6 for vertical margin and h-auto to allow natural height -->
+                <div class="my-6 h-auto max-h-[calc(100vh-8rem)] overflow-y-auto bg-white rounded-xl">
+                    <div class="px-6">
+                        <!-- Modal Header -->
+                        <div class="mb-6">
+                            <h2 class="text-2xl font-semibold text-gray-900">New Leave Request</h2>
+                            <p class="text-sm text-gray-500">Submit your leave request by filling in the details below</p>
+                        </div>
 
-                    <form method="POST" action="{{ route('staff.leave.store') }}" enctype="multipart/form-data">
-                        @csrf
-                        <div class="space-y-6">
-                            <!-- Leave Type -->
-                            <div>
-                                <label for="type" class="block text-sm font-medium text-gray-900">Leave
-                                    Type</label>
-                                <select id="type" name="type"
-                                    class="mt-2 block w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
-                                    <option value="" selected disabled>Select leave type</option>
-                                    <option value="annual">Annual Leave</option>
-                                    <option value="sick">Sick Leave</option>
-                                    <option value="important">Important Leave</option>
-                                    <option value="other">Other</option>
-                                </select>
-                                @error('type')
-                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
+                        {{-- Content --}}
+                        <form method="POST" action="{{ route('staff.leave.store') }}"
+                            enctype="multipart/form-data">
+                            @csrf
+
+                            <!-- Leave Type Selection with Grid Cards -->
+                            <div class="grid grid-cols-2 gap-4 mb-8">
+                                @foreach (['annual' => ['Calendar', 'blue'], 'sick' => ['Bolt', 'red'], 'important' => ['Clock', 'amber'], 'other' => ['Calendar', 'gray']] as $type => $config)
+                                    <label class="cursor-pointer group">
+                                        <input type="radio" name="type" value="{{ $type }}"
+                                            class="peer hidden" {{ $type === 'annual' ? 'checked' : '' }}>
+                                        <div
+                                            class="p-4 rounded-xl border-2 border-gray-100 hover:border-blue-100 peer-checked:border-blue-500 peer-checked:bg-blue-50/50 transition-all duration-200">
+                                            <div class="flex flex-col items-center gap-3">
+                                                <div @class([
+                                                    'p-3 rounded-xl transition-colors',
+                                                    "bg-{$config[1]}-100 text-{$config[1]}-600" => true,
+                                                ])>
+                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        @if ($config[0] === 'Calendar')
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                        @elseif($config[0] === 'Bolt')
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                        @elseif($config[0] === 'Clock')
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        @endif
+                                                    </svg>
+                                                </div>
+                                                <span
+                                                    class="text-sm font-medium text-gray-900 capitalize">{{ $type }}</span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                @endforeach
                             </div>
 
                             <!-- Date Selection -->
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label for="start_date" class="block text-sm font-medium text-gray-900">Start
-                                        Date</label>
-                                    <input type="date" id="start_date" name="start_date"
-                                        min="{{ date('Y-m-d') }}"
-                                        class="mt-2 block w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
-                                    @error('start_date')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-
-                                <div>
-                                    <label for="end_date" class="block text-sm font-medium text-gray-900">End
-                                        Date</label>
-                                    <input type="date" id="end_date" name="end_date" min="{{ date('Y-m-d') }}"
-                                        class="mt-2 block w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600">
-                                    @error('end_date')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
+                            <div class="space-y-6 mb-8">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium text-gray-900 mb-1">Start Date</label>
+                                        <div class="relative">
+                                            <input type="date" name="start_date" required
+                                                class="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 appearance-none"
+                                                min="{{ date('Y-m-d') }}" style="min-height: 48px;">
+                                        </div>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium text-gray-900 mb-1">End Date</label>
+                                        <div class="relative">
+                                            <input type="date" name="end_date" required
+                                                class="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 appearance-none"
+                                                min="{{ date('Y-m-d') }}" style="min-height: 48px;">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Reason -->
-                            <div>
-                                <label for="reason" class="block text-sm font-medium text-gray-900">Reason</label>
-                                <textarea id="reason" name="reason" rows="4"
-                                    class="mt-2 block w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
-                                    placeholder="Please provide a detailed reason for your leave request"></textarea>
-                                @error('reason')
-                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
+                            <!-- Reason Input -->
+                            <div class="space-y-2 mb-8">
+                                <label class="text-sm font-medium text-gray-900">Reason for Leave</label>
+                                <div class="relative">
+                                    <textarea name="reason" rows="4" required
+                                        class="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 resize-none"
+                                        placeholder="Please provide a detailed reason for your leave request..."></textarea>
+                                    <div class="absolute right-3 bottom-3">
+                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- File Upload -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-900">
-                                    Supporting Document <span class="text-gray-500 text-xs">(optional)</span>
-                                </label>
-                                <div class="mt-2">
-                                    <label
-                                        class="group relative flex justify-center items-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50">
-                                        <div class="text-center p-6">
-                                            <svg class="mx-auto h-12 w-12 text-gray-400 group-hover:text-gray-500"
-                                                stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                                <path
-                                                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4-4m4-24h8m-4-4v8m-12 4h.02"
-                                                    stroke-width="2" stroke-linecap="round"
-                                                    stroke-linejoin="round" />
-                                            </svg>
-                                            <div class="flex text-sm text-gray-600 mt-2">
-                                                <span
-                                                    class="relative rounded-md font-medium text-blue-600 hover:text-blue-700 focus-within:outline-none">
-                                                    Upload a file
-                                                </span>
-                                                <p class="pl-1">or drag and drop</p>
+                            <div class="space-y-2">
+                                <label class="text-sm font-medium text-gray-900">Supporting Document</label>
+                                <div x-data="{
+                                    fileName: '',
+                                    fileSize: '',
+                                    isUploaded: false,
+                                    handleFile(e) {
+                                        if (e.target.files.length > 0) {
+                                            this.fileName = e.target.files[0].name;
+                                            this.fileSize = (e.target.files[0].size / 1024).toFixed(2);
+                                            this.isUploaded = true;
+                                        }
+                                    }
+                                }">
+                                    <!-- Empty State - Show when no file -->
+                                    <div x-show="!isUploaded"
+                                        class="relative border-2 border-dashed border-gray-200 rounded-xl hover:border-blue-500 transition-all duration-200 group">
+                                        <input type="file" name="attachment" @change="handleFile($event)"
+                                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                                        <div class="p-8 text-center">
+                                            <div
+                                                class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
+                                                <svg class="w-8 h-8 text-blue-500" fill="none"
+                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                </svg>
                                             </div>
-                                            <p class="text-xs text-gray-500 mt-1">PDF, PNG, JPG up to 10MB</p>
+                                            <div class="space-y-2">
+                                                <p class="text-sm">
+                                                    <span class="text-blue-500 font-medium">Upload a file</span>
+                                                    <span class="text-gray-500"> or drag and drop</span>
+                                                </p>
+                                                <p class="text-xs text-gray-500">PDF, PNG, JPG up to 10MB</p>
+                                            </div>
                                         </div>
-                                        <input type="file" id="attachment" name="attachment"
-                                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                                    </label>
+                                    </div>
+
+                                    <!-- Preview State - Show when file is uploaded -->
+                                    <div x-show="isUploaded" x-cloak
+                                        class="relative border-2 border-gray-200 rounded-xl bg-gray-50 transition-all duration-200">
+                                        <div class="p-4">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center space-x-3">
+                                                    <div
+                                                        class="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
+                                                        <svg class="w-6 h-6 text-blue-500" fill="none"
+                                                            stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                        </svg>
+                                                    </div>
+                                                    <div class="min-w-0">
+                                                        <p class="text-sm font-medium text-gray-900 truncate"
+                                                            x-text="fileName">document.pdf</p>
+                                                        <p class="text-xs text-gray-500" x-text="`${fileSize} KB`">123
+                                                            KB
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-center space-x-2">
+                                                    <button type="button"
+                                                        @click="isUploaded = false; $refs.fileInput.value = ''"
+                                                        class="p-1 text-gray-400 hover:text-red-500 transition-colors">
+                                                        <span class="sr-only">Remove file</span>
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                            viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                @error('attachment')
-                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
                             </div>
-                        </div>
 
-                        <!-- Form Actions -->
-                        <div class="mt-8 flex justify-end gap-3">
-                            <button type="button" @click="$dispatch('close-modal', 'create-leave')"
-                                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                Cancel
-                            </button>
-                            <button type="submit"
-                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                Submit Request
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                            <!-- Action Buttons -->
+                            <div class="flex justify-end gap-3 mt-8">
+                                <button type="button" @click="$dispatch('close-modal', 'create-leave')"
+                                    class="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-200">
+                                    Cancel
+                                </button>
+                                <button type="submit"
+                                    class="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all duration-200">
+                                    Submit Request
+                                </button>
+                            </div>
+                        </form>
+                    </div>
             </x-modals.modal>
-
-
         </div>
     </div>
 </x-layouts.staff>
