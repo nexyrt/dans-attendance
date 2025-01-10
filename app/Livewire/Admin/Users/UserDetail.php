@@ -6,13 +6,18 @@ use App\Models\User;
 use Livewire\Component;
 use App\Models\LeaveRequest;
 use Illuminate\Support\Facades\Auth;
-
+use Livewire\WithPagination;
 use Cake\Chronos\Chronos;
 
 class UserDetail extends Component
 {
+    use WithPagination;
     public User $user;
     public $attendancePeriod = '30';
+    public $currentPage = 1;
+    public $perPage = 10;
+
+    public $activeTab = 'attendance';
 
     // Computed properties
     public $attendanceRate;
@@ -92,7 +97,7 @@ class UserDetail extends Component
         $period = Chronos::now()->subDays($this->attendancePeriod);
         $totalWorkDays = $this->getWorkdayCount($period);
 
-        $attendances = $this->user->attendance()
+        $attendances = $this->user->attendances()
             ->where('date', '>=', $period)
             ->whereIn('status', ['present', 'late'])
             ->count();
@@ -112,6 +117,11 @@ class UserDetail extends Component
         $this->leaveBalance = $currentYearBalance
             ? $currentYearBalance->remaining_balance
             : 0;
+    }
+
+    public function gotoPage($page)
+    {
+        $this->currentPage = $page;
     }
 
 
@@ -174,17 +184,28 @@ class UserDetail extends Component
 
     public function render()
     {
+        $attendances = $this->user->attendances()
+            ->where('date', '>=', now()->subDays($this->attendancePeriod))
+            ->latest('date')
+            ->get();
+
+        // Manual pagination
+        $offset = ($this->currentPage - 1) * $this->perPage;
+        $paginatedAttendances = $attendances->slice($offset, $this->perPage);
+
         return view('livewire.admin.users.user-detail', [
-            'attendances' => $this->user->attendance()
-                ->where('date', '>=', now()->subDays($this->attendancePeriod))
-                ->latest('date')
-                ->take(10)
-                ->get(),
+            'attendances' => $paginatedAttendances,
+            'totalPages' => ceil($attendances->count() / $this->perPage),
             'leaveRequests' => $this->user->leaveRequests()
                 ->latest()
                 ->take(5)
-                ->get(),
-            'tasks' => null
+                ->get()
         ]);
+    }
+
+    public function updatedAttendancePeriod()
+    {
+        $this->calculateStatistics();
+        $this->currentPage = 1; // Reset to first page when period changes
     }
 }

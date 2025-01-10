@@ -1,3 +1,5 @@
+{{-- resources/views/components/layouts/staff.blade.php --}}
+
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
