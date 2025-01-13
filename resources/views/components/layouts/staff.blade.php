@@ -105,10 +105,12 @@
                                         <svg class="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg"
                                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                             stroke-linecap="round" stroke-linejoin="round">
-                                            <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+                                            <rect width="18" height="18" x="3" y="4" rx="2"
+                                                ry="2"></rect>
                                             <line x1="16" y1="2" x2="16" y2="6"></line>
                                             <line x1="8" y1="2" x2="8" y2="6"></line>
-                                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                                            <line x1="3" y1="10" x2="21" y2="10">
+                                            </line>
                                             <path d="M8 14h.01"></path>
                                             <path d="M12 14h.01"></path>
                                             <path d="M16 14h.01"></path>
@@ -127,7 +129,8 @@
                     <div class="mt-auto w-full p-4 border-t border-gray-200 bg-white">
                         <button type="button" @click="$dispatch('open-modal', 'modal-name')"
                             class="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                            <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                             </svg>
@@ -137,126 +140,178 @@
                 </div>
             </div>
 
-            <!-- Main Content -->
-            <div class="flex-1 lg:ml-80 relative overflow-y-auto p-4">
-                <div class="flex justify-between items-center my-3">
-                    {{-- Hamburger Button --}}
-                    <button @click="sidebarOpen = !sidebarOpen"
-                        class="block lg:hidden p-2 rounded-lg bg-white shadow-lg">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
-
-                    {{-- Breadcrumbs --}}
-                    <nav class="lg:flex text-white hidden" aria-label="Breadcrumb">
-                        <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
-                            <li class="inline-flex items-center">
-                                <a href="#"
-                                    class="inline-flex items-center text-sm font-medium hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-                                    <svg class="w-3 h-3 me-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                        fill="currentColor" viewBox="0 0 20 20">
-                                        <path
-                                            d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z" />
-                                    </svg>
-                                    Home
-                                </a>
-                            </li>
-                            <li>
-                                <div class="flex items-center">
-                                    <svg class="rtl:rotate-180 w-3 h-3 mx-1" aria-hidden="true"
-                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2" d="m1 9 4-4-4-4" />
-                                    </svg>
-                                    <a href="#"
-                                        class="ms-1 text-sm font-medium hover:text-blue-600 md:ms-2 dark:text-gray-400 dark:hover:text-white">Projects</a>
-                                </div>
-                            </li>
-                            <li aria-current="page">
-                                <div class="flex items-center">
-                                    <svg class="rtl:rotate-180 w-3 h-3 mx-1" aria-hidden="true"
-                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2" d="m1 9 4-4-4-4" />
-                                    </svg>
-                                    <span class="ms-1 text-sm font-medium md:ms-2 dark:text-gray-400">Flowbite</span>
-                                </div>
-                            </li>
-                        </ol>
-                    </nav>
-
-                    {{-- Profile Dropdown --}}
-                    <div class="hs-dropdown [--placement:bottom-right] relative inline-flex">
-                        <button id="hs-dropdown-account" type="button"
-                            class="size-[38px] inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-full border border-transparent text-gray-800 focus:outline-none disabled:opacity-50 disabled:pointer-events-none dark:text-white"
-                            aria-haspopup="menu" aria-expanded="false" aria-label="Dropdown">
-                            <img class="shrink-0 size-[38px] rounded-full" src="{{ Auth::user()->profile }}"
-                                alt="Avatar">
+            <!-- Main Content Wrapper -->
+            <div class="flex-1 lg:ml-80 flex flex-col min-h-screen relative">
+                <!-- Header Bar with fixed position -->
+                <div class="sticky top-0 z-30 bg-blue-500 py-4 px-6">
+                    <div class="flex justify-between items-center">
+                        {{-- Hamburger Button --}}
+                        <button @click="sidebarOpen = !sidebarOpen"
+                            class="block lg:hidden p-2 rounded-lg bg-white shadow-lg">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
                         </button>
 
-                        <div class="hs-dropdown-menu transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 hidden min-w-60  bg-white shadow-md rounded-lg mt-2 dark:bg-neutral-800 dark:border dark:border-neutral-700 dark:divide-neutral-700 after:h-4 after:absolute after:-bottom-4 after:start-0 after:w-full before:h-4 before:absolute before:-top-4 before:start-0 before:w-full"
-                            role="menu" aria-orientation="vertical" aria-labelledby="hs-dropdown-account"
-                            style="position: absolute; z-index: 9999;">
-                            <div class="py-3 px-5 bg-gray-100 rounded-t-lg dark:bg-neutral-700">
-                                <p class="text-sm text-gray-500 dark:text-neutral-500">Signed in as</p>
-                                <p class="text-sm font-medium text-gray-800 dark:text-neutral-200">
-                                    {{ Auth::user()->name }} </p>
-                            </div>
-                            <form action="{{ route('logout') }}" method="POST">
-                                @csrf
-                                <button type="submit"
-                                    class="w-full flex items-center gap-x-3.5 py-2 px-3 text-sm text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-300 dark:focus:bg-neutral-700 dark:focus:text-neutral-300">
-                                    <svg class="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24"
-                                        height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                        <circle cx="9" cy="7" r="4" />
-                                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                                    </svg>
-                                    <span>Logout</span>
+                        {{-- Breadcrumbs --}}
+                        <nav class="lg:flex text-white hidden" aria-label="Breadcrumb">
+                            <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
+                                <li class="inline-flex items-center">
+                                    <a href="#"
+                                        class="inline-flex items-center text-sm font-medium hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+                                        <svg class="w-3 h-3 me-2.5" aria-hidden="true"
+                                            xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                                            viewBox="0 0 20 20">
+                                            <path
+                                                d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z" />
+                                        </svg>
+                                        Home
+                                    </a>
+                                </li>
+                                <li>
+                                    <div class="flex items-center">
+                                        <svg class="rtl:rotate-180 w-3 h-3 mx-1" aria-hidden="true"
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                                            <path stroke="currentColor" stroke-linecap="round"
+                                                stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4" />
+                                        </svg>
+                                        <a href="#"
+                                            class="ms-1 text-sm font-medium hover:text-blue-600 md:ms-2 dark:text-gray-400 dark:hover:text-white">Projects</a>
+                                    </div>
+                                </li>
+                                <li aria-current="page">
+                                    <div class="flex items-center">
+                                        <svg class="rtl:rotate-180 w-3 h-3 mx-1" aria-hidden="true"
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                                            <path stroke="currentColor" stroke-linecap="round"
+                                                stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4" />
+                                        </svg>
+                                        <span
+                                            class="ms-1 text-sm font-medium md:ms-2 dark:text-gray-400">Flowbite</span>
+                                    </div>
+                                </li>
+                            </ol>
+                        </nav>
+
+                        {{-- Profile Dropdown with proper z-index --}}
+                        <div class="relative z-50">
+                            <div class="hs-dropdown relative inline-flex" x-data="{ open: false }">
+                                <button @click="open = !open"
+                                    class="inline-flex items-center gap-x-2 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                    <img class="size-10 rounded-full ring-2 ring-white/80"
+                                        src="{{ Auth::user()->profile }}" alt="{{ Auth::user()->name }}">
                                 </button>
-                            </form>
+
+                                <!-- Dropdown Menu -->
+                                <div x-show="open" @click.away="open = false"
+                                    x-transition:enter="transition ease-out duration-200"
+                                    x-transition:enter-start="opacity-0 scale-95"
+                                    x-transition:enter-end="opacity-100 scale-100"
+                                    x-transition:leave="transition ease-in duration-100"
+                                    x-transition:leave-start="opacity-100 scale-100"
+                                    x-transition:leave-end="opacity-0 scale-95"
+                                    class="absolute right-0 mt-2 w-72 origin-top-right rounded-xl bg-white shadow-lg ring-1 ring-black/5 focus:outline-none">
+
+                                    <!-- Header Section -->
+                                    <div class="p-4 bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-t-xl">
+                                        <div class="flex items-center gap-x-4">
+                                            <img class="size-16 rounded-full ring-4 ring-white"
+                                                src="{{ Auth::user()->profile }}" alt="{{ Auth::user()->name }}">
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-semibold text-gray-900 truncate">
+                                                    {{ Auth::user()->name }}
+                                                </p>
+                                                <p class="text-sm text-gray-500 truncate">
+                                                    {{ Auth::user()->email }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Quick Stats -->
+                                    <div class="p-3 border-b border-gray-100">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div class="bg-gray-50 px-4 py-3 rounded-lg">
+                                                <p class="text-xs font-medium text-gray-500">Leave Balance</p>
+                                                <p class="mt-1 text-sm font-semibold text-gray-900">
+                                                    {{ Auth::user()->leaveBalance?->remaining_balance ?? 0 }} days
+                                                </p>
+                                            </div>
+                                            <div class="bg-gray-50 px-4 py-3 rounded-lg">
+                                                <p class="text-xs font-medium text-gray-500">Department</p>
+                                                <p class="mt-1 text-sm font-semibold text-gray-900">
+                                                    {{ Auth::user()->department?->name ?? 'N/A' }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Menu Items -->
+                                    <div class="p-2">
+                                        <a href="#"
+                                            class="flex items-center gap-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                                            <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            Profile Settings
+                                        </a>
+
+                                        <form method="POST" action="{{ route('logout') }}">
+                                            @csrf
+                                            <button type="submit"
+                                                class="w-full flex items-center gap-x-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200">
+                                                <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                                </svg>
+                                                Sign out
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
+                    {{ $slot }}
                 </div>
-
-                {{ $slot }}
             </div>
-        </div>
 
-        {{-- Modals & Notifications --}}
-        <livewire:shared.check-in-modal />
-        <livewire:shared.check-out-modal />
-        
-        @livewireScripts
+            {{-- Modals & Notifications --}}
+            <livewire:shared.check-in-modal />
+            <livewire:shared.check-out-modal />
 
-        <script>
-            window.addEventListener('alpine:init', () => {
-                Alpine.store('app', {
-                    isSidebarOpen: window.innerWidth >= 1024,
-                    toggleSidebar() {
-                        this.isSidebarOpen = !this.isSidebarOpen;
-                    }
-                });
-            });
+            @livewireScripts
 
-            document.addEventListener('livewire:initialized', () => {
-                Livewire.on('success-checkin', () => {
-                    setTimeout(() => {
-                        Livewire.dispatch('closeModal');
-                    }, 1500);
+            <script>
+                window.addEventListener('alpine:init', () => {
+                    Alpine.store('app', {
+                        isSidebarOpen: window.innerWidth >= 1024,
+                        toggleSidebar() {
+                            this.isSidebarOpen = !this.isSidebarOpen;
+                        }
+                    });
                 });
 
-                Livewire.on('success-checkout', () => {
-                    setTimeout(() => {
-                        Livewire.dispatch('closeModal');
-                    }, 1500);
+                document.addEventListener('livewire:initialized', () => {
+                    Livewire.on('success-checkin', () => {
+                        setTimeout(() => {
+                            Livewire.dispatch('closeModal');
+                        }, 1500);
+                    });
+
+                    Livewire.on('success-checkout', () => {
+                        setTimeout(() => {
+                            Livewire.dispatch('closeModal');
+                        }, 1500);
+                    });
                 });
-            });
-        </script>
+            </script>
     </body>
 
 </html>

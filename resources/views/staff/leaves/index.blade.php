@@ -538,7 +538,8 @@
                         <!-- Modal Header -->
                         <div class="mb-6">
                             <h2 class="text-2xl font-semibold text-gray-900">New Leave Request</h2>
-                            <p class="text-sm text-gray-500">Submit your leave request by filling in the details below</p>
+                            <p class="text-sm text-gray-500">Submit your leave request by filling in the details below
+                            </p>
                         </div>
 
                         {{-- Content --}}
@@ -548,35 +549,38 @@
 
                             <!-- Leave Type Selection with Grid Cards -->
                             <div class="grid grid-cols-2 gap-4 mb-8">
-                                @foreach (['annual' => ['Calendar', 'blue'], 'sick' => ['Bolt', 'red'], 'important' => ['Clock', 'amber'], 'other' => ['Calendar', 'gray']] as $type => $config)
+                                @foreach ([
+                                            'annual' => ['icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', 'color' => 'blue', 'bg' => 'bg-gradient-to-br from-blue-50 to-blue-100/50'],
+                                            'sick' => ['icon' => 'M13 10V3L4 14h7v7l9-11h-7z', 'color' => 'red', 'bg' => 'bg-gradient-to-br from-red-50 to-red-100/50'],
+                                            'important' => ['icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', 'color' => 'amber', 'bg' => 'bg-gradient-to-br from-amber-50 to-amber-100/50'],
+                                            'other' => ['icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', 'color' => 'gray', 'bg' => 'bg-gradient-to-br from-gray-50 to-gray-100/50'],
+                                        ] as $type => $config)
                                     <label class="cursor-pointer group">
                                         <input type="radio" name="type" value="{{ $type }}"
                                             class="peer hidden" {{ $type === 'annual' ? 'checked' : '' }}>
                                         <div
-                                            class="p-4 rounded-xl border-2 border-gray-100 hover:border-blue-100 peer-checked:border-blue-500 peer-checked:bg-blue-50/50 transition-all duration-200">
+                                            class="relative p-4 rounded-xl border-2 border-gray-100 hover:border-{{ $config['color'] }}-500 peer-checked:border-{{ $config['color'] }}-500 peer-checked:{{ $config['bg'] }} transition-all duration-200">
                                             <div class="flex flex-col items-center gap-3">
-                                                <div @class([
-                                                    'p-3 rounded-xl transition-colors',
-                                                    "bg-{$config[1]}-100 text-{$config[1]}-600" => true,
-                                                ])>
-                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor"
+                                                <div
+                                                    class="p-4 rounded-xl bg-{{ $config['color'] }}-100 text-{{ $config['color'] }}-600 group-hover:scale-110 transition-transform duration-200">
+                                                    <svg class="w-7 h-7" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
-                                                        @if ($config[0] === 'Calendar')
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                        @elseif($config[0] === 'Bolt')
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                                        @elseif($config[0] === 'Clock')
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        @endif
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="{{ $config['icon'] }}" />
                                                     </svg>
                                                 </div>
                                                 <span
-                                                    class="text-sm font-medium text-gray-900 capitalize">{{ $type }}</span>
+                                                    class="text-sm font-medium text-gray-900 group-hover:text-{{ $config['color'] }}-600 capitalize">{{ $type }}</span>
+                                            </div>
+                                            <!-- Added subtle checkmark indicator -->
+                                            <div
+                                                class="absolute top-2 right-2 opacity-0 peer-checked:opacity-100 transition-opacity duration-200">
+                                                <svg class="w-5 h-5 text-{{ $config['color'] }}-500"
+                                                    fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd"
+                                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                        clip-rule="evenodd" />
+                                                </svg>
                                             </div>
                                         </div>
                                     </label>
