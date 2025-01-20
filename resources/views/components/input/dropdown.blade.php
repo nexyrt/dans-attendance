@@ -1,39 +1,68 @@
+{{-- resources/views/components/input/dropdown.blade.php --}}
+
 @props([
-    'label' => 'Select Option',
-    'name' => '',
-    'options' => [],
-    'selected' => 'all',
-    'isLivewire' => false
+    'align' => 'right',
+    'width' => '56',
+    'contentClasses' => 'py-1 bg-white divide-y divide-gray-100',
+    'items' => [],
 ])
 
-<div class="hs-dropdown relative inline-flex">
-    <button 
-        type="button" 
-        class="hs-dropdown-toggle py-3 px-4 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 focus:outline-none focus:bg-gray-50"
-    >
-        {{ $label }}
-        <svg class="hs-dropdown-open:rotate-180 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m6 9 6 6 6-6"/>
-        </svg>
-    </button>
+@php
+    $alignmentClasses = match ($align) {
+        'left' => 'left-0',
+        'right' => 'right-0',
+        'top' => 'top-0',
+        'bottom' => 'bottom-0',
+        default => 'right-0',
+    };
 
-    <div class="hs-dropdown-menu transition-[opacity,margin] duration hs-dropdown-open:opacity-100 opacity-0 hidden z-10 mt-2 min-w-[15rem] bg-white shadow-md rounded-lg p-2">
-        @foreach($options as $option)
-            <button 
-                type="button"
-                @if($isLivewire)
-                    wire:click="$set('{{ $name }}', '{{ $option['value'] }}')"
-                @else
-                    onclick="this.closest('.hs-dropdown').querySelector('input[type=hidden]').value = '{{ $option['value'] }}'"
-                @endif
-                class="flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 w-full text-left"
-            >
-                {{ $option['label'] }}
-            </button>
-        @endforeach
+    $widthClasses = "w-{$width}";
+@endphp
+
+<div x-data="{ open: false }" class="relative" @click.away="open = false">
+    {{-- Trigger --}}
+    <div @click="open = !open">
+        {{ $trigger }}
     </div>
 
-    @unless($isLivewire)
-        <input type="hidden" name="{{ $name }}" value="{{ $selected }}">
-    @endunless
+    {{-- Content --}}
+    <div x-show="open" x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100"
+        x-transition:leave-end="transform opacity-0 scale-95"
+        class="absolute {{ $alignmentClasses }} mt-2 {{ $widthClasses }} rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 {{ $contentClasses }}"
+        style="display: none;">
+        @foreach ($items as $section)
+            <div class="py-1">
+                @foreach ($section as $item)
+                    @if ($item['type'] === 'link')
+                        <a href="{{ $item['href'] }}"
+                            class="group flex items-center px-4 py-2 text-sm {{ $item['class'] ?? 'text-gray-700 hover:bg-gray-50' }}">
+                            @if (isset($item['icon']))
+                                <svg class="mr-3 h-5 w-5 {{ $item['iconClass'] ?? 'text-gray-400 group-hover:text-gray-500' }}"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    {!! $item['icon'] !!}
+                                </svg>
+                            @endif
+                            {{ $item['label'] }}
+                        </a>
+                    @elseif($item['type'] === 'button')
+                        <form method="{{ $item['method'] ?? 'POST' }}" action="{{ $item['action'] }}">
+                            @csrf
+                            <button type="submit"
+                                class="group flex w-full items-center px-4 py-2 text-sm {{ $item['class'] ?? 'text-gray-700 hover:bg-gray-50' }}">
+                                @if (isset($item['icon']))
+                                    <svg class="mr-3 h-5 w-5 {{ $item['iconClass'] ?? 'text-gray-400 group-hover:text-gray-500' }}"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        {!! $item['icon'] !!}
+                                    </svg>
+                                @endif
+                                {{ $item['label'] }}
+                            </button>
+                        </form>
+                    @endif
+                @endforeach
+            </div>
+        @endforeach
+    </div>
 </div>

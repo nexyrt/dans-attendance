@@ -126,10 +126,14 @@
                                 <h1 class="text-xl font-semibold text-gray-900">{{ $title ?? 'Dashboard' }}</h1>
 
                                 <!-- Profile Dropdown -->
-                                <div x-data="{ open: false }" class="relative hidden lg:block">
-                                    <button @click="open = !open"
-                                        class="flex items-center space-x-3 focus:outline-none">
-                                        <div class="flex items-center space-x-3">
+                                <x-input.dropdown align="right" width="56" items={{[
+                                    'type' => 'link',
+                                    'label' => 'Profile Settings',
+                                    'href' => route('staff.profile.index'),
+                                    'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />'
+                                ]}} >
+                                    <x-slot name="trigger">
+                                        <button class="flex items-center space-x-3 focus:outline-none">
                                             <div class="text-right">
                                                 <p class="text-sm font-medium text-gray-900">{{ auth()->user()->name }}
                                                 </p>
@@ -138,44 +142,15 @@
                                             <img class="h-10 w-10 rounded-full object-cover ring-2 ring-primary-50"
                                                 src="{{ asset(auth()->user()->image) }}"
                                                 alt="{{ auth()->user()->name }}">
-                                        </div>
-                                    </button>
-
-                                    <!-- Dropdown Panel -->
-                                    <div x-show="open" @click.away="open = false"
-                                        class="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100"
-                                        x-transition:enter="transition ease-out duration-100"
-                                        x-transition:enter-start="transform opacity-0 scale-95"
-                                        x-transition:enter-end="transform opacity-100 scale-100">
-                                        <div class="py-1">
-                                            <a href="{{ route('staff.profile.index') }}"
-                                                class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                                                <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                </svg>
-                                                Profile Settings
-                                            </a>
-                                        </div>
-                                        <div class="py-1">
-                                            <form method="POST" action="{{ route('logout') }}">
-                                                @csrf
-                                                <button type="submit"
-                                                    class="group flex w-full items-center px-4 py-2 text-sm text-red-700 hover:bg-red-50">
-                                                    <svg class="mr-3 h-5 w-5 text-red-400 group-hover:text-red-500"
-                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                                    </svg>
-                                                    Sign out
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
+                                            <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                :class="{ 'transform rotate-180': open }">
+                                                <path d="m6 9 6 6 6-6" />
+                                            </svg>
+                                        </button>
+                                    </x-slot>
+                                </x-input.dropdown>
                             </div>
                         </header>
 
