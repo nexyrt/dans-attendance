@@ -11,7 +11,7 @@
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-        <link rel="icon" href="{{ asset('images/dans.png') }}">
+        <link rel="icon" href="{{ asset('images/icons/icon-72x72.png') }}">
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -73,7 +73,7 @@
                 <!-- Logo Area -->
                 <div class="mb-12 flex items-center space-x-3">
                     <div class="p-2 bg-gradient-to-tr from-blue-600 to-blue-800 rounded-xl shadow-lg">
-                        <img src="{{ asset('images/dans.png') }}" class="h-8 w-auto" alt="Logo">
+                        <img src="{{ asset('dans.png') }}" class="h-8 w-auto" alt="Logo">
                     </div>
                     <span
                         class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-800">
