@@ -151,6 +151,10 @@
                     New Request
                 </button>
             </div>
+            
+            <div class="px-4 py-2 rounded-lg bg-violet-400 hover:bg-violet-500 focus:bg-red-700">
+                Click me!
+            </div>
 
             <!-- Leave Requests Table -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -548,57 +552,136 @@
                             @csrf
 
                             <!-- Leave Type Selection with Active States -->
-                            <div class="grid grid-cols-4 gap-4 mb-8">
-                                @foreach ([
-                                            'annual' => [
-                                                'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-                                                'color' => 'blue',
-                                                'description' => 'Regular planned leave',
-                                            ],
-                                            'sick' => [
-                                                'icon' => 'M13 10V3L4 14h7v7l9-11h-7z',
-                                                'color' => 'red',
-                                                'description' => 'Health-related leave',
-                                            ],
-                                            'important' => [
-                                                'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
-                                                'color' => 'amber',
-                                                'description' => 'Urgent matters',
-                                            ],
-                                            'other' => [
-                                                'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-                                                'color' => 'gray',
-                                                'description' => 'Other purposes',
-                                            ],
-                                        ] as $type => $config)
-                                    <div>
-                                        <input type="radio" id="type-{{ $type }}" name="type"
-                                            value="{{ $type }}" class="peer hidden"
-                                            {{ $type === 'annual' ? 'checked' : '' }}>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                                <!-- Annual Leave -->
+                                <div class="bg-white px-10 py-12 hover:bg-violet-300 focus:bg-violet-300">
+                                    Hello There!
+                                </div>
 
-                                        <label for="type-{{ $type }}" class="block cursor-pointer">
-                                            <div
-                                                class="p-4 rounded-xl border-2 border-gray-200 hover:border-{{ $config['color'] }}-500 peer-checked:border-{{ $config['color'] }}-500 peer-checked:bg-{{ $config['color'] }}-500 transition-all duration-200 ">
-                                                <div class="flex flex-col items-center gap-3">
-                                                    <div
-                                                        class="p-3 rounded-xl bg-{{ $config['color'] }}-100 text-{{ $config['color'] }}-600">
-                                                        <svg class="w-6 h-6" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2" d="{{ $config['icon'] }}" />
-                                                        </svg>
-                                                    </div>
-                                                    <div class="text-center">
-                                                        <span
-                                                            class="block text-sm font-medium text-gray-900 capitalize">{{ $type }}</span>
-                                                        <span
-                                                            class="text-xs text-gray-500">{{ $config['description'] }}</span>
-                                                    </div>
+                                <!-- Sick Leave -->
+                                <div>
+                                    <input type="radio" id="type-sick" name="type" value="sick"
+                                        class="hidden peer">
+                                    <label for="type-sick" class="block cursor-pointer">
+                                        <div
+                                            class="relative p-6 rounded-2xl bg-white border border-gray-100 shadow-lg transition-all duration-300
+                                                    hover:shadow-xl hover:-translate-y-1 peer-checked:shadow-2xl
+                                                    peer-checked:bg-gradient-to-br peer-checked:from-rose-500 peer-checked:to-rose-600 peer-checked:shadow-rose-500/30">
+                                            <div class="flex flex-col items-center gap-4">
+                                                <div
+                                                    class="p-4 rounded-xl bg-rose-50 group-[.peer-checked]:bg-white/20 transition-colors duration-300">
+                                                    <svg class="w-8 h-8 text-gray-700 peer-checked:text-white transition-colors duration-300"
+                                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                    </svg>
+                                                </div>
+                                                <div class="text-center space-y-1">
+                                                    <span
+                                                        class="block text-base font-semibold text-gray-900 peer-checked:text-white capitalize">
+                                                        Sick
+                                                    </span>
+                                                    <span
+                                                        class="block text-sm text-gray-500 peer-checked:text-white/80">
+                                                        Health-related leave
+                                                    </span>
+                                                </div>
+                                                <div
+                                                    class="absolute top-3 right-3 opacity-0 peer-checked:opacity-100 transition-opacity duration-300">
+                                                    <svg class="w-5 h-5 text-white" fill="none"
+                                                        stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
                                                 </div>
                                             </div>
-                                        </label>
-                                    </div>
-                                @endforeach
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <!-- Important Leave -->
+                                <div>
+                                    <input type="radio" id="type-important" name="type" value="important"
+                                        class="hidden peer">
+                                    <label for="type-important" class="block cursor-pointer">
+                                        <div
+                                            class="relative p-6 rounded-2xl bg-white border border-gray-100 shadow-lg transition-all duration-300
+                                                    hover:shadow-xl hover:-translate-y-1 peer-checked:shadow-2xl
+                                                    peer-checked:bg-gradient-to-br peer-checked:from-amber-500 peer-checked:to-amber-600 peer-checked:shadow-amber-500/30">
+                                            <div class="flex flex-col items-center gap-4">
+                                                <div
+                                                    class="p-4 rounded-xl bg-amber-50 group-[.peer-checked]:bg-white/20 transition-colors duration-300">
+                                                    <svg class="w-8 h-8 text-gray-700 peer-checked:text-white transition-colors duration-300"
+                                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </div>
+                                                <div class="text-center space-y-1">
+                                                    <span
+                                                        class="block text-base font-semibold text-gray-900 peer-checked:text-white capitalize">
+                                                        Important
+                                                    </span>
+                                                    <span
+                                                        class="block text-sm text-gray-500 peer-checked:text-white/80">
+                                                        Urgent matters
+                                                    </span>
+                                                </div>
+                                                <div
+                                                    class="absolute top-3 right-3 opacity-0 peer-checked:opacity-100 transition-opacity duration-300">
+                                                    <svg class="w-5 h-5 text-white" fill="none"
+                                                        stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <!-- Other Leave -->
+                                <div>
+                                    <input type="radio" id="type-other" name="type" value="other"
+                                        class="hidden peer">
+                                    <label for="type-other" class="block cursor-pointer">
+                                        <div
+                                            class="relative p-6 rounded-2xl bg-white border border-gray-100 shadow-lg transition-all duration-300
+                                                    hover:shadow-xl hover:-translate-y-1 peer-checked:shadow-2xl
+                                                    peer-checked:bg-gradient-to-br peer-checked:from-gray-500 peer-checked:to-gray-600 peer-checked:shadow-gray-500/30">
+                                            <div class="flex flex-col items-center gap-4">
+                                                <div
+                                                    class="p-4 rounded-xl bg-gray-50 group-[.peer-checked]:bg-white/20 transition-colors duration-300">
+                                                    <svg class="w-8 h-8 text-gray-700 peer-checked:text-white transition-colors duration-300"
+                                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                </div>
+                                                <div class="text-center space-y-1">
+                                                    <span
+                                                        class="block text-base font-semibold text-gray-900 peer-checked:text-white capitalize">
+                                                        Other
+                                                    </span>
+                                                    <span
+                                                        class="block text-sm text-gray-500 peer-checked:text-white/80">
+                                                        Other purposes
+                                                    </span>
+                                                </div>
+                                                <div
+                                                    class="absolute top-3 right-3 opacity-0 peer-checked:opacity-100 transition-opacity duration-300">
+                                                    <svg class="w-5 h-5 text-white" fill="none"
+                                                        stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
 
                             <!-- Date Selection - Wider layout -->

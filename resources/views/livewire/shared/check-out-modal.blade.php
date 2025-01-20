@@ -2,7 +2,7 @@
     use App\Helpers\DateTimeHelper;
 @endphp
 
-<x-modals.modal name="modal-name" :show="$showModal" max-width="xl">
+<x-modals.modal name="checkout" :show="$showModal" max-width="xl">
     <div class="w-[580px] mx-auto">
         @if ($todayAttendance && $todayAttendance->check_out)
             <div class="p-8 text-center">
@@ -35,7 +35,7 @@
                     </div>
                 </div>
                 <p class="mt-4 text-sm text-gray-500">You have completed your attendance for today.</p>
-                <button type="button" wire:click="$dispatch('close-modal', 'modal-name')"
+                <button type="button" wire:click="$dispatch('close-modal', 'checkout')"
                     class="mt-6 w-full px-5 py-3 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 transition-all duration-200">
                     Close
                 </button>
@@ -146,7 +146,7 @@
 
                         <!-- Action Buttons -->
                         <div class="flex space-x-3">
-                            <button type="button" wire:click="$dispatch('close-modal', 'modal-name')"
+                            <button type="button" wire:click="$dispatch('close-modal', 'checkout')"
                                 class="flex-1 px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 focus:ring-2 focus:ring-offset-1 focus:ring-gray-200 transition-all duration-200">
                                 Cancel
                             </button>
@@ -178,7 +178,7 @@
                         </div>
                         <h3 class="text-lg font-semibold text-gray-900">Check-Out Successful!</h3>
                         <p class="mt-2 text-sm text-gray-500">Have a great rest of your day.</p>
-                        <button type="button" wire:click="$dispatch('close-modal', 'modal-name')"
+                        <button type="button" wire:click="$dispatch('close-modal', 'checkout')"
                             class="mt-6 w-full px-5 py-2.5 text-sm font-medium text-white bg-green-600 rounded-xl hover:bg-green-700 focus:ring-2 focus:ring-offset-1 focus:ring-green-500 transition-all duration-200">
                             Close
                         </button>
