@@ -24,7 +24,8 @@ use App\Livewire\Staff\{
     Dashboard,
     Attendance,
     Leave,
-    Payroll
+    Payroll,
+    Profile
 };
 
 /*
@@ -95,6 +96,7 @@ Route::middleware(['auth', 'role:staff'])
         Route::get('/attendance', Attendance::class)->name('attendance.index');
         Route::get('/leave', Leave::class)->name('leave.index');
         Route::get('/payroll', Payroll::class)->name('payroll.index');
+        Route::get('/profile', Profile::class)->name('profile.index');
     });
 
 /*

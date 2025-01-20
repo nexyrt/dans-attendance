@@ -19,10 +19,28 @@
                                 d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
-                    <div class="flex justify-center px-6 py-4 border-b border-gray-200">
-                        <img src="{{ asset('images/dans.png') }}" alt="DANS" class="h-8 w-8 mr-3">
-                    </div>
-                    <div class="flex items-center">
+                    <div class="text-xl font-semibold text-primary-600">Dans Attendance</div>
+                    <div x-data="{ open: false }" class="relative">
+                        <button @click="open = !open" class="flex items-center">
+                            <img class="h-8 w-8 rounded-full object-cover ring-2 ring-primary-50"
+                                src="{{ asset(auth()->user()->image) }}" alt="{{ auth()->user()->name }}">
+                        </button>
+                        <div x-show="open" @click.away="open = false"
+                            class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
+                            x-transition:enter="transition ease-out duration-100"
+                            x-transition:enter-start="transform opacity-0 scale-95"
+                            x-transition:enter-end="transform opacity-100 scale-100">
+                            <div class="py-1">
+                                <a href="{{ route('staff.profile.index') }}"
+                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile Settings</a>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit"
+                                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign
+                                        out</button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -96,31 +114,6 @@
                             </button>
                         </div>
                     </nav>
-
-                    <!-- User Profile Section -->
-                    <div class="flex-shrink-0 border-t border-gray-100 p-4">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center min-w-0">
-                                <img class="h-9 w-9 rounded-full object-cover" src="{{ asset(auth()->user()->image) }}"
-                                    alt="{{ auth()->user()->name }}">
-                                <div class="ml-3 min-w-0 flex-1">
-                                    <p class="text-sm font-medium text-gray-900 truncate">{{ auth()->user()->name }}
-                                    </p>
-                                    <p class="text-xs text-gray-500 truncate">{{ auth()->user()->email }}</p>
-                                </div>
-                            </div>
-                            <!-- Logout Button -->
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button type="submit" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                    </svg>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
                 </aside>
 
                 <!-- Main Content Wrapper -->
@@ -129,8 +122,60 @@
                     <div class="flex flex-col min-h-screen">
                         <!-- Header -->
                         <header class="bg-white shadow-sm">
-                            <div class="px-6 py-5 h-16">
+                            <div class="px-6 py-4 h-16 flex items-center justify-between">
                                 <h1 class="text-xl font-semibold text-gray-900">{{ $title ?? 'Dashboard' }}</h1>
+
+                                <!-- Profile Dropdown -->
+                                <div x-data="{ open: false }" class="relative hidden lg:block">
+                                    <button @click="open = !open"
+                                        class="flex items-center space-x-3 focus:outline-none">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="text-right">
+                                                <p class="text-sm font-medium text-gray-900">{{ auth()->user()->name }}
+                                                </p>
+                                                <p class="text-xs text-gray-500">{{ auth()->user()->email }}</p>
+                                            </div>
+                                            <img class="h-10 w-10 rounded-full object-cover ring-2 ring-primary-50"
+                                                src="{{ asset(auth()->user()->image) }}"
+                                                alt="{{ auth()->user()->name }}">
+                                        </div>
+                                    </button>
+
+                                    <!-- Dropdown Panel -->
+                                    <div x-show="open" @click.away="open = false"
+                                        class="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100"
+                                        x-transition:enter="transition ease-out duration-100"
+                                        x-transition:enter-start="transform opacity-0 scale-95"
+                                        x-transition:enter-end="transform opacity-100 scale-100">
+                                        <div class="py-1">
+                                            <a href="{{ route('staff.profile.index') }}"
+                                                class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                                <svg class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                </svg>
+                                                Profile Settings
+                                            </a>
+                                        </div>
+                                        <div class="py-1">
+                                            <form method="POST" action="{{ route('logout') }}">
+                                                @csrf
+                                                <button type="submit"
+                                                    class="group flex w-full items-center px-4 py-2 text-sm text-red-700 hover:bg-red-50">
+                                                    <svg class="mr-3 h-5 w-5 text-red-400 group-hover:text-red-500"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                                    </svg>
+                                                    Sign out
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </header>
 
