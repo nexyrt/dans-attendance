@@ -15,8 +15,15 @@
         <div class="flex-1 overflow-y-auto p-6 space-y-6">
             {{-- Form Card --}}
             <div class="bg-white rounded-xl shadow-sm border border-gray-100">
-                <div class="p-4 border-b border-gray-100">
-                    <h3 class="text-sm font-semibold text-gray-700">Location Details</h3>
+                <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-sm font-semibold text-gray-700">
+                        {{ $isEditing ? 'Edit Location' : 'Location Details' }}
+                    </h3>
+                    @if($isEditing)
+                    <button wire:click="cancelEdit" class="text-gray-500 hover:text-gray-700">
+                        <i class="bx bx-x text-xl"></i>
+                    </button>
+                    @endif
                 </div>
                 <div class="p-5 space-y-4">
                     <div>
@@ -53,12 +60,28 @@
                         @error('radius') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                     </div>
                 </div>
-                <div class="p-4 bg-gray-50 rounded-b-xl">
+                <div class="p-4 bg-gray-50 rounded-b-xl space-y-3">
                     <button wire:click="saveLocation"
-                        class="w-full bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all duration-200 font-medium flex items-center justify-center space-x-2 group">
-                        <i class="bx bx-save text-xl group-hover:animate-bounce"></i>
-                        <span>Save Location</span>
+                        class="w-full bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all duration-200 font-medium flex items-center justify-center space-x-2">
+                        <i class="bx {{ $isEditing ? 'bx-check' : 'bx-save' }} text-xl"></i>
+                        <span>{{ $isEditing ? 'Update Location' : 'Save Location' }}</span>
                     </button>
+
+                    @if($selectedLocation && !$isEditing)
+                    <div class="flex gap-2">
+                        <button wire:click="editLocation"
+                            class="flex-1 bg-amber-500 text-white px-4 py-2.5 rounded-lg hover:bg-amber-600 focus:ring-4 focus:ring-amber-200 transition-all duration-200 font-medium flex items-center justify-center space-x-2">
+                            <i class="bx bx-edit text-xl"></i>
+                            <span>Edit</span>
+                        </button>
+                        <button wire:click="deleteLocation"
+                            onclick="return confirm('Are you sure you want to delete this location?')"
+                            class="flex-1 bg-red-500 text-white px-4 py-2.5 rounded-lg hover:bg-red-600 focus:ring-4 focus:ring-red-200 transition-all duration-200 font-medium flex items-center justify-center space-x-2">
+                            <i class="bx bx-trash text-xl"></i>
+                            <span>Delete</span>
+                        </button>
+                    </div>
+                    @endif
                 </div>
             </div>
 
@@ -69,7 +92,6 @@
                 <span>{{ session('message') }}</span>
             </div>
             @endif
-
 
             {{-- Search and Location List Section --}}
             <div class="bg-white rounded-xl shadow-sm border border-gray-100">
@@ -166,7 +188,7 @@
                     const initialLat = -0.49475;
                     const initialLng = 117.14883;
                     const initialRadius = 20;
-                
+
                     // Initialize the map
                     const map = L.map('map').setView([initialLat, initialLng], 20);
                     const tileLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -174,22 +196,22 @@
                         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                     });
                     tileLayer.addTo(map);
-                
+
                     // Draggable marker for selected location
                     let activeMarker = L.marker([initialLat, initialLng], {
-                        draggable: true
+                        draggable: false
                     }).addTo(map);
-                
+
                     let activeCircle = L.circle([initialLat, initialLng], {
                         color: 'blue',
                         fillColor: '#30f',
                         fillOpacity: 0.2,
                         radius: initialRadius
                     }).addTo(map);
-                
+
                     // Object to store all office markers
                     let officeMarkers = {};
-                
+
                     // Handle active marker drag
                     activeMarker.on('drag', function(event) {
                         const position = activeMarker.getLatLng();
@@ -197,7 +219,14 @@
                         @this.set('longitude', position.lng);
                         activeCircle.setLatLng(position);
                     });
-                
+
+                    // Handle dragend event
+                    activeMarker.on('dragend', function(event) {
+                        const position = activeMarker.getLatLng();
+                        @this.set('latitude', position.lat);
+                        @this.set('longitude', position.lng);
+                    });
+
                     // Create popup content
                     function createPopupContent(office) {
                         return `
@@ -214,16 +243,28 @@
                             </div>
                         `;
                     }
-                
-                    // Handle click on map
+
+                    // Handle click on map (only when not editing)
                     map.on('click', function(event) {
-                        const position = event.latlng;
-                        activeMarker.setLatLng(position);
-                        @this.set('latitude', position.lat);
-                        @this.set('longitude', position.lng);
-                        activeCircle.setLatLng(position);
+                        if (!@this.isEditing) {  // Only allow new markers when not in edit mode
+                            const position = event.latlng;
+                            activeMarker.setLatLng(position);
+                            @this.set('latitude', position.lat);
+                            @this.set('longitude', position.lng);
+                            activeCircle.setLatLng(position);
+                        }
                     });
-                
+
+                    // Listen for edit mode changes
+                    Livewire.on('editModeChanged', isEditing => {
+                        activeMarker.dragging.enable();  // Enable dragging in edit mode
+                        if (isEditing) {
+                            activeMarker.getElement().style.cursor = 'move';
+                        } else {
+                            activeMarker.getElement().style.cursor = '';
+                        }
+                    });
+
                     // Listen for office locations load
                     Livewire.on('loadOfficeLocations', locations => {
                         // Remove existing markers
@@ -231,46 +272,54 @@
                             map.removeLayer(officeMarkers[key]);
                         }
                         officeMarkers = {};
-                
+
                         // Add markers for all locations
                         locations[0].forEach(office => {
                             const marker = L.marker([office.latitude, office.longitude], {
-                                draggable: false // Only active marker is draggable
+                                draggable: false
                             });
-                
+
                             marker.bindPopup(createPopupContent(office));
                             marker.addTo(map);
                             officeMarkers[office.id] = marker;
                         });
-                
+
                         // Fit bounds to show all markers
                         if (locations[0].length > 0) {
                             const bounds = new L.LatLngBounds(locations[0].map(office => [office.latitude, office.longitude]));
                             map.fitBounds(bounds, { padding: [50, 50] });
                         }
                     });
-                
+
                     // Listen for location selection
                     Livewire.on('locationSelected', location => {
-                        const newLat = parseFloat(location[0].latitude);
-                        const newLng = parseFloat(location[0].longitude);
-                        const newRadius = parseInt(location[0].radius) || initialRadius;
-                
+                        const newLat = parseFloat(location[0][0].latitude);
+                        const newLng = parseFloat(location[0][0].longitude);
+                        const newRadius = parseInt(location[0][0].radius) || initialRadius;
+
                         // Update active marker and circle
                         activeMarker.setLatLng([newLat, newLng]);
                         activeCircle.setLatLng([newLat, newLng]);
                         activeCircle.setRadius(newRadius);
-                
+
+                        // Enable or disable dragging based on edit mode
+                        activeMarker.dragging[location[0] ? 'enable' : 'disable']();
+
                         // Animate to the selected location
                         map.flyTo([newLat, newLng], 18, {
                             duration: 1.5,
                             easeLinearity: 0.25,
                         });
-                
+
                         // Close any open popups
                         map.closePopup();
                     });
-                });
+
+                    // Listen for radius updates
+                    Livewire.on('radiusUpdated', radius => {
+                        activeCircle.setRadius(radius);
+                    });
+            });
         </script>
     </div>
 </div>

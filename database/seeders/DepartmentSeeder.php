@@ -15,10 +15,10 @@ class DepartmentSeeder extends Seeder
     {
         //
         $departments = [
-            ['name' => 'HR', 'code' => 'HR'],
+            ['name' => 'Legal', 'code' => 'LG'],
             ['name' => 'IT', 'code' => 'IT'],
+            ['name' => 'Digital Marketing', 'code' => 'DM'],
             ['name' => 'Finance', 'code' => 'FIN'],
-            ['name' => 'Sales', 'code' => 'SALES'],
         ];
 
         foreach ($departments as $department) {
