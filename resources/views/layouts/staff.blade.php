@@ -54,12 +54,9 @@
                     :class="{ 'translate-x-0': isSidebarOpen, '-translate-x-full': !isSidebarOpen }">
 
                     <!-- Logo Section -->
-                    <div class="flex items-center justify-between px-6 py-5 h-16 border-b border-gray-100">
-                        <div class="flex items-center space-x-3">
-                            <div class="p-1.5 bg-primary-50 rounded-lg">
-                                <img src="{{ asset('images/dans.png') }}" alt="DANS" class="h-8 w-8">
-                            </div>
-                            <span class="text-lg font-bold text-primary-600">DANS</span>
+                    <div class="flex justify-center items-center h-16 border-b border-gray-100">
+                        <div class="p-1.5 bg-primary-50 rounded-lg">
+                            <img src="{{ asset('images/dans.png') }}" alt="DANS" class="h-8 w-8">
                         </div>
                         <!-- Mobile close button -->
                         <button @click="isSidebarOpen = false"
@@ -108,15 +105,15 @@
                                 <a href="{{ route($nav['route']) }}"
                                     @click.prevent="window.innerWidth < 1024 ? (isSidebarOpen = false, window.location.href = '{{ route($nav['route']) }}') : window.location.href = '{{ route($nav['route']) }}'"
                                     class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 
-                    {{ request()->routeIs($nav['route'] . '*')
-                        ? 'bg-primary-50 text-primary-600'
-                        : 'text-gray-600 hover:bg-gray-50/80' }}">
+                                    {{ request()->routeIs($nav['route'] . '*')
+                                        ? 'bg-primary-50 text-primary-600'
+                                        : 'text-gray-600 hover:bg-gray-50/80' }}">
                                     <div class="flex items-center">
                                         <div
                                             class="{{ request()->routeIs($nav['route'] . '*')
                                                 ? 'bg-primary-100/50'
                                                 : 'bg-gray-100/50 group-hover:bg-primary-50/50' }} 
-                            p-2 rounded-lg transition-colors duration-200">
+                                                p-2 rounded-lg transition-colors duration-200">
                                             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"
                                                 stroke="currentColor">
                                                 {!! $nav['icon'] !!}
@@ -158,51 +155,91 @@
                     <!-- Main Content -->
                     <div class="flex flex-col min-h-screen">
                         <!-- Header -->
-                        <header class="bg-white shadow-sm">
+                        <header class="bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-10">
                             <div class="px-6 py-4 h-16 flex items-center justify-between">
-                                <h1 class="text-xl font-semibold text-gray-900">{{ $title ?? 'Dashboard' }}</h1>
+                                <!-- Left Section with Title -->
+                                <div class="flex items-center space-x-4">
+                                    <h1 class="text-xl font-semibold text-gray-900">{{ $title ?? 'Dashboard' }}</h1>
+                                </div>
 
-                                <!-- Profile Dropdown -->
-                                @php
-                                    $dropdownItems = [
-                                        [
-                                            // First section
-                                            [
-                                                'type' => 'link',
-                                                'label' => 'Profile Settings',
-                                                'href' => route('staff.profile.index'),
-                                                'icon' =>
-                                                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />',
-                                            ],
-                                        ],
-                                        [
-                                            // Second section
-                                            [
-                                                'type' => 'button',
-                                                'label' => 'Sign out',
-                                                'action' => route('logout'),
-                                                'method' => 'POST',
-                                                'class' => 'text-red-700 hover:bg-red-50',
-                                                'iconClass' => 'text-red-400 group-hover:text-red-500',
-                                                'icon' =>
-                                                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />',
-                                            ],
-                                        ],
-                                    ];
-                                @endphp
+                                <!-- Right Section with DateTime and Profile -->
+                                <div class="flex items-center space-x-6">
+                                    <!-- DateTime -->
+                                    <div class="text-gray-600 font-medium hidden sm:flex items-center space-x-4">
+                                        <div x-data="{ date: '', time: '' }" x-init="setInterval(() => {
+                                            const now = new Date();
+                                            date = now.toLocaleDateString('en-US', {
+                                                weekday: 'long',
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric'
+                                            });
+                                            time = now.toLocaleTimeString('en-US', {
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                                hour12: true
+                                            });
+                                        }, 1000);">
+                                            <span class="text-sm" x-text="date"></span>
+                                            <span class="text-lg font-semibold ml-3" x-text="time"></span>
+                                        </div>
+                                    </div>
 
-                                <x-input.dropdown :items="$dropdownItems">
-                                    <x-slot name="trigger">
-                                        <button class="flex items-center text-sm">
-                                            {{ Auth::user()->name }}
-                                            <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </button>
-                                    </x-slot>
-                                </x-input.dropdown>
+                                    <!-- Rest of your code remains the same -->
+                                    <!-- Divider -->
+                                    <div class="h-6 w-px bg-gray-200"></div>
+
+                                    <!-- Profile Dropdown -->
+                                    @php
+                                        $dropdownItems = [
+                                            [
+                                                [
+                                                    'type' => 'link',
+                                                    'label' => 'Profile Settings',
+                                                    'href' => route('staff.profile.index'),
+                                                    'icon' =>
+                                                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />',
+                                                ],
+                                            ],
+                                            [
+                                                [
+                                                    'type' => 'button',
+                                                    'label' => 'Sign out',
+                                                    'action' => route('logout'),
+                                                    'method' => 'POST',
+                                                    'class' => 'text-red-700 hover:bg-red-50',
+                                                    'iconClass' => 'text-red-400 group-hover:text-red-500',
+                                                    'icon' =>
+                                                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />',
+                                                ],
+                                            ],
+                                        ];
+                                    @endphp
+
+                                    <x-input.dropdown :items="$dropdownItems">
+                                        <x-slot name="trigger">
+                                            <button class="flex items-center space-x-3 group">
+                                                <div class="flex items-center space-x-3">
+                                                    <img class="h-8 w-8 rounded-lg object-cover ring-2 ring-primary-50 group-hover:ring-primary-100 transition-all"
+                                                        src="{{ asset(auth()->user()->image) }}"
+                                                        alt="{{ auth()->user()->name }}">
+                                                    <div class="flex flex-col items-start">
+                                                        <span
+                                                            class="text-sm font-medium text-gray-700 group-hover:text-gray-900">
+                                                            {{ Auth::user()->name }}
+                                                        </span>
+                                                        <span class="text-xs text-gray-500">Staff</span>
+                                                    </div>
+                                                    <svg class="h-4 w-4 text-gray-500 transition-transform duration-200 group-hover:rotate-180"
+                                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                    </svg>
+                                                </div>
+                                            </button>
+                                        </x-slot>
+                                    </x-input.dropdown>
+                                </div>
                             </div>
                         </header>
 
@@ -223,6 +260,7 @@
 
         @livewireScripts
 
+        {{-- Attendance Modals --}}
         <script>
             window.addEventListener('alpine:init', () => {
                 Alpine.store('app', {
@@ -246,6 +284,35 @@
                     }, 1500);
                 });
             });
+        </script>
+
+        {{-- Today's Date --}}
+        <script>
+            function clock() {
+                return {
+                    time: '',
+                    date: '',
+                    startClock() {
+                        setInterval(() => {
+                            const now = new Date();
+
+                            this.time = now.toLocaleTimeString('en-US', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: true
+                            });
+
+                            this.date = now.toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            });
+                        }, 1000);
+                    }
+                }
+            }
         </script>
     </body>
 
