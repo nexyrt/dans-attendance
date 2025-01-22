@@ -2,7 +2,7 @@
     use App\Helpers\DateTimeHelper;
 @endphp
 
-<x-modals.modal name="checkout" :show="$showModal" max-width="xl">
+<x-modals.modal name="checkout" :show="$showModal" max-width="xl" x-cloak>
     <div class="w-[580px] mx-auto">
         @if ($todayAttendance && $todayAttendance->check_out)
             <div class="p-8 text-center">

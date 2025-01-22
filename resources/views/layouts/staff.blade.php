@@ -47,7 +47,7 @@
                 </div>
             </div>
 
-            <div class="flex h-screen overflow-hidden">
+            <div class="flex h-screen">
                 <!-- Sidebar -->
                 <aside
                     class="fixed inset-y-0 left-0 z-20 w-72 bg-white/95 backdrop-blur-sm shadow-lg transition-all duration-300 ease-in-out lg:relative lg:translate-x-0 flex flex-col border-r border-gray-100"
@@ -151,12 +151,12 @@
                 </aside>
 
                 <!-- Main Content Wrapper -->
-                <div class="flex-1">
+                <div class="flex-1 flex flex-col">
                     <!-- Main Content -->
                     <div class="flex flex-col min-h-screen">
                         <!-- Header -->
                         <header
-                            class="bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-10 border-b border-gray-100">
+                            class="bg-white/95 flex-none backdrop-blur-sm shadow-sm sticky top-0 z-10 border-b border-gray-100">
                             <div class="px-6 h-16 flex items-center justify-between">
                                 <!-- Left Section: Title Area -->
                                 <div class="flex items-center space-x-4">
@@ -257,8 +257,8 @@
                         </header>
 
                         <!-- Content Area -->
-                        <main class="flex-1">
-                            <div class="p-6">
+                        <main class="flex-1 overflow-y-auto h-[calc(100vh-4rem)]"> <!-- 4rem = 64px for header -->
+                            <div class="container mx-auto p-6">
                                 {{ $slot }}
                             </div>
                         </main>
