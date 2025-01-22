@@ -155,41 +155,50 @@
                     <!-- Main Content -->
                     <div class="flex flex-col min-h-screen">
                         <!-- Header -->
-                        <header class="bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-10">
-                            <div class="px-6 py-4 h-16 flex items-center justify-between">
-                                <!-- Left Section with Title -->
+                        <header
+                            class="bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-10 border-b border-gray-100">
+                            <div class="px-6 h-16 flex items-center justify-between">
+                                <!-- Left Section: Title Area -->
                                 <div class="flex items-center space-x-4">
-                                    <h1 class="text-xl font-semibold text-gray-900">{{ $title ?? 'Dashboard' }}</h1>
+                                    <h1
+                                        class="text-xl font-semibold bg-gradient-to-r from-gray-900 to-gray-700 text-transparent bg-clip-text">
+                                        {{ $title ?? 'Dashboard' }}
+                                    </h1>
                                 </div>
 
-                                <!-- Right Section with DateTime and Profile -->
+                                <!-- Right Section: DateTime and Profile -->
                                 <div class="flex items-center space-x-6">
-                                    <!-- DateTime -->
-                                    <div class="text-gray-600 font-medium hidden sm:flex items-center space-x-4">
-                                        <div x-data="{ date: '', time: '' }" x-init="setInterval(() => {
-                                            const now = new Date();
-                                            date = now.toLocaleDateString('en-US', {
+                                    <!-- DateTime Display -->
+                                    <div x-data="{
+                                        date: '',
+                                        time: '',
+                                        init() {
+                                            this.updateClock();
+                                            setInterval(() => this.updateClock(), 1000)
+                                        },
+                                        updateClock() {
+                                            let now = new Date();
+                                            this.date = now.toLocaleDateString('en-US', {
                                                 weekday: 'long',
-                                                year: 'numeric',
                                                 month: 'long',
                                                 day: 'numeric'
                                             });
-                                            time = now.toLocaleTimeString('en-US', {
+                                            this.time = now.toLocaleTimeString('en-US', {
+                                                second: '2-digit',
                                                 hour: '2-digit',
                                                 minute: '2-digit',
-                                                hour12: true
+                                                hour12: false
                                             });
-                                        }, 1000);">
-                                            <span class="text-sm" x-text="date"></span>
-                                            <span class="text-lg font-semibold ml-3" x-text="time"></span>
-                                        </div>
+                                        }
+                                    }" x-init="init()"
+                                        class="flex flex-col items-end">
+                                        <span class="text-sm text-gray-600" x-text="date"></span>
+                                        <span class="text-sm font-medium text-primary-600" x-text="time"></span>
                                     </div>
 
-                                    <!-- Rest of your code remains the same -->
                                     <!-- Divider -->
                                     <div class="h-6 w-px bg-gray-200"></div>
 
-                                    <!-- Profile Dropdown -->
                                     @php
                                         $dropdownItems = [
                                             [
@@ -216,26 +225,30 @@
                                         ];
                                     @endphp
 
+                                    <!-- Profile Dropdown -->
                                     <x-input.dropdown :items="$dropdownItems">
                                         <x-slot name="trigger">
-                                            <button class="flex items-center space-x-3 group">
-                                                <div class="flex items-center space-x-3">
-                                                    <img class="h-8 w-8 rounded-lg object-cover ring-2 ring-primary-50 group-hover:ring-primary-100 transition-all"
+                                            <button class="flex items-center space-x-3" x-data="{ open: false }"
+                                                @click="open = !open">
+                                                <div class="relative">
+                                                    <img class="h-8 w-8 rounded-full object-cover"
                                                         src="{{ asset(auth()->user()->image) }}"
                                                         alt="{{ auth()->user()->name }}">
-                                                    <div class="flex flex-col items-start">
-                                                        <span
-                                                            class="text-sm font-medium text-gray-700 group-hover:text-gray-900">
-                                                            {{ Auth::user()->name }}
-                                                        </span>
-                                                        <span class="text-xs text-gray-500">Staff</span>
+                                                    <div
+                                                        class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 bg-green-500 rounded-full ring-1 ring-white">
                                                     </div>
-                                                    <svg class="h-4 w-4 text-gray-500 transition-transform duration-200 group-hover:rotate-180"
-                                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M19 9l-7 7-7-7" />
-                                                    </svg>
                                                 </div>
+                                                <div class="flex flex-col items-start">
+                                                    <span
+                                                        class="text-sm text-gray-700">{{ Auth::user()->name }}</span>
+                                                    <span class="text-xs text-gray-500">Staff</span>
+                                                </div>
+                                                <svg class="h-4 w-4 text-gray-400 transition-transform duration-200"
+                                                    :class="{ 'rotate-180': open }" fill="none"
+                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                </svg>
                                             </button>
                                         </x-slot>
                                     </x-input.dropdown>
@@ -284,35 +297,6 @@
                     }, 1500);
                 });
             });
-        </script>
-
-        {{-- Today's Date --}}
-        <script>
-            function clock() {
-                return {
-                    time: '',
-                    date: '',
-                    startClock() {
-                        setInterval(() => {
-                            const now = new Date();
-
-                            this.time = now.toLocaleTimeString('en-US', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                second: '2-digit',
-                                hour12: true
-                            });
-
-                            this.date = now.toLocaleDateString('en-US', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            });
-                        }, 1000);
-                    }
-                }
-            }
         </script>
     </body>
 
