@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Cake\Chronos\Chronos;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class LeaveRequest extends Model
 {
+    use HasFactory;
+
     // Status Constants - Matching database enum values exactly
     public const STATUS_PENDING = 'pending';
     public const STATUS_APPROVED = 'approved';

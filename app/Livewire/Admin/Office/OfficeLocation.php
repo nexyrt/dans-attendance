@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Admin\Office;
 
-
 use Livewire\Component;
 
 class OfficeLocation extends Component
@@ -14,14 +13,10 @@ class OfficeLocation extends Component
     public $latitude;
     public $longitude;
     public $radius;
+    public $isEditing = false;
 
     protected $listeners = ['updateCoordinates'];
 
-    public function updateCoordinates($data)
-    {
-        $this->latitude = $data['lat'];
-        $this->longitude = $data['lng'];
-    }
     protected $rules = [
         'name' => 'required|string|max:255',
         'address' => 'required|string',
@@ -35,9 +30,13 @@ class OfficeLocation extends Component
         $this->latitude = -0.49475;
         $this->longitude = 117.14883;
         $this->radius = 50;
-
-        // Dispatch initial office locations
         $this->dispatchAllOffices();
+    }
+
+    public function updateCoordinates($data)
+    {
+        $this->latitude = $data['lat'];
+        $this->longitude = $data['lng'];
     }
 
     public function dispatchAllOffices()
@@ -46,50 +45,81 @@ class OfficeLocation extends Component
         $this->dispatch('loadOfficeLocations', $locations);
     }
 
-    public function updateFilter($status)
-    {
-        $this->filterStatus = $status;
-        $this->dispatchAllOffices();
-    }
-
     public function saveLocation()
     {
         $this->validate();
 
-        \App\Models\OfficeLocation::create([
-            'name' => $this->name,
-            'address' => $this->address,
-            'latitude' => $this->latitude,
-            'longitude' => $this->longitude,
-            'radius' => $this->radius
-        ]);
+        if ($this->isEditing && $this->selectedLocation) {
+            $this->selectedLocation->update([
+                'name' => $this->name,
+                'address' => $this->address,
+                'latitude' => $this->latitude,
+                'longitude' => $this->longitude,
+                'radius' => $this->radius
+            ]);
+            
+            session()->flash('message', 'Office location updated successfully!');
+            $this->isEditing = false;
+            $this->dispatch('editModeChanged', false);
+        } else {
+            \App\Models\OfficeLocation::create([
+                'name' => $this->name,
+                'address' => $this->address,
+                'latitude' => $this->latitude,
+                'longitude' => $this->longitude,
+                'radius' => $this->radius
+            ]);
+            
+            session()->flash('message', 'Office location saved successfully!');
+        }
 
-        $this->reset(['name', 'address', 'latitude', 'longitude', 'radius']);
-        session()->flash('message', 'Office location saved successfully!');
+        $this->reset(['name', 'address', 'latitude', 'longitude', 'radius', 'selectedLocation']);
+        $this->dispatchAllOffices();
     }
 
-
-    public function updatedRadius($value)
+    public function editLocation()
     {
-        $this->dispatch('radiusUpdated', $value);
+        if ($this->selectedLocation) {
+            $this->isEditing = true;
+            $this->name = $this->selectedLocation->name;
+            $this->address = $this->selectedLocation->address;
+            $this->latitude = $this->selectedLocation->latitude;
+            $this->longitude = $this->selectedLocation->longitude;
+            $this->radius = $this->selectedLocation->radius;
+            
+            // Dispatch event to enable marker dragging
+            $this->dispatch('editModeChanged', true);
+        }
+    }
+
+    public function deleteLocation()
+    {
+        if ($this->selectedLocation) {
+            $this->selectedLocation->delete();
+            session()->flash('message', 'Office location deleted successfully!');
+            $this->reset(['name', 'address', 'latitude', 'longitude', 'radius', 'selectedLocation', 'isEditing']);
+            $this->dispatch('editModeChanged', false);
+            $this->dispatchAllOffices();
+        }
+    }
+
+    public function cancelEdit()
+    {
+        $this->isEditing = false;
+        $this->dispatch('editModeChanged', false);
+        $this->reset(['name', 'address', 'latitude', 'longitude', 'radius']);
+        if ($this->selectedLocation) {
+            $this->selectLocation($this->selectedLocation->id);
+        }
     }
 
     public function selectLocation($id)
     {
         $location = \App\Models\OfficeLocation::find($id);
         $this->selectedLocation = $location;
-
-        // Update form fields
-        $this->name = $location->name;
-        $this->address = $location->address;
-        $this->latitude = $location->latitude;
-        $this->longitude = $location->longitude;
-        $this->radius = $location->radius;
-
-        // Dispatch event to update map
-        $this->dispatch('locationSelected', $location);
+        // Pass isEditing state to the map
+        $this->dispatch('locationSelected', [$location, $this->isEditing]);
     }
-
 
     public function render()
     {

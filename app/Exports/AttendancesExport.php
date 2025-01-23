@@ -15,7 +15,6 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Color;
 use Carbon\Carbon;
 
 class AttendancesExport implements FromQuery, WithHeadings, WithMapping, WithColumnWidths, WithStyles, WithTitle, WithCustomStartCell
@@ -40,6 +39,43 @@ class AttendancesExport implements FromQuery, WithHeadings, WithMapping, WithCol
         return 'A7';
     }
 
+    /**
+     * Convert decimal hours to hours and minutes format
+     * Example: 8.5 becomes "8h 30m"
+     */
+    private function formatDuration(float $hours): string
+    {
+        if ($hours <= 0)
+            return '-';
+
+        $wholeHours = floor($hours);
+        $minutes = round(($hours - $wholeHours) * 60);
+
+        // Handle case where minutes round to 60
+        if ($minutes == 60) {
+            $wholeHours++;
+            $minutes = 0;
+        }
+
+        if ($minutes == 0) {
+            return "{$wholeHours}h";
+        }
+
+        return "{$wholeHours}h {$minutes}m";
+    }
+
+    /**
+     * Calculate overtime hours (any time beyond 8 hours)
+     */
+    private function calculateOvertime(float $workingHours): string
+    {
+        if ($workingHours <= 8)
+            return '-';
+
+        $overtimeHours = $workingHours - 8;
+        return $this->formatDuration($overtimeHours);
+    }
+
     public function styles(Worksheet $sheet)
     {
         $this->totalRecords = $this->query()->count();
@@ -49,10 +85,10 @@ class AttendancesExport implements FromQuery, WithHeadings, WithMapping, WithCol
             $sheet->getColumnDimension($column)->setWidth($width);
         }
 
-        // Top logo section with colored background
-        $sheet->mergeCells('A1:H2');
+        // Top logo section
+        $sheet->mergeCells('A1:I2');
         $sheet->setCellValue('A1', 'JKB EMPLOYEE MANAGEMENT');
-        $sheet->getStyle('A1:H2')->applyFromArray([
+        $sheet->getStyle('A1:I2')->applyFromArray([
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
                 'startColor' => ['rgb' => '1A56DB']
@@ -65,49 +101,28 @@ class AttendancesExport implements FromQuery, WithHeadings, WithMapping, WithCol
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER
-            ],
-            'borders' => [
-                'bottom' => [
-                    'borderStyle' => Border::BORDER_MEDIUM,
-                    'color' => ['rgb' => '1E429F']
-                ]
             ]
         ]);
-        $sheet->getRowDimension(1)->setRowHeight(35);
-        $sheet->getRowDimension(2)->setRowHeight(0);
 
         // Report Title Section
-        $sheet->mergeCells('A3:H3');
+        $sheet->mergeCells('A3:I3');
         $sheet->setCellValue('A3', 'Attendance Report');
         $sheet->getStyle('A3')->applyFromArray([
             'font' => [
                 'bold' => true,
-                'size' => 14,
-                'color' => ['rgb' => '1F2937']
+                'size' => 14
             ],
             'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER
-            ],
-            'fill' => [
-                'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['rgb' => 'F3F4F6']
-            ],
-            'borders' => [
-                'bottom' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color' => ['rgb' => 'E5E7EB']
-                ]
+                'horizontal' => Alignment::HORIZONTAL_CENTER
             ]
         ]);
-        $sheet->getRowDimension(3)->setRowHeight(30);
 
         // Period and Records info with side borders
         $startDate = $this->filters['startDate'] ? Carbon::parse($this->filters['startDate'])->format('d M Y') : 'All time';
         $endDate = $this->filters['endDate'] ? Carbon::parse($this->filters['endDate'])->format('d M Y') : 'Present';
 
         // Period info with left border accent
-        $sheet->mergeCells('A4:H4');
+        $sheet->mergeCells('A4:I4');
         $sheet->setCellValue('A4', "Period: {$startDate} - {$endDate}");
         $sheet->getStyle('A4')->applyFromArray([
             'font' => [
@@ -127,7 +142,7 @@ class AttendancesExport implements FromQuery, WithHeadings, WithMapping, WithCol
         ]);
 
         // Total records with right border accent
-        $sheet->mergeCells('A5:H5');
+        $sheet->mergeCells('A5:I5');
         $sheet->setCellValue('A5', "Total Records: {$this->totalRecords}");
         $sheet->getStyle('A5')->applyFromArray([
             'font' => [
@@ -146,56 +161,49 @@ class AttendancesExport implements FromQuery, WithHeadings, WithMapping, WithCol
             ]
         ]);
 
-        // Spacing before table
-        $sheet->getRowDimension(6)->setRowHeight(15);
-
-        // Table Headers with gradient-like effect
-        $headerRange = 'A7:H7';
+        // Table Headers
+        $headerRange = 'A7:I7';
         $sheet->getStyle($headerRange)->applyFromArray([
             'font' => [
                 'bold' => true,
-                'color' => ['rgb' => 'FFFFFF'],
-                'size' => 11
+                'color' => ['rgb' => 'FFFFFF']
             ],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
                 'startColor' => ['rgb' => '2563EB']
             ],
             'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER
+                'horizontal' => Alignment::HORIZONTAL_CENTER
             ]
         ]);
-        $sheet->getRowDimension(7)->setRowHeight(20);
 
         // Data rows styling
         $lastRow = $sheet->getHighestRow();
-        $dataRange = 'A8:H' . $lastRow;
+        $dataRange = 'A8:I' . $lastRow;
 
-        // Basic styling for all data rows
+        // Center align specific columns
+        $sheet->getStyle('A8:A' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER); // Date
+        $sheet->getStyle('D8:H' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER); // Time columns
+
         $sheet->getStyle($dataRange)->applyFromArray([
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => Border::BORDER_THIN,
                     'color' => ['rgb' => 'E5E7EB']
                 ]
-            ],
-            'alignment' => [
-                'vertical' => Alignment::VERTICAL_CENTER
             ]
         ]);
 
         // Zebra striping and status colors
         for ($row = 8; $row <= $lastRow; $row++) {
+            // Zebra striping
             if ($row % 2 == 0) {
-                $sheet->getStyle('A' . $row . ':H' . $row)->getFill()
+                $sheet->getStyle('A' . $row . ':I' . $row)->getFill()
                     ->setFillType(Fill::FILL_SOLID)
                     ->getStartColor()->setRGB('F9FAFB');
             }
 
-            $sheet->getRowDimension($row)->setRowHeight(18);
-
-            // Status color coding with background
+            // Status color coding
             $status = $sheet->getCell('G' . $row)->getValue();
             $statusStyle = $sheet->getStyle('G' . $row);
 
@@ -222,24 +230,28 @@ class AttendancesExport implements FromQuery, WithHeadings, WithMapping, WithCol
                 'fill' => [
                     'fillType' => Fill::FILL_SOLID,
                     'startColor' => ['rgb' => $bgColor]
-                ],
-                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+                ]
             ]);
+
+            // Highlight overtime
+            $overtimeCell = $sheet->getCell('H' . $row)->getValue();
+            if ($overtimeCell && $overtimeCell !== '-') {
+                $sheet->getStyle('H' . $row)->applyFromArray([
+                    'font' => ['color' => ['rgb' => '7C3AED']],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'F5F3FF']
+                    ]
+                ]);
+            }
         }
-
-        // Center align specific columns
-        $sheet->getStyle('A8:A' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER); // Date
-        $sheet->getStyle('D8:G' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER); // Check In, Check Out, Working Hours, Status
-
-        // Freeze panes
-        $sheet->freezePane('A8');
 
         return $sheet;
     }
 
     public function query()
     {
-        $query = Attendance::query()
+        return Attendance::query()
             ->with(['user'])
             ->select([
                 'attendances.*',
@@ -268,8 +280,6 @@ class AttendancesExport implements FromQuery, WithHeadings, WithMapping, WithCol
             )
             ->orderBy('date', 'desc')
             ->orderBy('check_in', 'desc');
-
-        return $query;
     }
 
     public function map($attendance): array
@@ -277,14 +287,17 @@ class AttendancesExport implements FromQuery, WithHeadings, WithMapping, WithCol
         $checkIn = $attendance->check_in ? Carbon::parse($attendance->check_in) : null;
         $checkOut = $attendance->check_out ? Carbon::parse($attendance->check_out) : null;
 
+        $workingHours = $attendance->working_hours ?? 0;
+
         return [
             Carbon::parse($attendance->date)->format('d M Y'),
             $attendance->user_name,
             $attendance->user_email,
             $checkIn ? $checkIn->format('h:i A') : '-',
             $checkOut ? $checkOut->format('h:i A') : '-',
-            $attendance->working_hours ? number_format($attendance->working_hours, 2) . ' hrs' : '-',
+            $this->formatDuration($workingHours),
             ucfirst($attendance->status),
+            $this->calculateOvertime($workingHours),
             $attendance->early_leave_reason ?: '-',
         ];
     }
@@ -299,6 +312,7 @@ class AttendancesExport implements FromQuery, WithHeadings, WithMapping, WithCol
             'CHECK OUT',
             'WORKING HOURS',
             'STATUS',
+            'OVERTIME',
             'EARLY LEAVE REASON'
         ];
     }
@@ -313,7 +327,8 @@ class AttendancesExport implements FromQuery, WithHeadings, WithMapping, WithCol
             'E' => 15,  // Check Out
             'F' => 15,  // Working Hours
             'G' => 15,  // Status
-            'H' => 40,  // Early Leave Reason
+            'H' => 15,  // Overtime
+            'I' => 40,  // Early Leave Reason
         ];
     }
 }

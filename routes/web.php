@@ -1,53 +1,52 @@
 <?php
 
-// Framework & Package Imports
-
-use App\Http\Controllers\Office\OfficeLocation;
-use App\Http\Controllers\Staff\LeaveController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Maatwebsite\Excel\Facades\Excel;
 
-// Controllers
+// Controller Imports
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Office\OfficeLocation;
 use App\Http\Controllers\Admin\{
     DashboardController,
     UsersController,
     ScheduleController,
     Leave\LeaveDashboard
 };
-use App\Http\Controllers\Staff\{
-    DashboardController as StaffDashboardController,
-    AttendanceController
-};
+use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
 
-// Livewire Components
-use App\Livewire\KanbanBoard;
-use App\Livewire\Admin\Users\UserDetail;
+// Livewire Component Imports
 use App\Livewire\Admin\Leave\{
     LeaveBalance,
     LeaveRequestsTable
 };
 use App\Livewire\Admin\Attendances\AttendanceRecord;
-use App\Livewire\Admin\Schedules\ScheduleTable;
-
-// Models & Exports
-use App\Models\{
+use App\Livewire\Staff\{
+    Dashboard,
     Attendance,
-    LeaveRequest
+    Leave,
+    Payroll,
+    Profile
 };
-use App\Exports\UsersExport;
 
-// Public Routes
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/kanban', KanbanBoard::class)->name('kanban');
 
-// Admin Routes
+/*
+|--------------------------------------------------------------------------
+| Admin Routes
+|--------------------------------------------------------------------------
+*/
+
 Route::prefix('admin')
     ->middleware(['auth', 'role:admin'])
     ->name('admin.')
     ->group(function () {
+        // Dashboard
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
         // Users Management
@@ -83,24 +82,29 @@ Route::prefix('admin')
         });
     });
 
-// Staff Routes
-Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->group(function () {
-    Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
+/*
+|--------------------------------------------------------------------------
+| Staff Routes
+|--------------------------------------------------------------------------
+*/
 
-    // Attendance
-    Route::prefix('attendance')->name('attendance.')->group(function () {
-        Route::get('/', [AttendanceController::class, 'index'])->name('index');
+Route::middleware(['auth', 'role:staff'])
+    ->prefix('staff')
+    ->name('staff.')
+    ->group(function () {
+        Route::get('/dashboard', Dashboard::class)->name('dashboard');
+        Route::get('/attendance', Attendance::class)->name('attendance.index');
+        Route::get('/leave', Leave::class)->name('leave.index');
+        Route::get('/payroll', Payroll::class)->name('payroll.index');
+        Route::get('/profile', Profile::class)->name('profile.index');
     });
 
-    // Leave Management Routes
-    Route::prefix('leave')->name('leave.')->group(function () {
-        Route::get('/', [LeaveController::class, 'index'])->name('index');
-        Route::post('/store', [LeaveController::class, 'store'])->name('store');
-        Route::post('/{leaveRequest}/cancel', [LeaveController::class, 'cancel'])->name('cancel');  // CORRECTED
-    });
-});
+/*
+|--------------------------------------------------------------------------
+| Manager Routes
+|--------------------------------------------------------------------------
+*/
 
-// Manager Routes
 Route::middleware(['auth', 'role:manager'])
     ->prefix('manager')
     ->name('manager.')
@@ -108,7 +112,12 @@ Route::middleware(['auth', 'role:manager'])
         Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
     });
 
-// Auth Routes
+/*
+|--------------------------------------------------------------------------
+| Authentication Routes
+|--------------------------------------------------------------------------
+*/
+
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });

@@ -1,6 +1,5 @@
 <div>
     <x-layouts.admin>
-
         <!-- Time Period Selector -->
         <div class="flex justify-end mb-4">
             <div
@@ -132,7 +131,7 @@
                 </div>
             </div>
         </div>
-        @include('components.modals.user-attendances-detail-modal')
+        {{-- @include('components.modals.user-attendances-detail-modal') --}}
 
 
 

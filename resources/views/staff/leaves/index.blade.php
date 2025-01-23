@@ -151,6 +151,10 @@
                     New Request
                 </button>
             </div>
+            
+            <div class="px-4 py-2 rounded-lg bg-violet-400 hover:bg-violet-500 focus:bg-red-700">
+                Click me!
+            </div>
 
             <!-- Leave Requests Table -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -530,101 +534,202 @@
                 @endif
             </div>
 
-            {{-- Create Leave Request --}}
-            <x-modals.modal name="create-leave" :show="false" maxWidth="md">
-                <!-- Added my-6 for vertical margin and h-auto to allow natural height -->
-                <div class="my-6 h-auto max-h-[calc(100vh-8rem)] overflow-y-auto bg-white rounded-xl">
-                    <div class="px-6">
-                        <!-- Modal Header -->
-                        <div class="mb-6">
-                            <h2 class="text-2xl font-semibold text-gray-900">New Leave Request</h2>
-                            <p class="text-sm text-gray-500">Submit your leave request by filling in the details below</p>
-                        </div>
 
-                        {{-- Content --}}
+            {{-- Create Leave Request --}}
+            <x-modals.modal name="create-leave" :show="false" maxWidth="2xl">
+                <div class="bg-white rounded-xl mt-3">
+                    <!-- Modal Header - Removed extra padding/gaps -->
+                    <div
+                        class="px-8 py-6 bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-t-xl border-b border-gray-100">
+                        <h2 class="text-2xl font-semibold text-gray-900">New Leave Request</h2>
+                        <p class="mt-1 text-sm text-gray-600">Fill in the details below to submit your leave request
+                        </p>
+                    </div>
+
+                    <div class="p-8">
                         <form method="POST" action="{{ route('staff.leave.store') }}"
                             enctype="multipart/form-data">
                             @csrf
 
-                            <!-- Leave Type Selection with Grid Cards -->
-                            <div class="grid grid-cols-2 gap-4 mb-8">
-                                @foreach (['annual' => ['Calendar', 'blue'], 'sick' => ['Bolt', 'red'], 'important' => ['Clock', 'amber'], 'other' => ['Calendar', 'gray']] as $type => $config)
-                                    <label class="cursor-pointer group">
-                                        <input type="radio" name="type" value="{{ $type }}"
-                                            class="peer hidden" {{ $type === 'annual' ? 'checked' : '' }}>
+                            <!-- Leave Type Selection with Active States -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                                <!-- Annual Leave -->
+                                <div class="bg-white px-10 py-12 hover:bg-violet-300 focus:bg-violet-300">
+                                    Hello There!
+                                </div>
+
+                                <!-- Sick Leave -->
+                                <div>
+                                    <input type="radio" id="type-sick" name="type" value="sick"
+                                        class="hidden peer">
+                                    <label for="type-sick" class="block cursor-pointer">
                                         <div
-                                            class="p-4 rounded-xl border-2 border-gray-100 hover:border-blue-100 peer-checked:border-blue-500 peer-checked:bg-blue-50/50 transition-all duration-200">
-                                            <div class="flex flex-col items-center gap-3">
-                                                <div @class([
-                                                    'p-3 rounded-xl transition-colors',
-                                                    "bg-{$config[1]}-100 text-{$config[1]}-600" => true,
-                                                ])>
-                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        @if ($config[0] === 'Calendar')
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                        @elseif($config[0] === 'Bolt')
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                                        @elseif($config[0] === 'Clock')
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        @endif
+                                            class="relative p-6 rounded-2xl bg-white border border-gray-100 shadow-lg transition-all duration-300
+                                                    hover:shadow-xl hover:-translate-y-1 peer-checked:shadow-2xl
+                                                    peer-checked:bg-gradient-to-br peer-checked:from-rose-500 peer-checked:to-rose-600 peer-checked:shadow-rose-500/30">
+                                            <div class="flex flex-col items-center gap-4">
+                                                <div
+                                                    class="p-4 rounded-xl bg-rose-50 group-[.peer-checked]:bg-white/20 transition-colors duration-300">
+                                                    <svg class="w-8 h-8 text-gray-700 peer-checked:text-white transition-colors duration-300"
+                                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                                     </svg>
                                                 </div>
-                                                <span
-                                                    class="text-sm font-medium text-gray-900 capitalize">{{ $type }}</span>
+                                                <div class="text-center space-y-1">
+                                                    <span
+                                                        class="block text-base font-semibold text-gray-900 peer-checked:text-white capitalize">
+                                                        Sick
+                                                    </span>
+                                                    <span
+                                                        class="block text-sm text-gray-500 peer-checked:text-white/80">
+                                                        Health-related leave
+                                                    </span>
+                                                </div>
+                                                <div
+                                                    class="absolute top-3 right-3 opacity-0 peer-checked:opacity-100 transition-opacity duration-300">
+                                                    <svg class="w-5 h-5 text-white" fill="none"
+                                                        stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
                                             </div>
                                         </div>
                                     </label>
-                                @endforeach
+                                </div>
+
+                                <!-- Important Leave -->
+                                <div>
+                                    <input type="radio" id="type-important" name="type" value="important"
+                                        class="hidden peer">
+                                    <label for="type-important" class="block cursor-pointer">
+                                        <div
+                                            class="relative p-6 rounded-2xl bg-white border border-gray-100 shadow-lg transition-all duration-300
+                                                    hover:shadow-xl hover:-translate-y-1 peer-checked:shadow-2xl
+                                                    peer-checked:bg-gradient-to-br peer-checked:from-amber-500 peer-checked:to-amber-600 peer-checked:shadow-amber-500/30">
+                                            <div class="flex flex-col items-center gap-4">
+                                                <div
+                                                    class="p-4 rounded-xl bg-amber-50 group-[.peer-checked]:bg-white/20 transition-colors duration-300">
+                                                    <svg class="w-8 h-8 text-gray-700 peer-checked:text-white transition-colors duration-300"
+                                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </div>
+                                                <div class="text-center space-y-1">
+                                                    <span
+                                                        class="block text-base font-semibold text-gray-900 peer-checked:text-white capitalize">
+                                                        Important
+                                                    </span>
+                                                    <span
+                                                        class="block text-sm text-gray-500 peer-checked:text-white/80">
+                                                        Urgent matters
+                                                    </span>
+                                                </div>
+                                                <div
+                                                    class="absolute top-3 right-3 opacity-0 peer-checked:opacity-100 transition-opacity duration-300">
+                                                    <svg class="w-5 h-5 text-white" fill="none"
+                                                        stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <!-- Other Leave -->
+                                <div>
+                                    <input type="radio" id="type-other" name="type" value="other"
+                                        class="hidden peer">
+                                    <label for="type-other" class="block cursor-pointer">
+                                        <div
+                                            class="relative p-6 rounded-2xl bg-white border border-gray-100 shadow-lg transition-all duration-300
+                                                    hover:shadow-xl hover:-translate-y-1 peer-checked:shadow-2xl
+                                                    peer-checked:bg-gradient-to-br peer-checked:from-gray-500 peer-checked:to-gray-600 peer-checked:shadow-gray-500/30">
+                                            <div class="flex flex-col items-center gap-4">
+                                                <div
+                                                    class="p-4 rounded-xl bg-gray-50 group-[.peer-checked]:bg-white/20 transition-colors duration-300">
+                                                    <svg class="w-8 h-8 text-gray-700 peer-checked:text-white transition-colors duration-300"
+                                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                </div>
+                                                <div class="text-center space-y-1">
+                                                    <span
+                                                        class="block text-base font-semibold text-gray-900 peer-checked:text-white capitalize">
+                                                        Other
+                                                    </span>
+                                                    <span
+                                                        class="block text-sm text-gray-500 peer-checked:text-white/80">
+                                                        Other purposes
+                                                    </span>
+                                                </div>
+                                                <div
+                                                    class="absolute top-3 right-3 opacity-0 peer-checked:opacity-100 transition-opacity duration-300">
+                                                    <svg class="w-5 h-5 text-white" fill="none"
+                                                        stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
 
-                            <!-- Date Selection -->
-                            <div class="space-y-6 mb-8">
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium text-gray-900 mb-1">Start Date</label>
-                                        <div class="relative">
-                                            <input type="date" name="start_date" required
-                                                class="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 appearance-none"
-                                                min="{{ date('Y-m-d') }}" style="min-height: 48px;">
-                                        </div>
+                            <!-- Date Selection - Wider layout -->
+                            <div class="grid grid-cols-2 gap-8 mb-8">
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-900">Start Date</label>
+                                    <div class="relative">
+                                        <input type="date" name="start_date" required
+                                            class="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-200 rounded-xl 
+                                       focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 
+                                       appearance-none hover:border-blue-400"
+                                            min="{{ date('Y-m-d') }}" style="min-height: 48px;">
                                     </div>
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium text-gray-900 mb-1">End Date</label>
-                                        <div class="relative">
-                                            <input type="date" name="end_date" required
-                                                class="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 appearance-none"
-                                                min="{{ date('Y-m-d') }}" style="min-height: 48px;">
-                                        </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-900">End Date</label>
+                                    <div class="relative">
+                                        <input type="date" name="end_date" required
+                                            class="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-200 rounded-xl 
+                                       focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 
+                                       appearance-none hover:border-blue-400"
+                                            min="{{ date('Y-m-d') }}" style="min-height: 48px;">
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Reason Input -->
+                            <!-- Reason Input with Character Count -->
                             <div class="space-y-2 mb-8">
-                                <label class="text-sm font-medium text-gray-900">Reason for Leave</label>
+                                <div class="flex justify-between items-center">
+                                    <label class="block text-sm font-medium text-gray-900">Reason for Leave</label>
+                                    <span class="text-xs text-gray-500" x-data="{ count: 0 }"
+                                        x-init="count = $refs.reason.value.length">
+                                        <span x-text="count"></span>/500 characters
+                                    </span>
+                                </div>
                                 <div class="relative">
-                                    <textarea name="reason" rows="4" required
-                                        class="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 resize-none"
+                                    <textarea name="reason" rows="4" required x-ref="reason" @input="count = $event.target.value.length"
+                                        maxlength="500"
+                                        class="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-200 rounded-xl 
+                                   focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 resize-none
+                                   hover:border-blue-400"
                                         placeholder="Please provide a detailed reason for your leave request..."></textarea>
-                                    <div class="absolute right-3 bottom-3">
-                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                    </div>
                                 </div>
                             </div>
 
-                            <!-- File Upload -->
+                            <!-- File Upload with Improved Preview -->
                             <div class="space-y-2">
-                                <label class="text-sm font-medium text-gray-900">Supporting Document</label>
+                                <label class="block text-sm font-medium text-gray-900">Supporting Document</label>
                                 <div x-data="{
                                     fileName: '',
                                     fileSize: '',
@@ -637,15 +742,18 @@
                                         }
                                     }
                                 }">
-                                    <!-- Empty State - Show when no file -->
+                                    <!-- Empty State -->
                                     <div x-show="!isUploaded"
-                                        class="relative border-2 border-dashed border-gray-200 rounded-xl hover:border-blue-500 transition-all duration-200 group">
+                                        class="relative border-2 border-dashed border-gray-200 rounded-xl hover:border-blue-500 
+                                   transition-all duration-200 group">
                                         <input type="file" name="attachment" @change="handleFile($event)"
+                                            accept=".pdf,.png,.jpg,.jpeg"
                                             class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                                        <div class="p-8 text-center">
+                                        <div class="p-6 text-center">
                                             <div
-                                                class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
-                                                <svg class="w-8 h-8 text-blue-500" fill="none"
+                                                class="flex items-center justify-center w-14 h-14 mx-auto mb-4 bg-blue-50 rounded-xl 
+                                            group-hover:bg-blue-100 group-hover:scale-110 transition-all duration-200">
+                                                <svg class="w-6 h-6 text-blue-500" fill="none"
                                                     stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
                                                         stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -653,23 +761,25 @@
                                             </div>
                                             <div class="space-y-2">
                                                 <p class="text-sm">
-                                                    <span class="text-blue-500 font-medium">Upload a file</span>
+                                                    <span class="text-blue-500 font-medium">Click to upload</span>
                                                     <span class="text-gray-500"> or drag and drop</span>
                                                 </p>
-                                                <p class="text-xs text-gray-500">PDF, PNG, JPG up to 10MB</p>
+                                                <p class="text-xs text-gray-500">PDF, PNG, JPG (max. 10MB)</p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Preview State - Show when file is uploaded -->
+                                    <!-- Preview State -->
                                     <div x-show="isUploaded" x-cloak
-                                        class="relative border-2 border-gray-200 rounded-xl bg-gray-50 transition-all duration-200">
+                                        class="relative border-2 border-gray-200 rounded-xl bg-gray-50 hover:bg-gray-100/50 
+                                   transition-all duration-200">
                                         <div class="p-4">
                                             <div class="flex items-center justify-between">
                                                 <div class="flex items-center space-x-3">
                                                     <div
-                                                        class="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
-                                                        <svg class="w-6 h-6 text-blue-500" fill="none"
+                                                        class="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg 
+                                                    shrink-0">
+                                                        <svg class="w-5 h-5 text-blue-500" fill="none"
                                                             stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                                 stroke-width="2"
@@ -678,43 +788,81 @@
                                                     </div>
                                                     <div class="min-w-0">
                                                         <p class="text-sm font-medium text-gray-900 truncate"
-                                                            x-text="fileName">document.pdf</p>
-                                                        <p class="text-xs text-gray-500" x-text="`${fileSize} KB`">123
-                                                            KB
+                                                            x-text="fileName"></p>
+                                                        <p class="text-xs text-gray-500" x-text="`${fileSize} KB`">
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div class="flex items-center space-x-2">
-                                                    <button type="button"
-                                                        @click="isUploaded = false; $refs.fileInput.value = ''"
-                                                        class="p-1 text-gray-400 hover:text-red-500 transition-colors">
-                                                        <span class="sr-only">Remove file</span>
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                        </svg>
-                                                    </button>
-                                                </div>
+                                                <button type="button"
+                                                    @click="isUploaded = false; $refs.fileInput.value = ''"
+                                                    class="p-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 
+                                               transition-colors">
+                                                    <span class="sr-only">Remove file</span>
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Action Buttons -->
-                            <div class="flex justify-end gap-3 mt-8">
+                            <!-- Divider -->
+                            <div class="relative my-8">
+                                <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                                    <div class="w-full border-t border-gray-200"></div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons with Improved Styling -->
+                            <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-8">
                                 <button type="button" @click="$dispatch('close-modal', 'create-leave')"
-                                    class="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-200">
-                                    Cancel
+                                    class="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-all duration-200">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Cancel Request
                                 </button>
+
                                 <button type="submit"
-                                    class="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all duration-200">
+                                    class="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M5 13l4 4L19 7" />
+                                    </svg>
                                     Submit Request
                                 </button>
                             </div>
+
+                            <!-- Leave Balance Info -->
+                            <div class="mt-6 p-4 bg-gray-50 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="p-2 bg-blue-100 rounded-lg">
+                                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900">Available Leave Balance</p>
+                                        <p class="text-sm text-gray-500">You have
+                                            {{ Auth::user()->leaveBalance?->remaining_balance ?? 0 }} days remaining
+                                            for this year</p>
+                                    </div>
+                                </div>
+                            </div>
                         </form>
                     </div>
+                </div>
             </x-modals.modal>
         </div>
     </div>
