@@ -1,118 +1,117 @@
-<div class="py-12">
+<div class="p-4 md:p-8">
     <div class="max-w-7xl mx-auto">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Attendance Status Card -->
-            <x-shared.card class="bg-gradient-to-br from-slate-50 via-white to-slate-50">
-                <div class="flex flex-col h-full">
-                    <div class="flex items-center justify-between mb-6">
-                        @if ($todayAttendance?->check_in && !$todayAttendance->check_out)
-                            <div
-                                class="flex items-center gap-2 px-4 py-1.5 bg-emerald-50 rounded-full border border-emerald-100">
-                                <div class="h-2 w-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                                <span class="text-sm font-medium text-emerald-700">Currently Working</span>
-                            </div>
-                        @endif
-                    </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            <!-- Attendance Card -->
+            <x-shared.card class="bg-white relative">
+                <div class="flex flex-col items-center">
+                    <!-- Status Badge -->
+                    @if($todayAttendance?->check_in && !$todayAttendance->check_out)
+                        <div class="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-50 rounded-full">
+                            <div class="h-2 w-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                            <span class="text-base font-medium text-emerald-700">Currently Working</span>
+                        </div>
+                    @endif
 
-                    <div class="grid grid-cols-2 gap-6">
-                        <!-- Check In Status -->
-                        <div
-                            class="relative flex flex-col items-center p-6 rounded-2xl bg-gradient-to-b from-gray-50 to-white border border-gray-100">
-                            <div
-                                class="absolute -top-3 left-1/2 transform -translate-x-1/2 px-4 py-1 bg-white border border-gray-100 rounded-full">
-                                <span class="text-xs font-medium text-gray-500">Check In</span>
+                    <!-- Time Display Grid -->
+                    <div class="w-full mt-5 grid grid-cols-2">
+                        <!-- Check In -->
+                        <div class="flex flex-col items-center">
+                            <span class="text-gray-500 text-lg mb-6">Check In</span>
+                            <div class="text-4xl font-bold text-blue-600 tracking-wider mb-4">
+                                {{ $formattedCheckIn }}
                             </div>
-                            <div class="w-full text-center">
-                                <div class="mb-2">
-                                    <span
-                                        class="font-mono text-4xl font-bold {{ $todayAttendance?->check_in ? 'text-blue-600' : 'text-gray-300' }}">
-                                        {{ $formattedCheckIn }}
-                                    </span>
+                            @if($todayAttendance?->check_in)
+                                <div class="flex items-center gap-2 text-blue-600">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    <span class="text-base">Checked In</span>
                                 </div>
-                                @if ($todayAttendance?->check_in)
-                                    <span class="inline-flex items-center gap-1 text-sm font-medium text-blue-600">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                        Checked In
-                                    </span>
-                                @endif
-                            </div>
+                            @endif
                         </div>
 
-                        <!-- Check Out Status -->
-                        <div
-                            class="relative flex flex-col items-center p-6 rounded-2xl bg-gradient-to-b from-gray-50 to-white border border-gray-100">
-                            <div
-                                class="absolute -top-3 left-1/2 transform -translate-x-1/2 px-4 py-1 bg-white border border-gray-100 rounded-full">
-                                <span class="text-xs font-medium text-gray-500">Check Out</span>
+                        <!-- Check Out -->
+                        <div class="flex flex-col items-center">
+                            <span class="text-gray-500 text-lg mb-6">Check Out</span>
+                            <div class="text-4xl font-bold tracking-wider mb-4 {{ $todayAttendance?->check_out ? 'text-blue-600' : 'text-gray-200' }}">
+                                {{ $formattedCheckOut }}
                             </div>
-                            <div class="w-full text-center">
-                                <div class="mb-2">
-                                    <span
-                                        class="font-mono text-4xl font-bold {{ $todayAttendance?->check_out ? 'text-blue-600' : 'text-gray-300' }}">
-                                        {{ $formattedCheckOut }}
-                                    </span>
+                            @if($todayAttendance?->check_out)
+                                <div class="flex items-center gap-2 text-blue-600">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    <span class="text-base">Checked Out</span>
                                 </div>
-                                @if ($todayAttendance?->check_out)
-                                    <span class="inline-flex items-center gap-1 text-sm font-medium text-blue-600">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                        Checked Out
-                                    </span>
-                                @endif
-                            </div>
+                            @endif
                         </div>
                     </div>
+
+                    <!-- Additional Info -->
+                    @if($todayAttendance?->check_in)
+                        <div class="w-full mt-8 pt-6 border-t border-gray-100">
+                            <div class="flex justify-center items-center gap-8 text-sm text-gray-500">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    </svg>
+                                    <span>From Device: Mobile</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <span>Office Location</span>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </x-shared.card>
 
             <!-- Work Duration Card -->
-            <x-shared.card class="bg-gradient-to-br from-blue-50 to-indigo-50">
-                <div class="flex flex-col h-full justify-center space-y-8">
-                    <div class="flex items-center justify-center gap-3">
-                        <div class="p-2 bg-blue-100 rounded-lg">
-                            <svg class="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <circle cx="12" cy="12" r="10" />
-                                <path d="M12 6v6l4 2" />
+            <x-shared.card class="bg-blue-50 min-h-[200px]">
+                <div class="flex justify-between items-start mb-12">
+                    <div class="flex items-center gap-2">
+                        <div class="text-blue-600">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 6v6l4 2"/>
                             </svg>
                         </div>
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-900">Work Duration</h3>
-                            <p class="text-sm text-gray-600">{{ $scheduleRange }}</p>
-                        </div>
+                        <span class="text-lg">Work Duration</span>
                     </div>
+                    <span class="text-sm text-gray-600">{{ $scheduleRange }}</span>
+                </div>
 
-                    <div class="text-center space-y-2">
-                        <div class="font-mono text-4xl font-bold text-blue-700 tracking-wider"
-                            wire:poll.1s="calculateWorkingDuration">
-                            {{ str_replace([':', ' '], ['h', 'm'], $workingDuration) . 's' }}
-                        </div>
-                        @if ($todayAttendance?->check_in && !$todayAttendance->check_out)
-                            <div class="flex items-center justify-center gap-2">
-                                <span class="inline-block h-2 w-2 bg-blue-500 rounded-full animate-pulse"></span>
-                                <span class="text-sm font-medium text-blue-700">In Progress</span>
-                            </div>
-                        @endif
+                <div class="text-center mb-12">
+                    <div class="text-4xl md:text-5xl font-mono font-bold text-blue-600" wire:poll.1s="calculateWorkingDuration">
+                        {{ $workingDuration }}
                     </div>
+                    @if($todayAttendance?->check_in && !$todayAttendance->check_out)
+                        <div class="flex items-center justify-center gap-2 mt-2">
+                            <span class="h-2 w-2 bg-blue-500 rounded-full animate-pulse"></span>
+                            <span class="text-sm text-blue-600">In Progress</span>
+                        </div>
+                    @endif
+                </div>
 
-                    <div class="space-y-3">
-                        <div class="flex justify-between text-sm">
-                            <span class="font-medium text-gray-700">Daily Progress</span>
-                            <span class="font-medium text-blue-700">{{ $progressPercentage }}%</span>
-                        </div>
-                        <div class="h-2 bg-blue-100 rounded-full overflow-hidden">
-                            <div class="h-full bg-blue-500 rounded-full transition-all duration-300"
-                                style="width: {{ $progressPercentage }}%"></div>
-                        </div>
-                        <div class="flex justify-between text-xs text-gray-500">
-                            <span>{{ $scheduleStart }}</span>
-                            <span>{{ $scheduleEnd }}</span>
-                        </div>
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-700">Daily Progress</span>
+                        <span class="text-blue-600">{{ $progressPercentage }}%</span>
+                    </div>
+                    <div class="h-2 bg-blue-100 rounded-full overflow-hidden mb-2">
+                        <div class="h-full bg-blue-600 rounded-full transition-all duration-300" 
+                             style="width: {{ $progressPercentage }}%"></div>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-500">
+                        <span>{{ $scheduleStart }}</span>
+                        <span>{{ $scheduleEnd }}</span>
                     </div>
                 </div>
             </x-shared.card>

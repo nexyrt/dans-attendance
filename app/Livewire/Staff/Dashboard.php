@@ -14,13 +14,14 @@ class Dashboard extends Component
     public $workingDuration;
     public $formattedCheckIn;
     public $formattedCheckOut;
-    public $currentWorkingHours;
     public $progressPercentage;
-    public $todaySchedule;
-    public $totalWorkHours;
     public $scheduleStart;
     public $scheduleEnd;
     public $scheduleRange;
+    public $totalWorkHours;
+    private $todaySchedule;
+
+    protected $listeners = ['refresh' => '$refresh'];
 
     public function mount()
     {
@@ -36,7 +37,7 @@ class Dashboard extends Component
         if ($this->todaySchedule) {
             $startTime = Chronos::parse($this->todaySchedule->start_time);
             $endTime = Chronos::parse($this->todaySchedule->end_time);
-
+            
             $this->scheduleStart = $startTime->format('H:i');
             $this->scheduleEnd = $endTime->format('H:i');
             $this->totalWorkHours = $endTime->diffInHours($startTime);
@@ -61,11 +62,11 @@ class Dashboard extends Component
 
     private function formatTimes()
     {
-        $this->formattedCheckIn = $this->todayAttendance?->check_in
+        $this->formattedCheckIn = $this->todayAttendance?->check_in 
             ? Chronos::parse($this->todayAttendance->check_in)->format('H:i')
             : '--:--';
-
-        $this->formattedCheckOut = $this->todayAttendance?->check_out
+            
+        $this->formattedCheckOut = $this->todayAttendance?->check_out 
             ? Chronos::parse($this->todayAttendance->check_out)->format('H:i')
             : '--:--';
     }
@@ -73,30 +74,50 @@ class Dashboard extends Component
     public function calculateWorkingDuration()
     {
         if (!$this->todayAttendance?->check_in) {
-            $this->workingDuration = '00:00:00';
-            $this->currentWorkingHours = 0;
+            $this->workingDuration = '00h00m00s';
             $this->progressPercentage = 0;
             return;
         }
 
         $startTime = Chronos::parse($this->todayAttendance->check_in);
-        $endTime = $this->todayAttendance->check_out
+        $endTime = $this->todayAttendance->check_out 
             ? Chronos::parse($this->todayAttendance->check_out)
             : Chronos::now();
 
         $duration = $endTime->diff($startTime);
-
-        $hours = str_pad($duration->h + ($duration->days * 24), 2, '0', STR_PAD_LEFT);
-        $minutes = str_pad($duration->i, 2, '0', STR_PAD_LEFT);
-        $seconds = str_pad($duration->s, 2, '0', STR_PAD_LEFT);
-
-        $this->workingDuration = "{$hours}:{$minutes}:{$seconds}";
-
-        // Calculate working hours and progress
-        $this->currentWorkingHours = $duration->h + ($duration->days * 24) + ($duration->i / 60) + ($duration->s / 3600);
-        $this->progressPercentage = $this->totalWorkHours > 0
-            ? min(round(($this->currentWorkingHours / $this->totalWorkHours) * 100), 100)
+        $totalHours = $duration->h + ($duration->days * 24);
+        
+        $this->workingDuration = sprintf(
+            '%02dh%02dm%02ds',
+            $totalHours,
+            $duration->i,
+            $duration->s
+        );
+        
+        $workedHours = $totalHours + ($duration->i / 60) + ($duration->s / 3600);
+        $this->progressPercentage = $this->totalWorkHours > 0 
+            ? min(round(($workedHours / $this->totalWorkHours) * 100), 100) 
             : 0;
+    }
+
+    public function checkOut()
+    {
+        if ($this->todayAttendance && !$this->todayAttendance->check_out) {
+            $this->todayAttendance->update([
+                'check_out' => Chronos::now(),
+                'working_hours' => $this->currentWorkingHours
+            ]);
+
+            $this->loadTodayAttendance();
+        }
+    }
+
+    public function getListeners()
+    {
+        return [
+            'refresh' => '$refresh',
+            'echo:private-attendance.' . Auth::id() . ',AttendanceUpdated' => 'loadTodayAttendance'
+        ];
     }
 
     public function render()

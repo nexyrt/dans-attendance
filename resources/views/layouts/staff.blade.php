@@ -258,7 +258,7 @@
 
                         <!-- Content Area -->
                         <main class="flex-1 overflow-y-auto h-[calc(100vh-4rem)]"> <!-- 4rem = 64px for header -->
-                            <div class="container mx-auto p-6">
+                            <div class="container mx-auto">
                                 {{ $slot }}
                             </div>
                         </main>
