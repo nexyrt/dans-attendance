@@ -115,6 +115,18 @@
                     </div>
                 </div>
             </x-shared.card>
+
+            {{-- This is the Calendar Component --}}
+            <div class="py-6">
+                <div class="mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900">Schedule Calendar</h2>
+                        <p class="mt-1 text-sm text-gray-600">View your work schedule, holidays, and leave requests in one place.</p>
+                    </div>
+                    
+                    <livewire:calendar-component />
+                </div>
+            </div>
         </div>
     </div>
 </div>

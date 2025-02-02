@@ -167,7 +167,7 @@
                                 </div>
 
                                 <!-- Right Section: DateTime and Profile -->
-                                <div class="flex items-center space-x-6">
+                                <div class="hidden lg:flex items-center space-x-6">
                                     <!-- DateTime Display -->
                                     <div x-data="{
                                         date: '',
