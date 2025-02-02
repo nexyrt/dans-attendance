@@ -5,6 +5,7 @@
     'width' => '56',
     'contentClasses' => 'py-1 bg-white divide-y divide-gray-100',
     'items' => [],
+    'wire' => null,
 ])
 
 @php
@@ -35,7 +36,7 @@
         @foreach ($items as $section)
             <div class="py-1">
                 @foreach ($section as $item)
-                    @if ($item['type'] === 'link')
+                    @if (isset($item['type']) && $item['type'] === 'link')
                         <a href="{{ $item['href'] }}"
                             class="group flex items-center px-4 py-2 text-sm {{ $item['class'] ?? 'text-gray-700 hover:bg-gray-50' }}">
                             @if (isset($item['icon']))
@@ -46,7 +47,7 @@
                             @endif
                             {{ $item['label'] }}
                         </a>
-                    @elseif($item['type'] === 'button')
+                    @elseif (isset($item['type']) && $item['type'] === 'button')
                         <form method="{{ $item['method'] ?? 'POST' }}" action="{{ $item['action'] }}">
                             @csrf
                             <button type="submit"
@@ -60,6 +61,13 @@
                                 {{ $item['label'] }}
                             </button>
                         </form>
+                    @else
+                        {{-- Default to regular option --}}
+                        <button wire:click="$set('{{ $wire }}', '{{ $item['value'] }}')" @click="open = false"
+                            type="button"
+                            class="w-full text-left px-4 py-2 text-sm {{ $item['class'] ?? 'text-gray-700 hover:bg-gray-50' }}">
+                            {{ $item['label'] }}
+                        </button>
                     @endif
                 @endforeach
             </div>

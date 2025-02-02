@@ -3,82 +3,81 @@
 namespace App\Livewire\Staff;
 
 use App\Models\Schedule;
-use Livewire\Component;
 use App\Models\Attendance;
+use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Cake\Chronos\Chronos;
 
 class Dashboard extends Component
 {
-    // For Attendance Section
+    /**
+     * Component properties
+     */
     public $todayAttendance;
-    public $workingDuration;
-    public $formattedCheckIn;
-    public $formattedCheckOut;
-    public $progressPercentage;
-    public $scheduleStart;
-    public $scheduleEnd;
-    public $scheduleRange;
-    public $totalWorkHours;
-    private $todaySchedule;
-    // For Attendance Section
+    public $workingDuration = '00h00m00s';
+    public $progressPercentage = 0;
+    public $scheduleRange = 'No schedule today';
+    public $monthlyStats = [];
 
-    protected $listeners = ['refresh' => '$refresh'];
+    // Schedule properties
+    public $scheduleStart = '--:--';
+    public $scheduleEnd = '--:--';
+    public $totalWorkHours = 0;
 
+    protected $listeners = [
+        'refresh' => '$refresh',
+        'echo:private-attendance.{userId},AttendanceUpdated' => 'loadTodayAttendance'
+    ];
+
+    /**
+     * Component initialization
+     */
     public function mount()
     {
         $this->loadTodaySchedule();
         $this->loadTodayAttendance();
+        $this->loadMonthlyStats();
     }
 
-    // For Attendance Section
+    /**
+     * Load today's schedule information
+     */
     private function loadTodaySchedule()
     {
         $dayOfWeek = strtolower(Chronos::now()->format('l'));
-        $this->todaySchedule = Schedule::where('day_of_week', $dayOfWeek)->first();
+        $schedule = Schedule::where('day_of_week', $dayOfWeek)->first();
 
-        if ($this->todaySchedule) {
-            $startTime = Chronos::parse($this->todaySchedule->start_time);
-            $endTime = Chronos::parse($this->todaySchedule->end_time);
-
-            $this->scheduleStart = $startTime->format('H:i');
-            $this->scheduleEnd = $endTime->format('H:i');
-            $this->totalWorkHours = $endTime->diffInHours($startTime);
-            $this->scheduleRange = "{$this->scheduleStart} - {$this->scheduleEnd} ({$this->totalWorkHours}h)";
-        } else {
-            $this->scheduleStart = '--:--';
-            $this->scheduleEnd = '--:--';
-            $this->totalWorkHours = 0;
-            $this->scheduleRange = 'No schedule today';
+        if (!$schedule) {
+            return;
         }
+
+        $startTime = Chronos::parse($schedule->start_time);
+        $endTime = Chronos::parse($schedule->end_time);
+
+        $this->scheduleStart = $startTime->format('H:i');
+        $this->scheduleEnd = $endTime->format('H:i');
+        $this->totalWorkHours = $endTime->diffInHours($startTime);
+        $this->scheduleRange = "{$this->scheduleStart} - {$this->scheduleEnd} ({$this->totalWorkHours}h)";
     }
 
+    /**
+     * Load today's attendance record
+     */
     public function loadTodayAttendance()
     {
         $this->todayAttendance = Attendance::where('user_id', Auth::id())
             ->whereDate('date', Chronos::today())
             ->first();
 
-        $this->formatTimes();
         $this->calculateWorkingDuration();
     }
 
-    private function formatTimes()
-    {
-        $this->formattedCheckIn = $this->todayAttendance?->check_in
-            ? Chronos::parse($this->todayAttendance->check_in)->format('H:i')
-            : '--:--';
-
-        $this->formattedCheckOut = $this->todayAttendance?->check_out
-            ? Chronos::parse($this->todayAttendance->check_out)->format('H:i')
-            : '--:--';
-    }
-
+    /**
+     * Calculate current working duration and progress
+     */
     public function calculateWorkingDuration()
     {
         if (!$this->todayAttendance?->check_in) {
-            $this->workingDuration = '00h00m00s';
-            $this->progressPercentage = 0;
             return;
         }
 
@@ -103,27 +102,53 @@ class Dashboard extends Component
             : 0;
     }
 
-    public function checkOut()
+    /**
+     * Load monthly attendance statistics
+     */
+    private function loadMonthlyStats()
     {
-        if ($this->todayAttendance && !$this->todayAttendance->check_out) {
-            $this->todayAttendance->update([
-                'check_out' => Chronos::now(),
-                'working_hours' => $this->currentWorkingHours
-            ]);
+        $currentMonth = Chronos::now()->startOfMonth();
+        $endOfMonth = Chronos::now()->endOfMonth();
 
-            $this->loadTodayAttendance();
+        // Get monthly attendance records
+        $monthlyAttendances = Attendance::where('user_id', Auth::id())
+            ->whereYear('date', $currentMonth->year)
+            ->whereMonth('date', $currentMonth->month)
+            ->get();
+
+        // Calculate working days (excluding weekends)
+        $workingDays = 0;
+        $date = clone $currentMonth;
+        while ($date <= $endOfMonth) {
+            if (!in_array($date->format('l'), ['Saturday', 'Sunday'])) {
+                $workingDays++;
+            }
+            $date = $date->modify('+1 day');
         }
-    }
 
-    public function getListeners()
-    {
-        return [
-            'refresh' => '$refresh',
-            'echo:private-attendance.' . Auth::id() . ',AttendanceUpdated' => 'loadTodayAttendance'
+        // Calculate statistics
+        $presentDays = $monthlyAttendances->count();
+        $this->monthlyStats = [
+            'workingDays' => $workingDays,
+            'presentDays' => $presentDays,
+            'attendanceRate' => $workingDays > 0 ? round(($presentDays / $workingDays) * 100) : 0,
+            'onTime' => $monthlyAttendances->where('status', 'present')->count(),
+            'late' => $monthlyAttendances->where('status', 'late')->count(),
+            'early' => $monthlyAttendances->where('status', 'early_leave')->count()
         ];
     }
-    // For Attendance Section
 
+    /**
+     * Get user ID for Echo channel
+     */
+    public function getUserIdProperty()
+    {
+        return Auth::id();
+    }
+
+    /**
+     * Render the component
+     */
     public function render()
     {
         return view('livewire.staff.dashboard')

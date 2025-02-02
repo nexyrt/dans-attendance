@@ -15,6 +15,7 @@ class CalendarComponent extends Component
     public $currentDateString;
     public $selectedDate = null;
     public $calendar = [];
+    public $todaySchedule = null;
     public $selectedDateEvents = [];
     public $formattedSelectedDate = null;
     public $selectedDayName = null;
@@ -34,6 +35,8 @@ class CalendarComponent extends Component
 
     public function selectDate($date)
     {
+        $dayOfWeek = strtolower(Chronos::parse($date)->format('l'));
+        $this->todaySchedule = Schedule::where('day_of_week', $dayOfWeek)->first();
         $this->selectedDate = $date;
         $chronosDate = new Chronos($date);
         $this->formattedSelectedDate = $chronosDate->format('F j, Y');
@@ -71,9 +74,9 @@ class CalendarComponent extends Component
 
         $this->calendar = [];
         $week = [];
-        
+
         $date = clone $start;
-        
+
         while ($date <= $end) {
             if (count($week) === 7) {
                 $this->calendar[] = $week;
@@ -108,7 +111,7 @@ class CalendarComponent extends Component
             $events->push([
                 'type' => 'schedule',
                 'title' => 'Regular Schedule',
-                'time' => $schedule->start_time . ' - ' . $schedule->end_time,
+                'time' => Chronos::parse($schedule->start_time)->format('H:i') . ' - ' . Chronos::parse($schedule->end_time)->format('H:i'),
                 'order' => 1
             ]);
         }
@@ -132,9 +135,10 @@ class CalendarComponent extends Component
             $events->push([
                 'type' => 'exception',
                 'title' => $exception->title ?? $this->getExceptionTitle($exception->status),
-                'status' => $exception->status,
-                'time' => $exception->start_time 
-                    ? $exception->start_time . ' - ' . $exception->end_time 
+                'status' => str($exception->status)->headline(),
+                'note' => $exception->note,
+                'time' => $exception->start_time
+                    ? Chronos::parse($exception->start_time)->format('H:i') . ' - ' . Chronos::parse($exception->end_time)->format('H:i')
                     : null,
                 'order' => 3
             ]);
@@ -158,9 +162,17 @@ class CalendarComponent extends Component
         return $events->sortBy('order')->values()->all();
     }
 
+    public function goToToday()
+    {
+        $this->currentDate = new Chronos();
+        $this->selectedDate = $this->currentDate->format('Y-m-d');
+        $this->selectDate($this->selectedDate);
+        $this->generateCalendar();
+    }
+
     protected function getExceptionTitle($status)
     {
-        return match($status) {
+        return match ($status) {
             'wfh' => 'Work From Home',
             'halfday' => 'Half Day',
             'holiday' => 'Holiday',
