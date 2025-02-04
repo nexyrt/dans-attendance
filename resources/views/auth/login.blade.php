@@ -2,9 +2,9 @@
     <!-- Login Header -->
     <div class="space-y-4 mb-8">
         <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-800">
-            Login to Your Account
+            Sok atuhh login!
         </h1>
-        <p class="text-gray-500 dark:text-gray-400">Welcome back! Please enter your details</p>
+        <p class="text-gray-500 dark:text-gray-400">Selamat datang, anggota Delima Dalam!</p>
     </div>
 
     <form method="POST" action="{{ route('login') }}" class="space-y-6">
@@ -45,19 +45,15 @@
         <!-- Remember Me & Forgot Password -->
         <div class="flex items-center justify-between">
             <div class="flex items-center">
-                <input id="remember_me" type="checkbox" name="remember"
-                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700">
                 <label for="remember_me" class="ml-2 text-sm text-gray-600 dark:text-gray-400">
-                    Remember me
+                    Lupa Password?
                 </label>
             </div>
 
-            @if (Route::has('password.request'))
-            <a href="{{ route('password.request') }}"
+            <p
                 class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
-                Forgot Password?
-            </a>
-            @endif
+                 Ya jangan sampai lupa
+        </p>
         </div>
 
         <!-- Submit Button -->
