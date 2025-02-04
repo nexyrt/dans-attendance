@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('holidays', function (Blueprint $table) {
+        Schema::create('salary_histories', function (Blueprint $table) {
             $table->id();
-            $table->string(column: 'title');
-            $table->datetime('start_date');
-            $table->datetime('end_date');
-            $table->text('description');
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->decimal('amount', 12, 2);
+            $table->date('effective_date');
+            $table->string('pay_slip')->nullable();
+            $table->string('notes')->nullable();
             $table->timestamps();
         });
     }
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('holidays');
+        Schema::dropIfExists('salary_histories');
     }
 };

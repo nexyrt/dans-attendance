@@ -3,17 +3,21 @@
 
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-
+        
         <title>{{ config('app.name', 'Laravel') }}</title>
-
-        <!-- Fonts -->
+        
+        {{-- Favicon --}}
+        <link rel="icon" href="{{ asset('images/jkb.png') }}">
+        
+        {{-- Fonts --}}
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-        <link rel="icon" href="{{ asset('images/icons/icon-72x72.png') }}">
-
-        <!-- Scripts -->
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+        
+        
+        {{-- Styles --}}
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         <style>
@@ -72,12 +76,12 @@
             <div class="w-full md:w-1/2 p-8 md:p-12 lg:p-16 flex flex-col bg-white dark:bg-gray-900">
                 <!-- Logo Area -->
                 <div class="mb-12 flex items-center space-x-3">
-                    <div class="p-2 bg-gradient-to-tr from-blue-600 to-blue-800 rounded-xl shadow-lg">
-                        <img src="{{ asset('dans.png') }}" class="h-8 w-auto" alt="Logo">
+                    <div class="p-2 bg-gradient-to-tr from-blue-50 to-orange-200 rounded-xl shadow-lg">
+                        <img src="{{ asset('images/jkb.png') }}" class="h-8 w-auto" alt="Logo">
                     </div>
                     <span
                         class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-800">
-                        Dans Attendance
+                        {{ config('app.name', 'Laravel') }}
                     </span>
                 </div>
 
@@ -122,7 +126,7 @@
                                 <div class="text-white space-y-4 text-center">
                                     <h2 class="text-3xl font-bold text-glow card-title">Welcome Back!</h2>
                                     <p class="text-lg text-blue-100 card-description">Track your time effortlessly with
-                                        Dans
+                                        JKB
                                         Attendance</p>
                                 </div>
                             </div>
@@ -136,7 +140,7 @@
             // Content rotation
             const contents = [{
                     title: "Welcome Back!",
-                    description: "Track your time effortlessly with Dans Attendance"
+                    description: "Track your time effortlessly with JKB Attendance"
                 },
                 {
                     title: "Stay Organized",

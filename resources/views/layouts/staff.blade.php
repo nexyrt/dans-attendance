@@ -21,7 +21,7 @@
                                 d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
-                    <div class="text-xl font-semibold text-primary-600">Dans Attendance</div>
+                    <div class="text-xl font-semibold text-primary-600">JKB Attendance</div>
                     <div x-data="{ open: false }" class="relative">
                         <button @click="open = !open" class="flex items-center">
                             <img class="h-8 w-8 rounded-full object-cover ring-2 ring-primary-50"
@@ -56,7 +56,7 @@
                     <!-- Logo Section -->
                     <div class="flex justify-center items-center h-16 border-b border-gray-100">
                         <div class="p-1.5 bg-primary-50 rounded-lg">
-                            <img src="{{ asset('images/dans.png') }}" alt="DANS" class="h-8 w-8">
+                            <img src="{{ asset('images/jkb.png') }}" alt="JKB" class="h-8 w-8">
                         </div>
                         <!-- Mobile close button -->
                         <button @click="isSidebarOpen = false"

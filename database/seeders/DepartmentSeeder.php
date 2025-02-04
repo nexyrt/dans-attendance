@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Department;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class DepartmentSeeder extends Seeder
 {
@@ -13,16 +12,14 @@ class DepartmentSeeder extends Seeder
      */
     public function run(): void
     {
-        //
-        $departments = [
-            ['name' => 'Legal', 'code' => 'LG'],
-            ['name' => 'IT', 'code' => 'IT'],
-            ['name' => 'Digital Marketing', 'code' => 'DM'],
-            ['name' => 'Finance', 'code' => 'FIN'],
-        ];
+        $departments = ['Digital Marketing', 'Sydital', 'Detax', 'HR'];
+        $codes = ['DM', 'SYD', 'DTX', 'HR'];
 
-        foreach ($departments as $department) {
-            Department::create($department);
+        foreach ($departments as $index => $department) {
+            Department::create([
+                'name' => $department,
+                'code' => $codes[$index]
+            ]);
         }
     }
 }

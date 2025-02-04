@@ -5,13 +5,11 @@ namespace App\Livewire;
 use Cake\Chronos\Chronos;
 use Livewire\Component;
 use App\Models\Schedule;
-use App\Models\Holiday;
 use App\Models\LeaveRequest;
 use App\Models\ScheduleException;
 
 class CalendarComponent extends Component
 {
-    // Store current date as string to avoid serialization issues
     public $currentDateString;
     public $selectedDate = null;
     public $calendar = [];
@@ -22,12 +20,10 @@ class CalendarComponent extends Component
 
     public function mount()
     {
-        // Initialize with current date string
         $this->currentDateString = now()->format('Y-m-d');
         $this->generateCalendar();
     }
 
-    // Helper method to get Chronos instance
     protected function getCurrentDate(): Chronos
     {
         return new Chronos($this->currentDateString);
@@ -67,15 +63,15 @@ class CalendarComponent extends Component
     public function generateCalendar()
     {
         $currentDate = $this->getCurrentDate();
-        $firstOfMonth = $currentDate->startOfMonth();
-        $start = $firstOfMonth->startOfWeek();
-        $lastOfMonth = $currentDate->endOfMonth();
-        $end = $lastOfMonth->endOfWeek();
+        $firstOfMonth = $currentDate->modify('first day of this month');
+        $start = $firstOfMonth->modify('last sunday');
+        $lastOfMonth = $currentDate->modify('last day of this month');
+        $end = $lastOfMonth->modify('next saturday');
 
         $this->calendar = [];
         $week = [];
 
-        $date = clone $start;
+        $date = new Chronos($start);
 
         while ($date <= $end) {
             if (count($week) === 7) {
@@ -92,7 +88,6 @@ class CalendarComponent extends Component
                 'events' => $this->getEventsForDate($date)
             ];
 
-            // Fixed: Using modify instead of addDay
             $date = $date->modify('+1 day');
         }
 
@@ -116,31 +111,19 @@ class CalendarComponent extends Component
             ]);
         }
 
-        // Holidays
-        $holiday = Holiday::whereDate('start_date', '<=', $date->format('Y-m-d'))
-            ->whereDate('end_date', '>=', $date->format('Y-m-d'))
-            ->first();
-        if ($holiday) {
-            $events->push([
-                'type' => 'holiday',
-                'title' => $holiday->title,
-                'description' => $holiday->description,
-                'order' => 2
-            ]);
-        }
-
-        // Schedule exceptions
+        // Schedule exceptions (including holidays)
         $exception = ScheduleException::whereDate('date', $date->format('Y-m-d'))->first();
         if ($exception) {
             $events->push([
-                'type' => 'exception',
+                'type' => $exception->status === 'holiday' ? 'holiday' : 'exception',
                 'title' => $exception->title ?? $this->getExceptionTitle($exception->status),
                 'status' => str($exception->status)->headline(),
                 'note' => $exception->note,
                 'time' => $exception->start_time
                     ? Chronos::parse($exception->start_time)->format('H:i') . ' - ' . Chronos::parse($exception->end_time)->format('H:i')
                     : null,
-                'order' => 3
+                'description' => $exception->note,
+                'order' => $exception->status === 'holiday' ? 2 : 3
             ]);
         }
 
@@ -164,8 +147,8 @@ class CalendarComponent extends Component
 
     public function goToToday()
     {
-        $this->currentDate = new Chronos();
-        $this->selectedDate = $this->currentDate->format('Y-m-d');
+        $this->currentDateString = now()->format('Y-m-d');
+        $this->selectedDate = $this->currentDateString;
         $this->selectDate($this->selectedDate);
         $this->generateCalendar();
     }

@@ -9,79 +9,20 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class LeaveRequestSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        // Get existing users
-        $users = User::all();
-        
-        if ($users->isEmpty()) {
-            $this->command->error('No existing users found. Please seed users first.');
+        // Ensure we have some users first
+        if (User::count() === 0) {
+            $this->command->error('No users found. Please run UserSeeder first.');
             return;
         }
 
-        // Get a random user as manager/approver
-        $manager = $users->random();
+        // Create 20 leave requests with different states
+        LeaveRequest::factory()->count(8)->pending()->create();
+        LeaveRequest::factory()->count(7)->approved()->create();
+        LeaveRequest::factory()->count(3)->rejected()->create();
+        LeaveRequest::factory()->count(2)->state(['status' => 'cancel'])->create();
 
-        // Create various types of leave requests for each user
-        foreach ($users as $user) {
-
-            // Skip if the user is the manager
-            if ($user->id === $manager->id) {
-                continue;
-            }
-
-            
-            // Pending leave requests
-            LeaveRequest::factory()
-                ->count(2)
-                ->pending()
-                ->create([
-                    'user_id' => $user->id
-                ]);
-
-            // Approved leave requests
-            LeaveRequest::factory()
-                ->count(3)
-                ->approved()
-                ->create([
-                    'user_id' => $user->id,
-                    'approved_by' => $manager->id
-                ]);
-
-            // Rejected leave requests
-            LeaveRequest::factory()
-                ->count(1)
-                ->rejected()
-                ->create([
-                    'user_id' => $user->id,
-                    'approved_by' => $manager->id
-                ]);
-
-            // Specific types of leaves
-            // Sick leave
-            LeaveRequest::factory()
-                ->sickLeave()
-                ->create([
-                    'user_id' => $user->id,
-                    'start_date' => now()->subDays(5),
-                    'end_date' => now()->subDays(3)
-                ]);
-
-            // Annual leave
-            LeaveRequest::factory()
-                ->annualLeave()
-                ->create([
-                    'user_id' => $user->id
-                ]);
-        }
-
-        // Create some upcoming leave requests
-        LeaveRequest::factory()
-            ->count(5)
-            ->pending()
-            ->create([
-                'start_date' => now()->addDays(random_int(1, 30)),
-                'user_id' => $users->random()->id
-            ]);
+        $this->command->info('20 Leave requests created successfully!');
     }
 }

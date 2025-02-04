@@ -46,27 +46,63 @@
                 hours: '00',
                 minutes: '00',
                 seconds: '00',
+                isLoadingLocation: false,
+                locationError: false,
                 startTimer() {
-                    setInterval(() => {
-                        this.time = new Date().toLocaleTimeString('en-US', {
-                            hour12: false,
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit'
-                        });
+                    this.updateTime();
+                    this.getLocation();
+                    setInterval(() => this.updateTime(), 1000);
+                },
+                updateTime() {
+                    this.time = new Date().toLocaleTimeString('en-US', {
+                        hour12: false,
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
             
-                        @if($attendance && $attendance->check_in)
-                        const checkIn = new Date('{{ $attendance->check_in }}');
-                        const now = new Date();
-                        const diff = Math.abs(now - checkIn);
+                    @if($attendance && $attendance->check_in)
+                    const checkIn = new Date('{{ $attendance->check_in }}');
+                    const now = new Date();
+                    const diff = Math.abs(now - checkIn);
             
-                        this.hours = String(Math.floor(diff / 3600000)).padStart(2, '0');
-                        this.minutes = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
-                        this.seconds = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
-                        @endif
-                    }, 1000);
+                    this.hours = String(Math.floor(diff / 3600000)).padStart(2, '0');
+                    this.minutes = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+                    this.seconds = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+                    @endif
+                },
+                getLocation() {
+                    this.isLoadingLocation = true;
+                    this.locationError = false;
+            
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                this.isLoadingLocation = false;
+                                @this.call('handleLocationUpdate',
+                                    position.coords.latitude,
+                                    position.coords.longitude
+                                );
+                            },
+                            (error) => {
+                                console.error('Error getting location:', error);
+                                this.isLoadingLocation = false;
+                                this.locationError = true;
+                                @this.call('handleLocationUpdate', null, null);
+                            }, {
+                                enableHighAccuracy: true,
+                                timeout: 5000,
+                                maximumAge: 0
+                            }
+                        );
+                    } else {
+                        this.isLoadingLocation = false;
+                        this.locationError = true;
+                        @this.call('handleLocationUpdate', null, null);
+                    }
                 }
-            }" x-init="startTimer()">
+            }" x-init="startTimer()" @success-checkout.window="isSuccess = true"
+                @refresh-page.window="setTimeout(() => { window.location.reload() }, 1500)">
                 @if (!$isSuccess)
                     <div class="p-8">
                         <!-- Time Display -->
@@ -81,8 +117,83 @@
                             </div>
                         </div>
 
+                        <div class="bg-blue-50 rounded-xl p-4 mb-6">
+                            <h4 class="text-sm font-medium text-blue-900 mb-2 flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                </svg>
+                                Location Requirements
+                            </h4>
+                            @if ($nearestOffice)
+                                <div class="space-y-2 text-sm text-blue-800">
+                                    <p class="flex items-center">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                        </svg>
+                                        Office: {{ $nearestOffice->name }}
+                                    </p>
+                                    <p class="flex items-center">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        </svg>
+                                        Address: {{ $nearestOffice->address }}
+                                    </p>
+                                    <p class="flex items-center">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                        </svg>
+                                        Required Distance: Within {{ $nearestOffice->radius }}m
+                                    </p>
+                                    @if ($nearestOfficeDistance !== null)
+                                        <p
+                                            class="flex items-center font-medium {{ $nearestOfficeDistance <= $nearestOffice->radius ? 'text-green-600' : 'text-red-600' }}">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                                            </svg>
+                                            Current Distance: {{ round($nearestOfficeDistance) }}m
+                                        </p>
+                                    @endif
+                                </div>
+                            @else
+                                <div class="text-sm text-blue-800 flex items-center">
+                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg"
+                                        fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10"
+                                            stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
+                                    </svg>
+                                    Loading office location information...
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Error Message -->
+                        @if ($errorMessage)
+                            <div class="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {{ $errorMessage }}
+                            </div>
+                        @endif
+
                         <!-- Check-in Info -->
-                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-100 mb-6">
+                        <div
+                            class="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-100 mb-6">
                             <div class="p-4">
                                 <div class="flex justify-between items-center">
                                     <span class="text-sm text-gray-600">Check-in Time</span>

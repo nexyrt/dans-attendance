@@ -4,7 +4,7 @@
             <!-- Attendance Card -->
             <x-shared.card class="bg-white h-[300px]">
                 <div class="flex flex-col h-full">
-                    <!-- Status Badge - Always at top -->
+                    <!-- Status Badge -->
                     <div class="mb-6 text-center">
                         @if (!$todayAttendance)
                             <div class="inline-flex items-center gap-2 px-6 py-2.5 bg-gray-50 rounded-full">
@@ -32,55 +32,70 @@
                         @endif
                     </div>
 
-                    <!-- Monthly Statistics Grid -->
-                    <div class="grid grid-cols-2 gap-6 mb-6">
-                        <!-- Attendance Rate -->
-                        <div class="relative flex flex-col items-center">
-                            <div class="absolute -top-7 z-10">
-                                <span class="text-xs font-medium text-gray-500">This Month</span>
-                            </div>
-                            <div class="w-20 h-20 relative">
-                                <svg class="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
-                                    <circle cx="18" cy="18" r="16" fill="none" stroke="#f0f9ff"
-                                        stroke-width="2"></circle>
-                                    <circle cx="18" cy="18" r="16" fill="none" stroke="#3b82f6"
-                                        stroke-width="2" stroke-dasharray="{{ $monthlyStats['attendanceRate'] }}, 100">
-                                    </circle>
-                                </svg>
-                                <div class="absolute inset-0 flex items-center justify-center">
-                                    <span
-                                        class="text-xl font-bold text-blue-600">{{ $monthlyStats['attendanceRate'] }}%</span>
+                    <!-- Check-in/out Information -->
+                    <div class="flex-1 grid grid-cols-2 gap-4">
+                        <!-- Check In Details -->
+                        <div class="flex flex-col items-center">
+                            <span class="text-sm font-medium text-gray-900 mb-2">Check In</span>
+                            @if ($todayAttendance?->check_in)
+                                <span
+                                    class="text-2xl font-bold text-blue-600 mb-2">{{ \Cake\Chronos\Chronos::parse($todayAttendance->check_in)->format('H:i') }}</span>
+                                <div class="text-xs text-gray-500">
+                                    @if (
+                                        \Cake\Chronos\Chronos::parse($todayAttendance->check_in)->timestamp >
+                                            \Cake\Chronos\Chronos::parse($scheduleStart)->timestamp)
+                                        <span class="text-yellow-600">
+                                            {{ \Cake\Chronos\Chronos::parse($todayAttendance->check_in)->diff(\Cake\Chronos\Chronos::parse($scheduleStart))->format('%h hours %i minutes') }}
+                                            late
+                                        </span>
+                                    @else
+                                        <span class="text-green-600">On Time</span>
+                                    @endif
                                 </div>
-                            </div>
-                            <span class="text-sm font-medium text-gray-600 mt-2">Attendance Rate</span>
+                            @else
+                                <div class="h-14 flex items-center justify-center">
+                                    <span class="text-lg text-gray-400">--:--</span>
+                                </div>
+                            @endif
                         </div>
 
-                        <!-- Total Working Days -->
-                        <div class="flex flex-col items-center justify-center">
-                            <span class="text-3xl font-bold text-blue-600">{{ $monthlyStats['workingDays'] }}</span>
-                            <span class="text-sm font-medium text-gray-600 mt-1">Working Days</span>
-                            <div class="flex items-center gap-1 mt-2">
-                                <span class="text-xs text-gray-500">Present:</span>
-                                <span class="text-xs font-medium text-blue-600">{{ $monthlyStats['presentDays'] }}
-                                    days</span>
-                            </div>
+                        <!-- Check Out Details -->
+                        <div class="flex flex-col items-center">
+                            <span class="text-sm font-medium text-gray-900 mb-2">Check Out</span>
+                            @if ($todayAttendance?->check_out)
+                                <span
+                                    class="text-2xl font-bold text-blue-600 mb-2">{{ \Cake\Chronos\Chronos::parse($todayAttendance->check_out)->format('H:i') }}</span>
+                                <div class="text-xs text-gray-500">
+                                    @if ($todayAttendance->status === 'early_leave')
+                                        <span class="text-blue-600">
+                                            Left
+                                            {{ \Cake\Chronos\Chronos::parse($todayAttendance->check_out)->diff(\Cake\Chronos\Chronos::parse($scheduleEnd))->format('%h hours %i minutes') }}
+                                            early
+                                        </span>
+                                    @else
+                                        <span class="text-gray-600">Complete Day</span>
+                                    @endif
+                                </div>
+                            @else
+                                <div class="h-14 flex items-center justify-center">
+                                    <span class="text-lg text-gray-400">--:--</span>
+                                </div>
+                            @endif
                         </div>
                     </div>
 
-                    <!-- Monthly Status Summary -->
+                    <!-- Additional Information -->
                     <div class="mt-auto pt-4 border-t border-gray-100">
-                        <div class="grid grid-cols-3 gap-2">
-                            <div class="flex flex-col items-center p-2 rounded-lg bg-emerald-50">
-                                <span class="text-sm font-medium text-emerald-700">{{ $monthlyStats['onTime'] }}</span>
-                                <span class="text-xs text-emerald-600">On Time</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="flex flex-col items-center p-2 rounded-lg bg-gray-50">
+                                <span class="text-sm font-medium text-gray-900">Location</span>
+                                <span
+                                    class="text-xs text-gray-600">{{ $todayAttendance?->checkInOffice->name ?? 'Not checked in' }}</span>
                             </div>
-                            <div class="flex flex-col items-center p-2 rounded-lg bg-yellow-50">
-                                <span class="text-sm font-medium text-yellow-700">{{ $monthlyStats['late'] }}</span>
-                                <span class="text-xs text-yellow-600">Late</span>
-                            </div>
-                            <div class="flex flex-col items-center p-2 rounded-lg bg-blue-50">
-                                <span class="text-sm font-medium text-blue-700">{{ $monthlyStats['early'] }}</span>
-                                <span class="text-xs text-blue-600">Early Leave</span>
+                            <div class="flex flex-col items-center p-2 rounded-lg bg-gray-50">
+                                <span class="text-sm font-medium text-gray-900">Device</span>
+                                <span
+                                    class="text-xs text-gray-600">{{ $todayAttendance?->device_type ?? 'Not checked in' }}</span>
                             </div>
                         </div>
                     </div>

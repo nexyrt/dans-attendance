@@ -4,13 +4,13 @@ namespace App\Livewire\Shared;
 
 use App\Models\Attendance;
 use App\Models\Schedule;
-use App\Helpers\DateTimeHelper;
-use App\Models\Holiday;
+use App\Models\OfficeLocation;
 use App\Models\ScheduleException;
 use App\Traits\DateTimeComparison;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
+use Cake\Chronos\Chronos;
 
 class CheckInModal extends Component
 {
@@ -19,59 +19,222 @@ class CheckInModal extends Component
     public $showModal = false;
     public $currentTime;
     public $schedule;
-    public $holidayInfo = null;
+    public $exceptionInfo = null;
+    public $latitude = null;
+    public $longitude = null;
+    public $errorMessage = null;
+    public $debug = false; // Set to true to show distance calculations
+    public $nearestOfficeDistance = null;
+    public $nearestOffice = null;
 
-    protected $listeners = ['closeModal' => 'closeModal'];
+    protected $listeners = [
+        'closeModal' => 'closeModal',
+        'locationUpdated' => 'handleLocationUpdate'
+    ];
 
     public function mount()
     {
-        Log::info('CheckInModal mounted');
         $this->checkAttendance();
     }
 
-    public function isHoliday()
+    
+
+    public function handleLocationUpdate($latitude, $longitude)
     {
         try {
-            $today = now();
-            
-            // Check holidays table
-            $holiday = Holiday::query()
-                ->whereDate('start_date', '<=', $today)
-                ->whereDate('end_date', '>=', $today)
-                ->first();
+            $this->latitude = $latitude;
+            $this->longitude = $longitude;
+            $this->errorMessage = null;
 
-            if ($holiday) {
-                Log::info('Found holiday in holidays table');
-                $this->holidayInfo = [
-                    'type' => 'holiday',
-                    'title' => $holiday->title,
-                    'description' => $holiday->description
-                ];
-                return true;
+            // Store nearest office in property
+            $this->nearestOffice = $this->findNearestOffice($latitude, $longitude);
+            
+            if (!$this->nearestOffice) {
+                $this->errorMessage = 'No office locations found in database.';
+                return;
             }
 
+            $distance = $this->calculateDistance(
+                $latitude,
+                $longitude,
+                $this->nearestOffice->latitude,
+                $this->nearestOffice->longitude
+            );
+
+            $this->nearestOfficeDistance = $distance;
+
+            if ($distance > $this->nearestOffice->radius) {
+                $this->errorMessage = "You must be within {$this->nearestOffice->radius}m of {$this->nearestOffice->name} to check in. Currently " . round($distance) . "m away.";
+            }
+
+        } catch (Exception $e) {
+            Log::error('Location update error: ' . $e->getMessage());
+            $this->errorMessage = 'Error processing location data.';
+        }
+    }
+
+    protected function findNearestOffice($latitude, $longitude)
+    {
+        if (!$latitude || !$longitude) {
+            return null;
+        }
+
+        $offices = OfficeLocation::all();
+        $nearestOffice = null;
+        $shortestDistance = PHP_FLOAT_MAX;
+
+        foreach ($offices as $office) {
+            $distance = $this->calculateDistance(
+                $latitude,
+                $longitude,
+                $office->latitude,
+                $office->longitude
+            );
+
+            if ($distance < $shortestDistance) {
+                $nearestOffice = $office;
+                $shortestDistance = $distance;
+            }
+        }
+
+        return $nearestOffice;
+    }
+
+    protected function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371000; // Earth's radius in meters
+
+        $lat1 = deg2rad($lat1);
+        $lon1 = deg2rad($lon1);
+        $lat2 = deg2rad($lat2);
+        $lon2 = deg2rad($lon2);
+
+        $latDelta = $lat2 - $lat1;
+        $lonDelta = $lon2 - $lon1;
+
+        $a = sin($latDelta / 2) * sin($latDelta / 2) +
+            cos($lat1) * cos($lat2) *
+            sin($lonDelta / 2) * sin($lonDelta / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c; // Distance in meters
+    }
+
+    public function checkIn()
+    {
+        try {
+            if (!$this->schedule) {
+                throw new Exception('No schedule found for today.');
+            }
+
+            if (!$this->latitude || !$this->longitude) {
+                $this->errorMessage = 'Location data is required for check-in.';
+                return;
+            }
+
+            $nearestOffice = $this->findNearestOffice($this->latitude, $this->longitude);
+            
+            if (!$nearestOffice) {
+                $this->errorMessage = 'No office locations found.';
+                return;
+            }
+
+            $distance = $this->calculateDistance(
+                $this->latitude,
+                $this->longitude,
+                $nearestOffice->latitude,
+                $nearestOffice->longitude
+            );
+
+            if ($distance > $nearestOffice->radius) {
+                $this->errorMessage = 'You must be within office area to check in.';
+                return;
+            }
+
+            $now = Chronos::now();
+            $startTime = Chronos::parse($this->schedule->start_time);
+
+            // Calculate status based on tolerance
+            $toleranceLimit = Chronos::parse($startTime)->modify("+{$this->schedule->late_tolerance} minutes");
+            $status = $now->timestamp > $toleranceLimit->timestamp ? 'late' : 'present';
+
+            Attendance::create([
+                'user_id' => auth()->id(),
+                'date' => $now->format('Y-m-d'),
+                'check_in' => $now,
+                'status' => $status,
+                'check_in_office_id' => $nearestOffice->id,
+                'check_in_latitude' => $this->latitude,
+                'check_in_longitude' => $this->longitude,
+                'device_type' => $this->detectDeviceType()
+            ]);
+
+            // Add refresh dispatch before success
+            $this->dispatch('refresh-page');
+            $this->dispatch('success-checkin');
+            
+        } catch (Exception $e) {
+            Log::error('Error during check-in:', [
+                'message' => $e->getMessage(),
+                'user_id' => auth()->id()
+            ]);
+            
+            $this->errorMessage = 'Failed to check in. Please try again.';
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => $this->errorMessage
+            ]);
+        }
+    }
+
+    protected function detectDeviceType()
+    {
+        $userAgent = request()->header('User-Agent');
+        if (strpos($userAgent, 'Mobile') !== false || strpos($userAgent, 'Android') !== false) {
+            return 'Mobile';
+        } elseif (strpos($userAgent, 'Tablet') !== false || strpos($userAgent, 'iPad') !== false) {
+            return 'Tablet';
+        }
+        return 'Desktop';
+    }
+
+    public function isException()
+    {
+        try {
+            $today = Chronos::now();
+            
             // Check schedule exceptions
             $exception = ScheduleException::query()
-                ->where('date', $today->toDateString())
-                ->where('status', 'holiday')
+                ->whereDate('date', $today->format('Y-m-d'))
                 ->first();
 
             if ($exception) {
-                Log::info('Found holiday in schedule exceptions');
-                $this->holidayInfo = [
-                    'type' => 'exception',
-                    'title' => $exception->title,
+                Log::info('Found schedule exception');
+                $this->exceptionInfo = [
+                    'type' => $exception->status,
+                    'title' => $exception->title ?? $this->getExceptionTitle($exception->status),
                     'description' => $exception->note
                 ];
                 return true;
             }
 
-            $this->holidayInfo = null;
+            $this->exceptionInfo = null;
             return false;
         } catch (Exception $e) {
-            Log::error('Error checking holiday status: ' . $e->getMessage());
+            Log::error('Error checking exception status: ' . $e->getMessage());
             return false;
         }
+    }
+
+    protected function getExceptionTitle($status)
+    {
+        return match ($status) {
+            'wfh' => 'Work From Home',
+            'halfday' => 'Half Day',
+            'holiday' => 'Holiday',
+            default => 'Regular Schedule'
+        };
     }
 
     public function checkAttendance()
@@ -79,17 +242,16 @@ class CheckInModal extends Component
         try {
             $this->showModal = false;
             
-            if ($this->isHoliday()) {
-                Log::info('Today is a holiday');
+            if ($this->isException()) {
+                Log::info('Today has schedule exception');
                 return;
             }
 
-            // Get current day name in lowercase to match database
-            $today = strtolower(now()->format('l'));
+            $today = strtolower(Chronos::now()->format('l'));
             
             Log::info('Checking schedule:', [
                 'day' => $today,
-                'current_time' => now()->format('H:i:s')
+                'current_time' => Chronos::now()->format('H:i:s')
             ]);
 
             if ($this->hasCheckedInToday()) {
@@ -97,7 +259,6 @@ class CheckInModal extends Component
                 return;
             }
 
-            // Find today's schedule
             $this->schedule = Schedule::where('day_of_week', $today)->first();
             
             if (!$this->schedule) {
@@ -110,22 +271,16 @@ class CheckInModal extends Component
                 'end_time' => $this->schedule->end_time
             ]);
 
-            $currentTime = now();
-            $startTime = now()->setTimeFromTimeString($this->schedule->start_time);
-            $endTime = now()->setTimeFromTimeString($this->schedule->end_time);
+            $currentTime = Chronos::now();
+            $startTime = Chronos::parse($this->schedule->start_time);
+            $endTime = Chronos::parse($this->schedule->end_time);
             
             // Check-in window starts 30 minutes before schedule
-            $checkInWindowStart = $startTime->copy()->subMinutes(30);
+            $checkInWindowStart = Chronos::parse($startTime)->modify('-30 minutes');
             
-            Log::info('Time checks:', [
-                'current' => $currentTime->format('H:i:s'),
-                'window_start' => $checkInWindowStart->format('H:i:s'),
-                'start' => $startTime->format('H:i:s'),
-                'end' => $endTime->format('H:i:s')
-            ]);
-
-            // Check if current time is within the check-in window
-            if ($currentTime->between($checkInWindowStart, $endTime)) {
+            // Check if current time is within check-in window
+            if ($currentTime->timestamp >= $checkInWindowStart->timestamp && 
+                $currentTime->timestamp <= $endTime->timestamp) {
                 Log::info('Current time is within check-in window');
                 $this->showModal = true;
             } else {
@@ -145,54 +300,8 @@ class CheckInModal extends Component
     public function hasCheckedInToday()
     {
         return Attendance::where('user_id', auth()->id())
-            ->whereDate('date', now()->toDateString())
+            ->whereDate('date', Chronos::today()->format('Y-m-d'))
             ->exists();
-    }
-
-    public function checkIn()
-    {
-        try {
-            if (!$this->schedule) {
-                throw new Exception('No schedule found for today.');
-            }
-
-            $now = now();
-            $startTime = now()->setTimeFromTimeString($this->schedule->start_time);
-            $endTime = now()->setTimeFromTimeString($this->schedule->end_time);
-
-            if ($now->greaterThan($endTime)) {
-                $this->dispatch('notify', [
-                    'type' => 'error',
-                    'message' => 'Check-in is not allowed after working hours.'
-                ]);
-                $this->closeModal();
-                return;
-            }
-
-            // Calculate status based on tolerance
-            $toleranceLimit = $startTime->copy()->addMinutes($this->schedule->late_tolerance);
-            $status = $now->greaterThan($toleranceLimit) ? 'late' : 'present';
-
-            Attendance::create([
-                'user_id' => auth()->id(),
-                'date' => $now->toDateString(),
-                'check_in' => $now,
-                'status' => $status,
-            ]);
-
-            $this->dispatch('success-checkin');
-            
-        } catch (Exception $e) {
-            Log::error('Error during check-in:', [
-                'message' => $e->getMessage(),
-                'user_id' => auth()->id()
-            ]);
-            
-            $this->dispatch('notify', [
-                'type' => 'error',
-                'message' => 'Failed to check in. Please try again.'
-            ]);
-        }
     }
 
     public function closeModal()
@@ -202,7 +311,7 @@ class CheckInModal extends Component
 
     public function render()
     {
-        $this->currentTime = now()->format('H:i:s');
+        $this->currentTime = Chronos::now()->format('H:i:s');
         return view('livewire.shared.check-in-modal');
     }
 }

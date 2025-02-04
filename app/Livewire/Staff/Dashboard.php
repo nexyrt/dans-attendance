@@ -65,7 +65,7 @@ class Dashboard extends Component
      */
     public function loadTodayAttendance()
     {
-        $this->todayAttendance = Attendance::where('user_id', Auth::id())
+        $this->todayAttendance = Attendance::with('checkInOffice')->where('user_id', Auth::id())
             ->whereDate('date', Chronos::today())
             ->first();
 

@@ -4,34 +4,30 @@ namespace Database\Factories;
 
 use App\Models\User;
 use App\Models\LeaveRequest;
-use Illuminate\Support\Carbon;
+use Cake\Chronos\Chronos;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\LeaveRequest>
- */
 class LeaveRequestFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     protected $model = LeaveRequest::class;
+
     public function definition(): array
     {
-        $startDate = Carbon::instance($this->faker->dateTimeBetween('-1 month', '+1 month'));
-        $endDate = $startDate->copy()->addDays($this->faker->numberBetween(1, 5));
+        $startDate = Chronos::now()->subDays($this->faker->numberBetween(1, 30));
+        $endDate = (clone $startDate)->addDays($this->faker->numberBetween(1, 5));
+
+        // Get existing staff/manager users instead of creating new ones
+        $users = User::whereIn('role', ['staff', 'manager'])->pluck('id')->toArray();
+        $approvers = User::where('role', 'manager')->pluck('id')->toArray();
 
         return [
-            'user_id' => User::factory(),
-            'type' => $this->faker->randomElement(LeaveRequest::TYPES),
+            'user_id' => $this->faker->randomElement($users),
+            'type' => $this->faker->randomElement(['sick', 'annual', 'important', 'other']),
             'start_date' => $startDate,
             'end_date' => $endDate,
             'reason' => $this->faker->sentence(),
-            'status' => $this->faker->randomElement(LeaveRequest::STATUSES),
-            'attachment_path' => $this->faker->optional(0.3)->imageUrl(),
+            'status' => $this->faker->randomElement(['pending', 'approved', 'rejected', 'cancel']),
+            'attachment_path' => $this->faker->optional(0.3)->filePath(),
         ];
     }
 
@@ -40,15 +36,15 @@ class LeaveRequestFactory extends Factory
         return $this->afterMaking(function (LeaveRequest $leave) {
             // No additional configuration needed
         })->afterCreating(function (LeaveRequest $leave) {
-            if ($leave->status !== 'pending') {
-                $leave->approved_by = User::factory()->create()->id;
-                $leave->approved_at = now();
+            if ($leave->status !== 'pending' && $leave->status !== 'cancel') {
+                $approvers = User::where('role', 'manager')->pluck('id')->toArray();
+                $leave->approved_by = $this->faker->randomElement($approvers);
+                $leave->approved_at = Chronos::now();
                 $leave->save();
             }
         });
     }
 
-    // State for pending leave requests
     public function pending()
     {
         return $this->state(function (array $attributes) {
@@ -60,14 +56,14 @@ class LeaveRequestFactory extends Factory
         });
     }
 
-    // State for approved leave requests
     public function approved()
     {
         return $this->state(function (array $attributes) {
+            $approvers = User::where('role', 'manager')->pluck('id')->toArray();
             return [
                 'status' => 'approved',
-                'approved_by' => User::factory(),
-                'approved_at' => now()
+                'approved_by' => $this->faker->randomElement($approvers),
+                'approved_at' => Chronos::now()
             ];
         });
     }
@@ -75,10 +71,11 @@ class LeaveRequestFactory extends Factory
     public function rejected()
     {
         return $this->state(function (array $attributes) {
+            $approvers = User::where('role', 'manager')->pluck('id')->toArray();
             return [
                 'status' => 'rejected',
-                'approved_by' => User::factory(),
-                'approved_at' => now()
+                'approved_by' => $this->faker->randomElement($approvers),
+                'approved_at' => Chronos::now()
             ];
         });
     }
@@ -102,11 +99,11 @@ class LeaveRequestFactory extends Factory
     public function annualLeave()
     {
         return $this->state(function (array $attributes) {
-            $startDate = Carbon::instance($this->faker->dateTimeBetween('+1 week', '+2 months'));
+            $startDate = Chronos::now()->addDays($this->faker->numberBetween(7, 60));
             return [
                 'type' => 'annual',
                 'start_date' => $startDate,
-                'end_date' => $startDate->copy()->addDays($this->faker->numberBetween(1, 14)),
+                'end_date' => (clone $startDate)->addDays($this->faker->numberBetween(1, 14)),
                 'reason' => $this->faker->randomElement([
                     'Family vacation',
                     'Personal time off',

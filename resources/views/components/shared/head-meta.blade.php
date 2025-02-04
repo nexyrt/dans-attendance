@@ -7,7 +7,7 @@
 <title>{{ config('app.name', 'Laravel') }}</title>
 
 {{-- Favicon --}}
-<link rel="icon" href="{{ asset('images/dans.png') }}">
+<link rel="icon" href="{{ asset('images/jkb.png') }}">
 
 {{-- Fonts --}}
 <link rel="preconnect" href="https://fonts.bunny.net">
