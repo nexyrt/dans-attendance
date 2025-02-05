@@ -25,7 +25,7 @@
                     <div x-data="{ open: false }" class="relative">
                         <button @click="open = !open" class="flex items-center">
                             <img class="h-8 w-8 rounded-full object-cover ring-2 ring-primary-50"
-                                src="{{ asset(auth()->user()->image) }}" alt="{{ auth()->user()->name }}">
+                                src="{{ asset('images/users/user.png') }}" alt="{{ auth()->user()->name }}">
                         </button>
                         <div x-show="open" @click.away="open = false"
                             class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
@@ -50,7 +50,7 @@
             <div class="flex h-screen">
                 <!-- Sidebar -->
                 <aside
-                    class="fixed inset-y-0 left-0 z-20 w-72 bg-white/95 backdrop-blur-sm shadow-lg transition-all duration-300 ease-in-out lg:relative lg:translate-x-0 flex flex-col border-r border-gray-100"
+                    class="fixed min-w-72 inset-y-0 left-0 z-20 w-72 bg-white/95 backdrop-blur-sm shadow-lg transition-all duration-300 ease-in-out lg:relative lg:translate-x-0 flex flex-col border-r border-gray-100"
                     :class="{ 'translate-x-0': isSidebarOpen, '-translate-x-full': !isSidebarOpen }">
 
                     <!-- Logo Section -->
@@ -151,119 +151,109 @@
                 </aside>
 
                 <!-- Main Content Wrapper -->
-                <div class="flex-1 flex flex-col">
-                    <!-- Main Content -->
-                    <div class="flex flex-col min-h-screen">
-                        <!-- Header -->
-                        <header
-                            class="bg-white/95 flex-none backdrop-blur-sm shadow-sm sticky top-0 z-10 border-b border-gray-100">
-                            <div class="px-6 h-16 flex items-center justify-between">
-                                <!-- Left Section: Title Area -->
-                                <div class="flex items-center space-x-4">
-                                    <h1
-                                        class="text-xl font-semibold bg-gradient-to-r from-gray-900 to-gray-700 text-transparent bg-clip-text">
-                                        {{ $title ?? 'Dashboard' }}
-                                    </h1>
+                <main class="w-full mt-14 lg:mt-0 overflow-y-auto min-h-screen">
+                    <header class="bg-white/95 hidden lg:block backdrop-blur-sm shadow-sm sticky top-0 z-10 border-b border-gray-100">
+                        <div class="px-6 h-16 flex items-center justify-between">
+                            <!-- Left Section: Title Area -->
+                            <div class="flex items-center space-x-4">
+                                <h1
+                                    class="text-xl font-semibold bg-gradient-to-r from-gray-900 to-gray-700 text-transparent bg-clip-text">
+                                    {{ $title ?? 'Dashboard' }}
+                                </h1>
+                            </div>
+
+                            <!-- Right Section: DateTime and Profile -->
+                            <div class="hidden lg:flex items-center space-x-6">
+                                <!-- DateTime Display -->
+                                <div x-data="{
+                                    date: '',
+                                    time: '',
+                                    init() {
+                                        this.updateClock();
+                                        setInterval(() => this.updateClock(), 1000)
+                                    },
+                                    updateClock() {
+                                        let now = new Date();
+                                        this.date = now.toLocaleDateString('en-US', {
+                                            weekday: 'long',
+                                            month: 'long',
+                                            day: 'numeric'
+                                        });
+                                        this.time = now.toLocaleTimeString('en-US', {
+                                            second: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            hour12: false
+                                        });
+                                    }
+                                }" x-init="init()" class="flex flex-col items-end">
+                                    <span class="text-sm text-gray-600" x-text="date"></span>
+                                    <span class="text-sm font-medium text-primary-600" x-text="time"></span>
                                 </div>
 
-                                <!-- Right Section: DateTime and Profile -->
-                                <div class="hidden lg:flex items-center space-x-6">
-                                    <!-- DateTime Display -->
-                                    <div x-data="{
-                                        date: '',
-                                        time: '',
-                                        init() {
-                                            this.updateClock();
-                                            setInterval(() => this.updateClock(), 1000)
-                                        },
-                                        updateClock() {
-                                            let now = new Date();
-                                            this.date = now.toLocaleDateString('en-US', {
-                                                weekday: 'long',
-                                                month: 'long',
-                                                day: 'numeric'
-                                            });
-                                            this.time = now.toLocaleTimeString('en-US', {
-                                                second: '2-digit',
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                                hour12: false
-                                            });
-                                        }
-                                    }" x-init="init()"
-                                        class="flex flex-col items-end">
-                                        <span class="text-sm text-gray-600" x-text="date"></span>
-                                        <span class="text-sm font-medium text-primary-600" x-text="time"></span>
-                                    </div>
+                                <!-- Divider -->
+                                <div class="h-6 w-px bg-gray-200"></div>
 
-                                    <!-- Divider -->
-                                    <div class="h-6 w-px bg-gray-200"></div>
-
-                                    @php
-                                        $dropdownItems = [
+                                @php
+                                    $dropdownItems = [
+                                        [
                                             [
-                                                [
-                                                    'type' => 'link',
-                                                    'label' => 'Profile Settings',
-                                                    'href' => route('staff.profile.index'),
-                                                    'icon' =>
-                                                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />',
-                                                ],
+                                                'type' => 'link',
+                                                'label' => 'Profile Settings',
+                                                'href' => route('staff.profile.index'),
+                                                'icon' =>
+                                                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />',
                                             ],
+                                        ],
+                                        [
                                             [
-                                                [
-                                                    'type' => 'button',
-                                                    'label' => 'Sign out',
-                                                    'action' => route('logout'),
-                                                    'method' => 'POST',
-                                                    'class' => 'text-red-700 hover:bg-red-50',
-                                                    'iconClass' => 'text-red-400 group-hover:text-red-500',
-                                                    'icon' =>
-                                                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />',
-                                                ],
+                                                'type' => 'button',
+                                                'label' => 'Sign out',
+                                                'action' => route('logout'),
+                                                'method' => 'POST',
+                                                'class' => 'text-red-700 hover:bg-red-50',
+                                                'iconClass' => 'text-red-400 group-hover:text-red-500',
+                                                'icon' =>
+                                                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />',
                                             ],
-                                        ];
-                                    @endphp
+                                        ],
+                                    ];
+                                @endphp
 
-                                    <!-- Profile Dropdown -->
-                                    <x-input.dropdown :items="$dropdownItems">
-                                        <x-slot name="trigger">
-                                            <button class="flex items-center space-x-3" x-data="{ open: false }"
-                                                @click="open = !open">
-                                                <div class="relative">
-                                                    <img class="h-8 w-8 rounded-full object-cover"
-                                                        src="{{ asset(auth()->user()->image) }}"
-                                                        alt="{{ auth()->user()->name }}">
-                                                    <div
-                                                        class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 bg-green-500 rounded-full ring-1 ring-white">
-                                                    </div>
+                                <!-- Profile Dropdown -->
+                                <x-input.dropdown :items="$dropdownItems">
+                                    <x-slot name="trigger">
+                                        <button class="flex items-center space-x-3" x-data="{ open: false }"
+                                            @click="open = !open">
+                                            <div class="relative">
+                                                <img class="h-8 w-8 rounded-full object-cover"
+                                                    src="{{ asset(auth()->user()->image) }}"
+                                                    alt="{{ auth()->user()->name }}">
+                                                <div
+                                                    class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 bg-green-500 rounded-full ring-1 ring-white">
                                                 </div>
-                                                <div class="flex flex-col items-start">
-                                                    <span
-                                                        class="text-sm text-gray-700">{{ Auth::user()->name }}</span>
-                                                    <span class="text-xs text-gray-500">Staff</span>
-                                                </div>
-                                                <svg class="h-4 w-4 text-gray-400 transition-transform duration-200"
-                                                    :class="{ 'rotate-180': open }" fill="none"
-                                                    stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M19 9l-7 7-7-7" />
-                                                </svg>
-                                            </button>
-                                        </x-slot>
-                                    </x-input.dropdown>
-                                </div>
+                                            </div>
+                                            <div class="flex flex-col items-start">
+                                                <span class="text-sm text-gray-700">{{ Auth::user()->name }}</span>
+                                                <span class="text-xs text-gray-500">Staff</span>
+                                            </div>
+                                            <svg class="h-4 w-4 text-gray-400 transition-transform duration-200"
+                                                :class="{ 'rotate-180': open }" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </button>
+                                    </x-slot>
+                                </x-input.dropdown>
                             </div>
-                        </header>
-
-                        <!-- Content Area -->
-                        <main class="flex-1 overflow-y-auto h-[calc(100vh-4rem)]"> <!-- 4rem = 64px for header -->
-                            <div class="container mx-auto">
-                                {{ $slot }}
-                            </div>
-                        </main>
+                        </div>
+                    </header>
+                    <div class="container mx-auto">
+                        {{ $slot }}
                     </div>
-                </div>
+                </main>
+
             </div>
         </div>
 
