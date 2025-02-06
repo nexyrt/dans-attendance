@@ -52,7 +52,7 @@ class Leave extends Component
             ->when($this->typeFilter, function ($query) {
                 $query->where('type', $this->typeFilter);
             })
-            ->paginate($this->perPage);
+            ->with('approvedBy')->paginate($this->perPage);
 
         return view('livewire.staff.leave', [
             'leaveBalance' => $leaveBalance,
