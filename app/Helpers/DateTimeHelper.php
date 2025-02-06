@@ -23,8 +23,12 @@ class DateTimeHelper
      * @param string $time
      * @return Chronos
      */
-    public static function parse(string $time): Chronos
+    public static function parse($time): Chronos
     {
+        if ($time instanceof \DateTime) {
+            return Chronos::parse($time->format('Y-m-d H:i:s'));
+        }
+
         return Chronos::parse($time);
     }
 

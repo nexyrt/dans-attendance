@@ -122,8 +122,8 @@
                     <div class="divide-y divide-gray-200">
                         {{-- Header Section --}}
                         <div class="p-6">
-                                <h2 class="text-xl font-semibold text-gray-900">Ready to Check Out?</h2>
-                                <p class="text-sm text-gray-500 mt-1">{{ $this->getCurrentDate() }}</p>
+                            <h2 class="text-xl font-semibold text-gray-900">Ready to Check Out?</h2>
+                            <p class="text-sm text-gray-500 mt-1">{{ $this->getCurrentDate() }}</p>
                         </div>
 
                         {{-- Location Section --}}

@@ -139,15 +139,6 @@ class CheckOutModal extends Component
 
         if ($this->showEarlyLeaveForm) {
             $this->validate();
-        
-            $endTime = DateTimeHelper::parse($this->schedule->end_time);
-            $currentTime = DateTimeHelper::now();
-            
-            if ($currentTime->lessThan($endTime)) {
-                $updateData['status'] = 'early_leave';
-                $updateData['early_leave_reason'] = $this->earlyLeaveReason;
-                $updateData['early_leave_hours'] = $endTime->diffInHours($currentTime, true);
-            }
         }
 
         try {
@@ -171,17 +162,26 @@ class CheckOutModal extends Component
             }
 
             $currentTime = DateTimeHelper::now();
+            $checkInTime = DateTimeHelper::parse($this->attendance->check_in);
+
+            // Calculate working hours from check-in time to current time
+            $workingHours = $checkInTime->diffInHours($currentTime, true);
+
             $updateData = [
                 'check_out' => $currentTime,
-                'working_hours' => $this->workingHours,
+                'working_hours' => round($workingHours, 1),
                 'check_out_latitude' => $this->latitude,
                 'check_out_longitude' => $this->longitude,
                 'check_out_office_id' => $this->nearestOffice->id
             ];
 
             if ($this->showEarlyLeaveForm) {
-                $updateData['status'] = 'early_leave';
-                $updateData['early_leave_reason'] = $this->earlyLeaveReason;
+                $endTime = DateTimeHelper::parse($this->schedule->end_time);
+
+                if ($currentTime->lessThan($endTime)) {
+                    $updateData['status'] = 'early_leave';
+                    $updateData['early_leave_reason'] = $this->earlyLeaveReason;
+                }
             }
 
             $this->attendance->update($updateData);

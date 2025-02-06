@@ -4,6 +4,7 @@ namespace App\Livewire\Staff;
 
 use App\Models\Schedule;
 use App\Models\Attendance;
+use App\Models\ScheduleException;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Cake\Chronos\Chronos;
@@ -44,15 +45,29 @@ class Dashboard extends Component
      */
     private function loadTodaySchedule()
     {
-        $dayOfWeek = strtolower(Chronos::now()->format('l'));
-        $schedule = Schedule::where('day_of_week', $dayOfWeek)->first();
+        $today = Chronos::now();
 
-        if (!$schedule) {
-            return;
+        // Check for schedule exception first
+        $exception = ScheduleException::query()
+            ->whereDate('date', $today->format('Y-m-d'))
+            ->where('status', 'regular')
+            ->first();
+
+        if ($exception) {
+            $startTime = Chronos::parse($exception->start_time);
+            $endTime = Chronos::parse($exception->end_time);
+        } else {
+            // Fall back to default schedule
+            $dayOfWeek = strtolower($today->format('l'));
+            $schedule = Schedule::where('day_of_week', $dayOfWeek)->first();
+
+            if (!$schedule) {
+                return;
+            }
+
+            $startTime = Chronos::parse($schedule->start_time);
+            $endTime = Chronos::parse($schedule->end_time);
         }
-
-        $startTime = Chronos::parse($schedule->start_time);
-        $endTime = Chronos::parse($schedule->end_time);
 
         $this->scheduleStart = $startTime->format('H:i');
         $this->scheduleEnd = $endTime->format('H:i');
