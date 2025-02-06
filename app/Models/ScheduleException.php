@@ -15,7 +15,8 @@ class ScheduleException extends Model
         'start_time',
         'end_time',
         'status',
-        'note'
+        'note',
+        'late_tolerance'
     ];
 
     protected $casts = [

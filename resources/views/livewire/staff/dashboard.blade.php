@@ -38,14 +38,15 @@
                         <div class="flex flex-col items-center">
                             <span class="text-sm font-medium text-gray-900 mb-2">Check In</span>
                             @if ($todayAttendance?->check_in)
-                                <span
-                                    class="text-2xl font-bold text-blue-600 mb-2">{{ \Cake\Chronos\Chronos::parse($todayAttendance->check_in)->format('H:i') }}</span>
+                                <span class="text-2xl font-bold text-blue-600 mb-2">
+                                    {{ \Cake\Chronos\Chronos::parse($todayAttendance->check_in)->format('H:i') }}
+                                </span>
                                 <div class="text-xs text-gray-500">
-                                    @if (
-                                        \Cake\Chronos\Chronos::parse($todayAttendance->check_in)->timestamp >
-                                            \Cake\Chronos\Chronos::parse($scheduleStart)->timestamp)
+                                    @if ($todayAttendance->late_hours)
                                         <span class="text-yellow-600">
-                                            {{ \Cake\Chronos\Chronos::parse($todayAttendance->check_in)->diff(\Cake\Chronos\Chronos::parse($scheduleStart))->format('%h hours %i minutes') }}
+                                            {{ floor($todayAttendance->late_hours) }} hours
+                                            {{ round(($todayAttendance->late_hours - floor($todayAttendance->late_hours)) * 60) }}
+                                            minutes
                                             late
                                         </span>
                                     @else

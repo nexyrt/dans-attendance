@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Models\OfficeLocation;
 use App\Models\Schedule;
 use App\Helpers\DateTimeHelper;
+use App\Models\ScheduleException;
 use App\Traits\DateTimeComparison;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -25,6 +26,7 @@ class CheckOutModal extends Component
     public $isSuccess = false;
     public $schedule;
     public $hasCompletedAttendance = false;
+    public $exception = null;
 
     // New properties for geolocation
     public $latitude = null;
@@ -137,6 +139,15 @@ class CheckOutModal extends Component
 
         if ($this->showEarlyLeaveForm) {
             $this->validate();
+        
+            $endTime = DateTimeHelper::parse($this->schedule->end_time);
+            $currentTime = DateTimeHelper::now();
+            
+            if ($currentTime->lessThan($endTime)) {
+                $updateData['status'] = 'early_leave';
+                $updateData['early_leave_reason'] = $this->earlyLeaveReason;
+                $updateData['early_leave_hours'] = $endTime->diffInHours($currentTime, true);
+            }
         }
 
         try {
@@ -240,8 +251,23 @@ class CheckOutModal extends Component
 
     public function loadSchedule()
     {
-        $today = DateTimeHelper::currentDayName();
-        $this->schedule = Schedule::where('day_of_week', $today)->first();
+        $today = DateTimeHelper::now();
+
+        // Check for exception schedule first
+        $exception = ScheduleException::query()
+            ->whereDate('date', $today->format('Y-m-d'))
+            ->where('status', 'regular')
+            ->first();
+
+        if ($exception) {
+            $this->schedule = new Schedule([
+                'start_time' => $exception->start_time,
+                'end_time' => $exception->end_time
+            ]);
+        } else {
+            // Fall back to default schedule
+            $this->schedule = Schedule::where('day_of_week', strtolower($today->format('l')))->first();
+        }
 
         if ($this->schedule && $this->attendance && !$this->hasCompletedAttendance) {
             $currentTime = DateTimeHelper::now();

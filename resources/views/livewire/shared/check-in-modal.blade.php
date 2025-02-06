@@ -161,11 +161,48 @@
                                 Selamat Datang!
                             </h3>
                             <div class="mt-2">
-                                @if ($schedule)
+                                @if ($exceptionInfo && $exceptionInfo['type'] === 'regular')
+                                    {{-- Show Exception Schedule Info --}}
+                                    <div class="mb-2 text-blue-600 font-medium">
+                                        {{ $exceptionInfo['title'] }}
+                                        {{ $exceptionInfo['description'] }}
+                                    </div>
+                                    @if ($exception)
+                                        @php
+                                            $startTime = $exception->start_time;
+                                            $endTime = $exception->end_time;
+                                            $lateToleranceMinutes = 30; // Default tolerance for exception schedule
+                                            $currentTime = \Cake\Chronos\Chronos::now();
+                                            $toleranceLimit = \Cake\Chronos\Chronos::parse($startTime)->addMinutes(
+                                                $lateToleranceMinutes,
+                                            );
+                                            $toleranceTime = $toleranceLimit->format('H:i');
+                                        @endphp
+
+                                        @if ($exceptionInfo['description'])
+                                            <p class="text-sm text-gray-500 mb-3">
+                                                {{ $exceptionInfo['description'] }}
+                                            </p>
+                                        @endif
+
+                                        @if ($currentTime->timestamp > $toleranceLimit->timestamp)
+                                            <p class="text-red-500">
+                                                Anda terlambat. Check-in setelah {{ $toleranceTime }} akan dihitung
+                                                sebagai keterlambatan.
+                                            </p>
+                                        @else
+                                            <p>
+                                                Silakan check-in. Batas waktu check-in tanpa keterlambatan adalah
+                                                {{ $toleranceTime }}.
+                                            </p>
+                                        @endif
+                                    @endif
+                                @elseif($schedule)
+                                    {{-- Show Default Schedule Info --}}
                                     @php
-                                        $startTime = \Cake\Chronos\Chronos::parse($schedule->start_time)->format('H:i');
-                                        $toleranceLimit = \Cake\Chronos\Chronos::parse($schedule->start_time)->modify(
-                                            "+{$schedule->late_tolerance} minutes",
+                                        $startTime = $schedule->start_time;
+                                        $toleranceLimit = \Cake\Chronos\Chronos::parse($startTime)->addMinutes(
+                                            $schedule->late_tolerance,
                                         );
                                         $toleranceTime = $toleranceLimit->format('H:i');
                                         $currentTime = \Cake\Chronos\Chronos::now();
