@@ -18,6 +18,7 @@ return new class extends Migration
             $table->enum('status', ['regular', 'event', 'holiday']);
             $table->time('start_time')->nullable(); 
             $table->time('end_time')->nullable();   
+            $table->integer('late_tolerance')->nullable()->default(30);
             $table->text('note')->nullable();       
             $table->timestamps();
         });
