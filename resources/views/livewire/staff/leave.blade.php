@@ -3,22 +3,163 @@
 
         <div class="py-6">
             <div class="mx-auto px-4 sm:px-6 lg:px-8">
-                <!-- Leave Balance Card -->
-                <div class="mb-6 bg-white rounded-lg shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Leave Balance Overview</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="bg-green-50 rounded-lg p-4">
-                            <p class="text-sm text-green-600 mb-1">Total Balance</p>
-                            <p class="text-2xl font-bold text-green-700">{{ $leaveBalance->total_balance ?? 0 }} days</p>
+                <!-- Leave Balance Overview -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <!-- Total Balance Card -->
+                    <div class="relative group">
+                        <div
+                            class="h-full bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-200 hover:shadow-lg">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Total Balance</p>
+                                    <div class="mt-2 flex items-baseline">
+                                        <p class="text-3xl font-bold text-gray-900">
+                                            {{ $leaveBalance->total_balance ?? 0 }}</p>
+                                        <p class="ml-1 text-lg text-gray-500">days</p>
+                                    </div>
+                                </div>
+                                <div class="p-3 bg-green-50 rounded-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="mt-4">
+                                <div class="relative pt-1">
+                                    <div class="overflow-hidden h-2 text-xs flex rounded-full bg-gray-100">
+                                        <div class="w-full bg-green-100"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="bg-blue-50 rounded-lg p-4">
-                            <p class="text-sm text-blue-600 mb-1">Used Leave</p>
-                            <p class="text-2xl font-bold text-blue-700">{{ $leaveBalance->used_balance ?? 0 }} days</p>
+
+                        <!-- Hover Card -->
+                        <div
+                            class="hidden group-hover:block absolute top-full left-0 mt-2 w-72 p-4 bg-white rounded-lg shadow-xl border border-gray-100 z-10">
+                            <h4 class="text-sm font-semibold text-gray-900">About Total Balance</h4>
+                            <p class="mt-2 text-sm text-gray-600">This is your annual leave allocation for
+                                {{ now()->year }}. It represents the total number of leave days you're entitled to
+                                this year.</p>
                         </div>
-                        <div class="bg-purple-50 rounded-lg p-4">
-                            <p class="text-sm text-purple-600 mb-1">Remaining Balance</p>
-                            <p class="text-2xl font-bold text-purple-700">{{ $leaveBalance->remaining_balance ?? 0 }}
-                                days</p>
+                    </div>
+
+                    <!-- Used Balance Card -->
+                    <div class="relative group">
+                        <div
+                            class="h-full bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-200 hover:shadow-lg">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Used Leave</p>
+                                    <div class="mt-2 flex items-baseline">
+                                        <p class="text-3xl font-bold text-gray-900">
+                                            {{ $leaveBalance->used_balance ?? 0 }}</p>
+                                        <p class="ml-1 text-lg text-gray-500">days</p>
+                                    </div>
+                                </div>
+                                <div class="p-3 bg-blue-50 rounded-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="mt-4">
+                                <div class="relative pt-1">
+                                    <div class="overflow-hidden h-2 text-xs flex rounded-full bg-gray-100">
+                                        <div style="width: {{ ($leaveBalance->used_balance / $leaveBalance->total_balance) * 100 }}%"
+                                            class="bg-blue-100 rounded-full"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hover Card -->
+                        <div
+                            class="hidden group-hover:block absolute top-full left-0 mt-2 w-72 p-4 bg-white rounded-lg shadow-xl border border-gray-100 z-10">
+                            <h4 class="text-sm font-semibold text-gray-900">About Used Leave</h4>
+                            <p class="mt-2 text-sm text-gray-600">This shows how many leave days you've used so far this
+                                year. It includes all approved leave requests.</p>
+                            <div class="mt-3 text-xs text-gray-500">
+                                <p>Last leave taken:
+                                    <span class="font-medium text-gray-900">
+                                        {{ optional(auth()->user()->leaveRequests()->where('status', 'approved')->latest()->first())->start_date?->format('M d, Y') ?? 'No leave taken yet' }}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Remaining Balance Card -->
+                    <div class="relative group">
+                        <div
+                            class="h-full bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-200 hover:shadow-lg">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Remaining Balance</p>
+                                    <div class="mt-2 flex items-baseline">
+                                        <p class="text-3xl font-bold text-gray-900">
+                                            {{ $leaveBalance->remaining_balance ?? 0 }}</p>
+                                        <p class="ml-1 text-lg text-gray-500">days</p>
+                                    </div>
+                                </div>
+                                <div class="p-3 bg-purple-50 rounded-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="mt-4">
+                                <div class="relative pt-1">
+                                    <div class="overflow-hidden h-2 text-xs flex rounded-full bg-gray-100">
+                                        <div style="width: {{ ($leaveBalance->remaining_balance / $leaveBalance->total_balance) * 100 }}%"
+                                            class="bg-purple-100 rounded-full"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Info for Low Balance -->
+                            @if ($leaveBalance && $leaveBalance->remaining_balance < 5)
+                                <div class="mt-3 flex items-center text-sm text-amber-600">
+                                    <svg class="h-5 w-5 mr-1.5" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    Low balance alert
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Hover Card -->
+                        <div
+                            class="hidden group-hover:block absolute top-full left-0 mt-2 w-72 p-4 bg-white rounded-lg shadow-xl border border-gray-100 z-10">
+                            <h4 class="text-sm font-semibold text-gray-900">About Remaining Balance</h4>
+                            <p class="mt-2 text-sm text-gray-600">This is the number of leave days you still have
+                                available to use this year.</p>
+                            @if ($leaveBalance && $leaveBalance->remaining_balance < 5)
+                                <div class="mt-3 p-2 bg-amber-50 rounded-md">
+                                    <p class="text-xs text-amber-800">You're running low on leave days. Plan your
+                                        remaining leaves carefully.</p>
+                                </div>
+                            @endif
+                            <div class="mt-3 text-xs text-gray-500">
+                                <p>Pending requests:
+                                    <span class="font-medium text-gray-900">
+                                        {{ auth()->user()->leaveRequests()->pending()->count() }} day(s)
+                                    </span>
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -295,7 +436,226 @@
                             </div>
                         </div>
                     @else
-                        <p>Hello World</p>
+                        <div class="bg-white rounded-lg shadow-sm">
+                            <!-- Form Header -->
+                            <div class="px-6 py-4 border-b border-gray-200">
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="p-2 bg-indigo-50 rounded-lg">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600"
+                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900">New Leave Request</h3>
+                                        <p class="text-sm text-gray-500">Fill in the details below to submit your leave
+                                            request</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form wire:submit="submitForm">
+                                <div class="p-6 space-y-6">
+                                    @if ($errors->has('general'))
+                                        <div class="rounded-md bg-red-50 p-4">
+                                            <div class="flex">
+                                                <div class="shrink-0">
+                                                    <svg class="h-5 w-5 text-red-400"
+                                                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                        fill="currentColor">
+                                                        <path fill-rule="evenodd"
+                                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                                                            clip-rule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                <div class="ml-3">
+                                                    <h3 class="text-sm font-medium text-red-800">
+                                                        {{ $errors->first('general') }}</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    <!-- Form Sections -->
+                                    <div class="grid grid-cols-1 gap-8">
+                                        <!-- Leave Details Section -->
+                                        <div class="bg-gray-50 rounded-lg p-4">
+                                            <h4 class="text-sm font-medium text-gray-900 mb-4">Leave Details</h4>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <!-- Leave Type -->
+                                                <div>
+                                                    <label for="type"
+                                                        class="block text-sm font-medium text-gray-700 mb-1">Leave
+                                                        Type</label>
+                                                    <select wire:model="type" id="type"
+                                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                                        <option value="">Select type</option>
+                                                        @foreach (App\Models\LeaveRequest::TYPES as $leaveType)
+                                                            <option value="{{ $leaveType }}">
+                                                                {{ ucfirst($leaveType) }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    @error('type')
+                                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                                    @enderror
+                                                </div>
+
+                                                <!-- Duration Preview -->
+                                                <div class="flex items-center">
+                                                    @if ($start_date && $end_date)
+                                                        <div
+                                                            class="bg-white p-3 rounded-lg border border-gray-200 w-full">
+                                                            <span class="text-sm text-gray-600">Duration:</span>
+                                                            <span class="ml-1 text-sm font-medium text-gray-900">
+                                                                {{ (new App\Models\LeaveRequest(['start_date' => $start_date, 'end_date' => $end_date]))->getDurationInDays() }}
+                                                                day(s)
+                                                            </span>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+
+
+                                        <div class="relative max-w-sm">
+                                            <div
+                                                class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                                                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400"
+                                                    aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                                    fill="currentColor" viewBox="0 0 20 20">
+                                                    <path
+                                                        d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
+                                                </svg>
+                                            </div>
+                                            <input datepicker id="default-datepicker" type="text"
+                                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                                placeholder="Select date">
+                                        </div>
+
+
+                                        <!-- Date Selection Section -->
+                                        <div class="bg-gray-50 rounded-lg p-4">
+                                            <h4 class="text-sm font-medium text-gray-900 mb-4">Leave Duration</h4>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label for="start_date"
+                                                        class="block text-sm font-medium text-gray-700 mb-1">Start
+                                                        Date</label>
+                                                    <div class="relative">
+                                                        <input type="date" wire:model="start_date" id="start_date"
+                                                            min="{{ date('Y-m-d') }}"
+                                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                                    </div>
+                                                    @error('start_date')
+                                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                                    @enderror
+                                                </div>
+
+                                                <div>
+                                                    <label for="end_date"
+                                                        class="block text-sm font-medium text-gray-700 mb-1">End
+                                                        Date</label>
+                                                    <div class="relative">
+                                                        <input type="date" wire:model="end_date" id="end_date"
+                                                            min="{{ $start_date ?: date('Y-m-d') }}"
+                                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                                    </div>
+                                                    @error('end_date')
+                                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Reason Section -->
+                                        <div class="bg-gray-50 rounded-lg p-4">
+                                            <h4 class="text-sm font-medium text-gray-900 mb-4">Leave Reason</h4>
+                                            <div>
+                                                <div class="relative">
+                                                    <textarea wire:model="reason" id="reason" rows="4"
+                                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                                        placeholder="Please provide a detailed reason for your leave request..."></textarea>
+                                                    <div class="absolute bottom-2 right-2 text-xs text-gray-400">
+                                                        {{ strlen($reason) }} / 500
+                                                    </div>
+                                                </div>
+                                                @error('reason')
+                                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                                @enderror
+                                            </div>
+                                        </div>
+
+                                        <!-- Attachment Section -->
+                                        <div class="bg-gray-50 rounded-lg p-4">
+                                            <h4 class="text-sm font-medium text-gray-900 mb-4">Supporting Document</h4>
+                                            <div class="flex items-center justify-center">
+                                                <label for="attachment" class="w-full cursor-pointer">
+                                                    <div
+                                                        class="p-4 border-2 border-gray-300 border-dashed rounded-lg text-center hover:border-indigo-500 transition-colors">
+                                                        <div class="flex flex-col items-center">
+                                                            @if ($attachment)
+                                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                                    class="h-8 w-8 text-green-500" fill="none"
+                                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                </svg>
+                                                                <span class="mt-2 text-sm text-gray-900">File selected:
+                                                                    {{ $attachment->getClientOriginalName() }}</span>
+                                                            @else
+                                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                                    class="h-8 w-8 text-gray-400" fill="none"
+                                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                                </svg>
+                                                                <span class="mt-2 text-sm text-gray-500">Drop files
+                                                                    here or click to upload</span>
+                                                            @endif
+                                                            <input type="file" wire:model="attachment"
+                                                                id="attachment" class="hidden"
+                                                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                                                        </div>
+                                                        <p class="mt-1 text-xs text-gray-500">Supported formats: PDF,
+                                                            DOC, DOCX, JPG, PNG (max 5MB)</p>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                            @error('attachment')
+                                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Form Actions -->
+                                <div
+                                    class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg flex justify-end space-x-3">
+                                    <button type="button" wire:click="setTab('requests')"
+                                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        Cancel
+                                    </button>
+                                    <button type="submit"
+                                        class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        <svg wire:loading wire:target="submitForm"
+                                            class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none"
+                                            viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                            </path>
+                                        </svg>
+                                        Submit Request
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     @endif
                 </div>
             </div>

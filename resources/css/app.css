@@ -41,3 +41,5 @@ body {
         @apply bg-red-100 text-red-800;
     }
 }
+
+@source "../node_modules/flowbite-datepicker";

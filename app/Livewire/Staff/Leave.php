@@ -7,10 +7,12 @@ use App\Models\LeaveRequest;
 use Cake\Chronos\Chronos;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\WithFileUploads;
 
 class Leave extends Component
 {
     use WithPagination;
+    use WithFileUploads;
 
     // For Main Leave
     public $activeTab = 'requests';
@@ -19,15 +21,28 @@ class Leave extends Component
     public $search = '';
     public $statusFilter = '';
     public $typeFilter = '';
-    public $dateFilter = '';
     public $perPage = 10;
+
+    // For Form
+    public $type = '';
+    public $start_date = '';
+    public $end_date = '';
+    public $reason = '';
+    public $attachment;
 
     protected $queryString = [
         'search' => ['except' => ''],
         'statusFilter' => ['except' => ''],
         'typeFilter' => ['except' => ''],
-        'dateFilter' => ['except' => ''],
         'page' => ['except' => 1],
+    ];
+
+    protected $rules = [
+        'type' => 'required|string',
+        'start_date' => 'required|date|after_or_equal:today',
+        'end_date' => 'required|date|after_or_equal:start_date',
+        'reason' => 'required|string|min:10',
+        'attachment' => 'nullable|file|max:5120', // 5MB Max
     ];
 
     public function mount()
@@ -38,7 +53,7 @@ class Leave extends Component
     public function render()
     {
         $leaveBalance = LeaveBalance::where('user_id', auth()->id())
-            ->where('year', now()->year)
+            ->where('year', Chronos::now()->year)
             ->first();
 
         $leaveRequests = LeaveRequest::query()
@@ -52,7 +67,9 @@ class Leave extends Component
             ->when($this->typeFilter, function ($query) {
                 $query->where('type', $this->typeFilter);
             })
-            ->with('approvedBy')->paginate($this->perPage);
+            ->with('approvedBy')
+            ->latest()
+            ->paginate($this->perPage);
 
         return view('livewire.staff.leave', [
             'leaveBalance' => $leaveBalance,
@@ -64,12 +81,13 @@ class Leave extends Component
     public function setTab($tab)
     {
         $this->activeTab = $tab;
+        $this->resetForm();
     }
 
     // For Table
     public function resetFilters()
     {
-        $this->reset(['search', 'statusFilter', 'typeFilter', 'dateFilter']);
+        $this->reset(['search', 'statusFilter', 'typeFilter']);
     }
 
     public function cancelLeave($leaveId)
@@ -80,5 +98,54 @@ class Leave extends Component
             $leave->cancel();
             $this->dispatch('leave-cancelled', 'Leave request cancelled successfully');
         }
+    }
+
+    // For Form
+    public function submitForm()
+    {
+        $this->validate();
+
+        try {
+            $leaveData = [
+                'type' => $this->type,
+                'start_date' => $this->start_date,
+                'end_date' => $this->end_date,
+                'reason' => $this->reason,
+                'status' => LeaveRequest::STATUS_PENDING,
+                'user_id' => auth()->id(),
+            ];
+
+            // Handle file upload if attachment exists
+            if ($this->attachment) {
+                $path = $this->attachment->store('leave-attachments', 'public');
+                $leaveData['attachment_path'] = $path;
+            }
+
+            // Calculate duration to check against leave balance
+            $leaveRequest = new LeaveRequest($leaveData);
+            $duration = $leaveRequest->getDurationInDays();
+
+            // Check leave balance
+            $leaveBalance = auth()->user()->currentLeaveBalance();
+            if (!$leaveBalance || $leaveBalance->remaining_balance < $duration) {
+                $this->addError('general', 'Insufficient leave balance for this request.');
+                return;
+            }
+
+            LeaveRequest::create($leaveData);
+
+            $this->dispatch('leave-requested', 'Leave request submitted successfully');
+            $this->resetForm();
+            $this->activeTab = 'requests';
+
+        } catch (\Exception $e) {
+            $this->addError('general', 'An error occurred while submitting your request.');
+        }
+    }
+
+    public function resetForm()
+    {
+        $this->reset(['type', 'start_date', 'end_date', 'reason', 'attachment']);
+        $this->resetErrorBag();
     }
 }
