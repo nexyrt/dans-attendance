@@ -15,7 +15,7 @@ class Leave extends Component
     use WithFileUploads;
 
     // For Main Leave
-    public $activeTab = 'requests';
+    public $activeTab = 'new-request';
 
     // For Table
     public $search = '';

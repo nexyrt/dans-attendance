@@ -479,114 +479,19 @@
                                         </div>
                                     @endif
 
+
+                                    <div class="relative max-w-sm">
+                                        <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                                          <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
+                                          </svg>
+                                        </div>
+                                        <input datepicker id="default-datepicker" type="text" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Select date">
+                                      </div>
+                                      
+
                                     <!-- Form Sections -->
                                     <div class="grid grid-cols-1 gap-8">
-                                        <!-- Leave Details Section -->
-                                        <div class="bg-gray-50 rounded-lg p-4">
-                                            <h4 class="text-sm font-medium text-gray-900 mb-4">Leave Details</h4>
-                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                <!-- Leave Type -->
-                                                <div>
-                                                    <label for="type"
-                                                        class="block text-sm font-medium text-gray-700 mb-1">Leave
-                                                        Type</label>
-                                                    <select wire:model="type" id="type"
-                                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                                        <option value="">Select type</option>
-                                                        @foreach (App\Models\LeaveRequest::TYPES as $leaveType)
-                                                            <option value="{{ $leaveType }}">
-                                                                {{ ucfirst($leaveType) }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    @error('type')
-                                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                                    @enderror
-                                                </div>
-
-                                                <!-- Duration Preview -->
-                                                <div class="flex items-center">
-                                                    @if ($start_date && $end_date)
-                                                        <div
-                                                            class="bg-white p-3 rounded-lg border border-gray-200 w-full">
-                                                            <span class="text-sm text-gray-600">Duration:</span>
-                                                            <span class="ml-1 text-sm font-medium text-gray-900">
-                                                                {{ (new App\Models\LeaveRequest(['start_date' => $start_date, 'end_date' => $end_date]))->getDurationInDays() }}
-                                                                day(s)
-                                                            </span>
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-
-
-                                        <div class="relative max-w-sm">
-                                            <div
-                                                class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
-                                                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400"
-                                                    aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                                    fill="currentColor" viewBox="0 0 20 20">
-                                                    <path
-                                                        d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
-                                                </svg>
-                                            </div>
-                                            <input datepicker id="default-datepicker" type="text"
-                                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                                placeholder="Select date">
-                                        </div>
-
-
-                                        <!-- Date Selection Section -->
-                                        <div class="bg-gray-50 rounded-lg p-4">
-                                            <h4 class="text-sm font-medium text-gray-900 mb-4">Leave Duration</h4>
-                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label for="start_date"
-                                                        class="block text-sm font-medium text-gray-700 mb-1">Start
-                                                        Date</label>
-                                                    <div class="relative">
-                                                        <input type="date" wire:model="start_date" id="start_date"
-                                                            min="{{ date('Y-m-d') }}"
-                                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                                    </div>
-                                                    @error('start_date')
-                                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                                    @enderror
-                                                </div>
-
-                                                <div>
-                                                    <label for="end_date"
-                                                        class="block text-sm font-medium text-gray-700 mb-1">End
-                                                        Date</label>
-                                                    <div class="relative">
-                                                        <input type="date" wire:model="end_date" id="end_date"
-                                                            min="{{ $start_date ?: date('Y-m-d') }}"
-                                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                                    </div>
-                                                    @error('end_date')
-                                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                                    @enderror
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Reason Section -->
-                                        <div class="bg-gray-50 rounded-lg p-4">
-                                            <h4 class="text-sm font-medium text-gray-900 mb-4">Leave Reason</h4>
-                                            <div>
-                                                <div class="relative">
-                                                    <textarea wire:model="reason" id="reason" rows="4"
-                                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                                        placeholder="Please provide a detailed reason for your leave request..."></textarea>
-                                                    <div class="absolute bottom-2 right-2 text-xs text-gray-400">
-                                                        {{ strlen($reason) }} / 500
-                                                    </div>
-                                                </div>
-                                                @error('reason')
-                                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                                @enderror
-                                            </div>
-                                        </div>
 
                                         <!-- Attachment Section -->
                                         <div class="bg-gray-50 rounded-lg p-4">

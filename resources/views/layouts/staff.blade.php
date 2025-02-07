@@ -152,7 +152,8 @@
 
                 <!-- Main Content Wrapper -->
                 <main class="w-full mt-14 lg:mt-0 overflow-y-auto min-h-screen">
-                    <header class="bg-white/95 hidden lg:block backdrop-blur-sm shadow-sm sticky top-0 z-10 border-b border-gray-100">
+                    <header
+                        class="bg-white/95 hidden lg:block backdrop-blur-sm shadow-sm sticky top-0 z-10 border-b border-gray-100">
                         <div class="px-6 h-16 flex items-center justify-between">
                             <!-- Left Section: Title Area -->
                             <div class="flex items-center space-x-4">
@@ -288,6 +289,8 @@
                 });
             });
         </script>
+
+        <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
     </body>
 
 </html>

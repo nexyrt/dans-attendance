@@ -1,2 +1,1 @@
-import 'flowbite';
 import 'preline';
