@@ -1,7 +1,5 @@
 @import 'boxicons/css/boxicons.min.css';
 
-@source "../node_modules/flowbite-datepicker";
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

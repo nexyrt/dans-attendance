@@ -25,8 +25,8 @@ class Leave extends Component
 
     // For Form
     public $type = '';
-    public $start_date = '';
-    public $end_date = '';
+    public $start_date;
+    public $end_date;
     public $reason = '';
     public $attachment;
 
@@ -45,6 +45,15 @@ class Leave extends Component
         'attachment' => 'nullable|file|max:5120', // 5MB Max
     ];
 
+    protected $listeners = ["set-date" => "setDate"];
+
+    public function setDate(string $name, string $value)
+    {
+        if ($name === 'start_date' || $name === 'end_date') {
+            $this->$name = $value;
+        }
+    }
+    
     public function mount()
     {
         $this->dateFilter = 'current_month';
