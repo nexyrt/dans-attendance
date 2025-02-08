@@ -1,50 +1,124 @@
 <?php
 
-use App\Exports\FilteredDataExport;
-use App\Exports\UsersExport;
-use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\AttendanceController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\EmployeeController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\ProfileController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Maatwebsite\Excel\Facades\Excel;
+
+// Controller Imports
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Office\OfficeLocation;
+use App\Http\Controllers\Admin\{
+    DashboardController,
+    UsersController,
+    ScheduleController,
+    Leave\LeaveDashboard
+};
+use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
+
+// Livewire Component Imports
+use App\Livewire\Admin\Leave\{
+    LeaveBalance,
+    LeaveRequestsTable
+};
+use App\Livewire\Admin\Attendances\AttendanceRecord;
+use App\Livewire\Staff\{
+    Dashboard,
+    Attendance,
+    Leave,
+    Payroll,
+    Profile
+};
+
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
+/*
+|--------------------------------------------------------------------------
+| Admin Routes
+|--------------------------------------------------------------------------
+*/
 
-// Admin routes
-Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
+Route::prefix('admin')
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.')
+    ->group(function () {
+        // Dashboard
+        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-    // admin/dashboard
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+        // Users Management
+        Route::prefix('users')->name('users.')->group(function () {
+            Route::get('/', [DashboardController::class, 'users'])->name('index');
+            Route::post('/store', [UsersController::class, 'store'])->name('store');
+            Route::put('/{user}', [UsersController::class, 'update'])->name('update');
+            Route::delete('/{user}', [UsersController::class, 'destroy'])->name('destroy');
+            Route::get('/{user}', [UsersController::class, 'detail'])->name('detail');
+        });
 
-    // admin/users
-    Route::get('/users', [AdminDashboardController::class, 'users'])->name('admin.users');
-    Route::post('users/store', [UserController::class, 'store'])->name('admin.users.store');
-    Route::delete('users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
-    Route::get('/admin/users/export', function (Request $request) {
-        $department = $request->input('department');
-        $position = $request->input('position');
-        $name = $request->input('name');
+        // Schedules
+        Route::prefix('schedules')->name('schedules.')->group(function () {
+            Route::get('/dashboard', [ScheduleController::class, 'index'])->name('dashboard');
+            Route::get('/default-schedules', [ScheduleController::class, 'shift'])->name('default-schedules');
+        });
 
-        return Excel::download(new UsersExport($department, $position, $name), 'users.xlsx');
-    })->name('admin.users.export');
+        // Attendances
+        Route::prefix('attendances')->name('attendances.')->group(function () {
+            Route::get('/', AttendanceRecord::class)->name('index');
+        });
 
-    // admin/clients
-    // admin/settings
-});
+        // Leave Management
+        Route::prefix('leave')->name('leave.')->group(function () {
+            Route::get('/', [LeaveDashboard::class, 'index'])->name('dashboard');
+            Route::get('/leave-request', LeaveRequestsTable::class)->name('leave-request');
+            Route::get('/leave-balance', LeaveBalance::class)->name('leave-balance');
+        });
+
+        // Office
+        Route::prefix('office')->name('office.')->group(function () {
+            Route::get('/', [OfficeLocation::class, 'index'])->name('index');
+        });
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Staff Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:staff'])
+    ->prefix('staff')
+    ->name('staff.')
+    ->group(function () {
+        Route::get('/dashboard', Dashboard::class)->name('dashboard');
+        Route::get('/attendance', Attendance::class)->name('attendance.index');
+        Route::get('/leave', Leave::class)->name('leave.index');
+        Route::get('/payroll', Payroll::class)->name('payroll.index');
+        Route::get('/profile', Profile::class)->name('profile.index');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Manager Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:manager'])
+    ->prefix('manager')
+    ->name('manager.')
+    ->group(function () {
+        Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Authentication Routes
+|--------------------------------------------------------------------------
+*/
 
 Route::middleware('auth')->group(function () {
-    Route::post('/check-in', [AttendanceController::class, 'checkIn'])->name('check-in');
-    Route::post('/check-out', [AttendanceController::class, 'checkOut'])->name('check-out');
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });
 

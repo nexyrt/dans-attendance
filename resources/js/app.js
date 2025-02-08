@@ -1,6 +1,5 @@
-import Alpine from 'alpinejs';
+import 'preline';
 import 'flowbite';
 
-window.Alpine = Alpine;
-
-Alpine.start();
+import './attendance-modal';
+import './leave-flowbite-components';
