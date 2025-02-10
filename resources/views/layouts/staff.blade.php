@@ -12,6 +12,7 @@
             <!-- Mobile Header -->
             <div class="lg:hidden fixed top-0 left-0 right-0 bg-white h-16 border-b border-gray-100 z-30 px-4">
                 <div class="flex items-center justify-between h-full">
+                    {{-- Hamburger Button --}}
                     <button @click="isSidebarOpen = !isSidebarOpen"
                         class="p-2 rounded-lg text-gray-600 hover:bg-gray-100">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -21,11 +22,18 @@
                                 d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
-                    <div class="text-xl font-semibold text-primary-600">JKB Attendance</div>
+
+                    {{-- Logo Section --}}
+                    <div class="p-1.5 bg-primary-50 rounded-lg">
+                        <img src="{{ asset('images/jkb.png') }}" alt="JKB" class="h-8 w-8">
+                    </div>
+
+                    {{-- Profile --}}
                     <div x-data="{ open: false }" class="relative">
                         <button @click="open = !open" class="flex items-center">
                             <img class="h-8 w-8 rounded-full object-cover ring-2 ring-primary-50"
-                                src="{{ asset('images/users/user.png') }}" alt="{{ auth()->user()->name }}">
+                                src="{{ asset(auth()->user()->image ?? 'images/users/user.png') }}"
+                                alt="{{ auth()->user()->name }}">
                         </button>
                         <div x-show="open" @click.away="open = false"
                             class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
@@ -152,6 +160,7 @@
 
                 <!-- Main Content Wrapper -->
                 <main class="w-full mt-14 lg:mt-0 overflow-y-auto min-h-screen">
+                    {{-- Header --}}
                     <header
                         class="bg-white/95 hidden lg:block backdrop-blur-sm shadow-sm sticky top-0 z-10 border-b border-gray-100">
                         <div class="px-6 h-16 flex items-center justify-between">
@@ -228,7 +237,7 @@
                                             @click="open = !open">
                                             <div class="relative">
                                                 <img class="h-8 w-8 rounded-full object-cover"
-                                                    src="{{ asset(auth()->user()->image) }}"
+                                                    src="{{ asset(auth()->user()->image ?? 'images/users/user.png') }}"
                                                     alt="{{ auth()->user()->name }}">
                                                 <div
                                                     class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 bg-green-500 rounded-full ring-1 ring-white">
@@ -250,6 +259,8 @@
                             </div>
                         </div>
                     </header>
+
+                    {{-- Main Content --}}
                     <div class="container mx-auto">
                         {{ $slot }}
                     </div>

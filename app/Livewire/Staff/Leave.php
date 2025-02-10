@@ -47,13 +47,6 @@ class Leave extends Component
 
     protected $listeners = ["set-date" => "setDate"];
 
-    public function setDate(string $name, string $value)
-    {
-        if ($name === 'start_date' || $name === 'end_date') {
-            $this->$name = $value;
-        }
-    }
-    
     public function mount()
     {
         $this->dateFilter = 'current_month';
@@ -148,7 +141,29 @@ class Leave extends Component
             $this->activeTab = 'requests';
 
         } catch (\Exception $e) {
-            $this->addError('general', 'An error occurred while submitting your request.');
+            $this->addError('general', $e->getMessage());
+        }
+    }
+
+    public function updatedStartDate($value)
+    {
+        // Reset end date if start date is after it
+        if ($this->end_date && $value > $this->end_date) {
+            $this->end_date = null;
+        }
+    }
+
+    public function updatedActiveTab($value)
+    {
+        if ($value === 'new-request') {
+            $this->dispatch('init-datepicker');
+        }
+    }
+
+    public function setDate(string $name, string $value)
+    {
+        if ($name === 'start_date' || $name === 'end_date') {
+            $this->$name = $value;
         }
     }
 

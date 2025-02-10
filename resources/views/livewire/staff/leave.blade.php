@@ -190,30 +190,32 @@
                                     <!-- Search and Filter Controls -->
                                     <div class="md:flex justify-between">
                                         <!-- Search Box -->
-                                        <div class="min-w-sm">
-                                            <div class="relative rounded-md shadow-sm">
+                                        <div class="max-w-full">
+                                            <label for="default-search"
+                                                class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
+                                            <div class="relative">
                                                 <div
-                                                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <svg class="h-5 w-5 text-gray-400"
-                                                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                        fill="currentColor">
-                                                        <path fill-rule="evenodd"
-                                                            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                                            clip-rule="evenodd" />
+                                                    class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                                                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400"
+                                                        aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none" viewBox="0 0 20 20">
+                                                        <path stroke="currentColor" stroke-linecap="round"
+                                                            stroke-linejoin="round" stroke-width="2"
+                                                            d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
                                                     </svg>
                                                 </div>
-                                                <input wire:model.live.debounce.300ms="search" type="search"
-                                                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                                    placeholder="Search leave requests...">
+                                                <input wire:model.live="search" type="text" id="default-search"
+                                                    class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                                    placeholder="Search reasons.." />
                                             </div>
                                         </div>
 
                                         <div class="flex space-x-3">
                                             <!-- Leave Type Dropdown -->
-                                            <div class="w-full sm:w-[200px]">
-                                                <select wire:model.live="typeFilter"
-                                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                                    <option value="">Leave Type</option>
+                                            <div class="max-w-full mx-auto">
+                                                <select id="leave" wire:model.live="typeFilter"
+                                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                                    <option value="">All type</option>
                                                     @foreach (App\Models\LeaveRequest::TYPES as $type)
                                                         <option value="{{ $type }}">{{ ucfirst($type) }}
                                                         </option>
@@ -221,11 +223,11 @@
                                                 </select>
                                             </div>
 
-                                            <!-- Status Dropdown -->
-                                            <div class="w-full sm:w-[200px]">
-                                                <select wire:model.live="statusFilter"
-                                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                                    <option value="">Status</option>
+                                            <!-- Leave Type Dropdown -->
+                                            <div class="max-w-full mx-auto">
+                                                <select id="status" wire:model.live="statusFilter"
+                                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                                    <option value="">All status</option>
                                                     @foreach (App\Models\LeaveRequest::STATUSES as $status)
                                                         <option value="{{ $status }}">{{ ucfirst($status) }}
                                                         </option>
@@ -438,142 +440,327 @@
                     @else
                         <div class="bg-white rounded-lg shadow-sm">
                             <!-- Form Header -->
-                            <div class="px-6 py-4 border-b border-gray-200">
-                                <div class="flex items-center space-x-3">
-                                    <div class="flex-shrink-0">
-                                        <div class="p-2 bg-indigo-50 rounded-lg">
+                            <div class="px-8 py-6 border-b border-gray-200">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="p-2.5 bg-indigo-50 rounded-xl">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600"
                                                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                                             </svg>
                                         </div>
+                                        <div>
+                                            <h3 class="text-xl font-semibold text-gray-900">Request Leave</h3>
+                                            <p class="text-sm text-gray-500 mt-1">Please complete all required
+                                                information</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h3 class="text-lg font-semibold text-gray-900">New Leave Request</h3>
-                                        <p class="text-sm text-gray-500">Fill in the details below to submit your leave
-                                            request</p>
+
+                                    <div class="hidden sm:block">
+                                        <div class="bg-indigo-50 rounded-lg px-4 py-2">
+                                            <p class="text-sm text-indigo-700">Available Balance</p>
+                                            <p class="text-2xl font-bold text-indigo-900">
+                                                {{ $leaveBalance->remaining_balance ?? 0 }} days</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             <form wire:submit="submitForm">
-                                <div class="p-6 space-y-6">
+                                <div class="px-8 py-6">
                                     @if ($errors->has('general'))
-                                        <div class="rounded-md bg-red-50 p-4">
+                                        <div class="mb-6 rounded-lg bg-red-50 p-4">
                                             <div class="flex">
-                                                <div class="shrink-0">
-                                                    <svg class="h-5 w-5 text-red-400"
-                                                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                        fill="currentColor">
+                                                <div class="flex-shrink-0">
+                                                    <svg class="h-5 w-5 text-red-400" fill="currentColor"
+                                                        viewBox="0 0 20 20">
                                                         <path fill-rule="evenodd"
-                                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
                                                             clip-rule="evenodd" />
                                                     </svg>
                                                 </div>
                                                 <div class="ml-3">
-                                                    <h3 class="text-sm font-medium text-red-800">
-                                                        {{ $errors->first('general') }}</h3>
+                                                    <p class="text-sm font-medium text-red-800">
+                                                        {{ $errors->first('general') }}</p>
                                                 </div>
                                             </div>
                                         </div>
                                     @endif
 
-                                    {{-- Range Datepicker --}}
-                                    <div id="date-range-picker" date-rangepicker class="flex items-center">
-                                        <div class="relative max-w-sm">
-                                            <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                               <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                                                  <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
-                                                </svg>
-                                            </div>
-                                            <input id="datepicker-range-start" wire:model='start_date' datepicker datepicker-buttons datepicker-autoselect-today type="text" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Select date">
-                                          </div>
-                                        <span class="mx-4 text-gray-500">to</span>
-                                        <div class="relative max-w-sm">
-                                            <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                               <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                                                  <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
-                                                </svg>
-                                            </div>
-                                            <input id="datepicker-range-end" wire:model='end_date' datepicker datepicker-buttons datepicker-autoselect-today type="text" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Select date">
-                                          </div>
-                                    </div>
-
-                                    @if ($this->end_date)
-                                        <p>{{ $this->end_date }}</p>
-                                    @endif
-
                                     <!-- Form Sections -->
-                                    <div class="grid grid-cols-1 gap-8">
+                                    <div class="space-y-8">
+                                        <!-- Leave Type Section -->
+                                        <div class="grid grid-cols-12 gap-8">
+                                            <div class="col-span-12 md:col-span-4">
+                                                <h4 class="text-base font-medium text-gray-900">Leave Type</h4>
+                                                <p class="mt-1 text-sm text-gray-500">Select the type of leave you want
+                                                    to request. Different types may have different approval processes.
+                                                </p>
+                                            </div>
+                                            <div class="col-span-12 md:col-span-8">
+                                                <div class="grid grid-cols-2 gap-4">
+                                                    @foreach (App\Models\LeaveRequest::TYPES as $leaveType)
+                                                        <label
+                                                            class="relative flex flex-col bg-white p-4 border-2 rounded-lg cursor-pointer focus-within:ring-2 focus-within:ring-indigo-500 {{ $type === $leaveType ? 'border-indigo-500' : 'border-gray-300' }}">
+                                                            <span
+                                                                class="block text-sm font-medium text-gray-900">{{ ucfirst($leaveType) }}</span>
+                                                            <span class="mt-1 text-xs text-gray-500">
+                                                                {{ match ($leaveType) {
+                                                                    'sick' => 'For medical reasons',
+                                                                    'annual' => 'Planned vacation',
+                                                                    'important' => 'Important matters',
+                                                                    default => 'Other purposes',
+                                                                } }}
+                                                            </span>
+                                                            <input type="radio" wire:model.live="type"
+                                                                name="type" value="{{ $leaveType }}"
+                                                                class="sr-only">
+                                                            @if ($type === $leaveType)
+                                                                <span class="absolute top-2 right-2 text-indigo-500">
+                                                                    <svg class="h-5 w-5" fill="currentColor"
+                                                                        viewBox="0 0 20 20">
+                                                                        <path fill-rule="evenodd"
+                                                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                                            clip-rule="evenodd" />
+                                                                    </svg>
+                                                                </span>
+                                                            @endif
+                                                        </label>
+                                                    @endforeach
+                                                </div>
+                                                @error('type')
+                                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                                @enderror
+                                            </div>
+                                        </div>
+
+                                        <!-- Date Range Section -->
+                                        <div class="grid grid-cols-12 gap-8">
+                                            {{-- Left Section --}}
+                                            <div class="col-span-12 md:col-span-4">
+                                                <h4 class="text-base font-medium text-gray-900">Duration</h4>
+                                                <p class="mt-1 text-sm text-gray-500">Select the start and end dates
+                                                    for your leave. The system will automatically calculate the number
+                                                    of working days.</p>
+                                                @if ($start_date && $end_date)
+                                                    <div class="mt-4 p-3 bg-indigo-50 rounded-lg">
+                                                        <span class="text-sm font-medium text-indigo-900">
+                                                            Duration:
+                                                            {{ (new App\Models\LeaveRequest(['start_date' => $start_date, 'end_date' => $end_date]))->getDurationInDays() }}
+                                                            working days
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                            </div>
+
+                                            {{-- Right Section --}}
+                                            <div class="col-span-12 md:col-span-8" x-data="{}"
+                                                x-init="() => {
+                                                    $nextTick(() => {
+                                                        initDatepicker();
+                                                    });
+                                                }"
+                                                @init-datepicker.window="
+                                                    $nextTick(() => {
+                                                        initDatepicker();
+                                                    });
+                                                ">
+                                                <div id="date-range-picker" class="flex items-center">
+                                                    <div class="relative max-w-sm">
+                                                        <div
+                                                            class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                                                            <svg class="w-4 h-4 text-gray-500" aria-hidden="true"
+                                                                xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                                                                viewBox="0 0 20 20">
+                                                                <path
+                                                                    d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
+                                                            </svg>
+                                                        </div>
+                                                        <input id="datepicker-range-start"
+                                                            wire:model.live='start_date' type="text"
+                                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full ps-10 p-2.5"
+                                                            placeholder="Start date">
+                                                    </div>
+                                                    <span class="mx-4 text-gray-500">to</span>
+                                                    <div class="relative max-w-sm">
+                                                        <div
+                                                            class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                                                            <svg class="w-4 h-4 text-gray-500" aria-hidden="true"
+                                                                xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                                                                viewBox="0 0 20 20">
+                                                                <path
+                                                                    d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
+                                                            </svg>
+                                                        </div>
+                                                        <input id="datepicker-range-end" wire:model.live='end_date'
+                                                            type="text"
+                                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full ps-10 p-2.5"
+                                                            placeholder="End date">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Reason Section -->
+                                        <div class="grid grid-cols-12 gap-8">
+                                            <div class="col-span-12 md:col-span-4">
+                                                <h4 class="text-base font-medium text-gray-900">Reason</h4>
+                                                <p class="mt-1 text-sm text-gray-500">Provide a detailed explanation
+                                                    for your leave request. This helps in the approval process.</p>
+                                            </div>
+                                            <div class="col-span-12 md:col-span-8">
+                                                <div class="relative">
+                                                    <textarea wire:model="reason" rows="4"
+                                                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                                        placeholder="Please provide details about your leave request..."></textarea>
+                                                    <div class="absolute bottom-3 right-3">
+                                                        <span class="text-sm text-gray-400">{{ strlen($reason) }} /
+                                                            500</span>
+                                                    </div>
+                                                </div>
+                                                @error('reason')
+                                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                                @enderror
+                                            </div>
+                                        </div>
 
                                         <!-- Attachment Section -->
-                                        <div class="bg-gray-50 rounded-lg p-4">
-                                            <h4 class="text-sm font-medium text-gray-900 mb-4">Supporting Document</h4>
-                                            <div class="flex items-center justify-center">
-                                                <label for="attachment" class="w-full cursor-pointer">
-                                                    <div
-                                                        class="p-4 border-2 border-gray-300 border-dashed rounded-lg text-center hover:border-indigo-500 transition-colors">
-                                                        <div class="flex flex-col items-center">
-                                                            @if ($attachment)
-                                                                <svg xmlns="http://www.w3.org/2000/svg"
-                                                                    class="h-8 w-8 text-green-500" fill="none"
-                                                                    viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path stroke-linecap="round"
-                                                                        stroke-linejoin="round" stroke-width="2"
-                                                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                                </svg>
-                                                                <span class="mt-2 text-sm text-gray-900">File selected:
-                                                                    {{ $attachment->getClientOriginalName() }}</span>
-                                                            @else
-                                                                <svg xmlns="http://www.w3.org/2000/svg"
-                                                                    class="h-8 w-8 text-gray-400" fill="none"
-                                                                    viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path stroke-linecap="round"
-                                                                        stroke-linejoin="round" stroke-width="2"
-                                                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                                                </svg>
-                                                                <span class="mt-2 text-sm text-gray-500">Drop files
-                                                                    here or click to upload</span>
-                                                            @endif
-                                                            <input type="file" wire:model="attachment"
-                                                                id="attachment" class="hidden"
-                                                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-                                                        </div>
-                                                        <p class="mt-1 text-xs text-gray-500">Supported formats: PDF,
-                                                            DOC, DOCX, JPG, PNG (max 5MB)</p>
-                                                    </div>
-                                                </label>
+                                        <div class="grid grid-cols-12 gap-8">
+                                            <div class="col-span-12 md:col-span-4">
+                                                <h4 class="text-base font-medium text-gray-900">Supporting Documents
+                                                </h4>
+                                                <p class="mt-1 text-sm text-gray-500">Attach any relevant documents to
+                                                    support your leave request (optional).</p>
+                                                <p class="mt-4 text-xs text-gray-500">Accepted formats: PDF, DOC, DOCX,
+                                                    JPG, PNG (max 5MB)</p>
                                             </div>
-                                            @error('attachment')
-                                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                            @enderror
+                                            <div class="col-span-12 md:col-span-8">
+                                                <div class="relative">
+                                                    <label
+                                                        class="flex justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-lg appearance-none cursor-pointer hover:border-indigo-500 focus:outline-none">
+                                                        <span class="flex items-center space-x-2">
+                                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                                class="w-6 h-6 text-gray-600" fill="none"
+                                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                            </svg>
+                                                            @if ($attachment)
+                                                                <span class="font-medium text-gray-600">
+                                                                    {{ $attachment->getClientOriginalName() }}
+                                                                    <span class="text-indigo-600">(Click to
+                                                                        change)</span>
+                                                                </span>
+                                                            @else
+                                                                <span class="font-medium text-gray-600">
+                                                                    Drop files to Attach, or
+                                                                    <span class="text-indigo-600">browse</span>
+                                                                </span>
+                                                            @endif
+                                                        </span>
+                                                        <input type="file" wire:model="attachment" class="hidden"
+                                                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                                                    </label>
+                                                </div>
+                                                @error('attachment')
+                                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                                @enderror
+                                            </div>
                                         </div>
+
+                                        <!-- Summary Section -->
+                                        @if ($start_date && $end_date && $reason)
+                                            <div class="mt-8 border-t border-gray-200 pt-8">
+                                                <div class="grid grid-cols-12 gap-8">
+                                                    <div class="col-span-12 md:col-span-4">
+                                                        <h4 class="text-base font-medium text-gray-900">Request Summary
+                                                        </h4>
+                                                        <p class="mt-1 text-sm text-gray-500">Review your leave request
+                                                            details before submitting.</p>
+                                                    </div>
+                                                    <div class="col-span-12 md:col-span-8">
+                                                        <div class="bg-gray-50 rounded-lg p-4">
+                                                            <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                                                <div>
+                                                                    <dt class="text-sm font-medium text-gray-500">Leave
+                                                                        Type</dt>
+                                                                    <dd class="mt-1 text-sm text-gray-900 capitalize">
+                                                                        {{ $type }}</dd>
+                                                                </div>
+                                                                <div>
+                                                                    <dt class="text-sm font-medium text-gray-500">
+                                                                        Duration</dt>
+                                                                    <dd class="mt-1 text-sm text-gray-900">
+                                                                        {{ (new App\Models\LeaveRequest(['start_date' => $start_date, 'end_date' => $end_date]))->getDurationInDays() }}
+                                                                        working days
+                                                                    </dd>
+                                                                </div>
+                                                                <div class="sm:col-span-2">
+                                                                    <dt class="text-sm font-medium text-gray-500">Date
+                                                                        Range</dt>
+                                                                    <dd class="mt-1 text-sm text-gray-900">
+                                                                        {{ $start_date }} to {{ $end_date }}
+                                                                    </dd>
+                                                                </div>
+                                                                <div class="sm:col-span-2">
+                                                                    <dt class="text-sm font-medium text-gray-500">
+                                                                        Reason</dt>
+                                                                    <dd class="mt-1 text-sm text-gray-900">
+                                                                        {{ $reason }}</dd>
+                                                                </div>
+                                                                @if ($attachment)
+                                                                    <div class="sm:col-span-2">
+                                                                        <dt class="text-sm font-medium text-gray-500">
+                                                                            Attachment</dt>
+                                                                        <dd class="mt-1 text-sm text-gray-900">
+                                                                            {{ $attachment->getClientOriginalName() }}
+                                                                        </dd>
+                                                                    </div>
+                                                                @endif
+                                                            </dl>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
 
                                 <!-- Form Actions -->
-                                <div
-                                    class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg flex justify-end space-x-3">
-                                    <button type="button" wire:click="setTab('requests')"
-                                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                        Cancel
-                                    </button>
-                                    <button type="submit"
-                                        class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                        <svg wire:loading wire:target="submitForm"
-                                            class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none"
-                                            viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10"
-                                                stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor"
-                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                            </path>
-                                        </svg>
-                                        Submit Request
-                                    </button>
+                                <div class="px-8 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+                                    <div class="flex justify-end space-x-3">
+                                        <button type="button" wire:click="setTab('requests')"
+                                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                            Cancel
+                                        </button>
+                                        <button type="submit"
+                                            class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            @if (!$start_date || !$end_date || !$reason) disabled @endif>
+                                            <svg wire:loading wire:target="submitForm"
+                                                class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none"
+                                                viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                    stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor"
+                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                                </path>
+                                            </svg>
+                                            Submit Request
+                                        </button>
+                                    </div>
                                 </div>
                             </form>
+                        </div>
+
+                        <!-- Success Message -->
+                        <div x-data="{ show: false, message: '' }"
+                            x-on:leave-requested.window="show = true; message = $event.detail; setTimeout(() => show = false, 3000)"
+                            x-show="show" x-transition class="fixed bottom-4 right-4 z-50">
+                            <div class="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+                                <span x-text="message"></span>
+                            </div>
                         </div>
                     @endif
                 </div>
@@ -582,6 +769,47 @@
     </div>
 
     <script>
-        
+        function initDatepicker() {
+            const options = {
+                autoHide: true,
+                format: 'yyyy-mm-dd',
+                minDate: new Date(),
+            };
+
+            const startDatePicker = document.getElementById('datepicker-range-start');
+            const endDatePicker = document.getElementById('datepicker-range-end');
+
+            if (startDatePicker) {
+                new Datepicker(startDatePicker, {
+                    ...options,
+                    onSelect: (selectedDate) => {
+                        // Update Livewire start_date
+                        startDatePicker.dispatchEvent(new Event('input'));
+
+                        // Update end date min date
+                        if (endDatePicker._datepicker) {
+                            endDatePicker._datepicker.setOptions({
+                                minDate: selectedDate
+                            });
+                        }
+                    }
+                });
+            }
+
+            if (endDatePicker) {
+                new Datepicker(endDatePicker, {
+                    ...options,
+                    onSelect: (selectedDate) => {
+                        // Update Livewire end_date
+                        endDatePicker.dispatchEvent(new Event('input'));
+                    }
+                });
+            }
+        }
+
+        // When tab changes, reinitialize datepicker
+        document.addEventListener('livewire:navigated', () => {
+            initDatepicker();
+        });
     </script>
 </div>
