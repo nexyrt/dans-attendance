@@ -2,174 +2,106 @@
 
 namespace App\Livewire\Staff;
 
-use App\Models\LeaveBalance;
-use App\Models\LeaveRequest;
-use Cake\Chronos\Chronos;
 use Livewire\Component;
-use Livewire\WithPagination;
 use Livewire\WithFileUploads;
+use App\Models\LeaveRequest;
+use Livewire\Attributes\On;
 
 class Leave extends Component
 {
-    use WithPagination;
     use WithFileUploads;
 
-    // For Main Leave
-    public $activeTab = 'new-request';
-
-    // For Table
-    public $search = '';
-    public $statusFilter = '';
-    public $typeFilter = '';
-    public $perPage = 10;
-
-    // For Form
+    // Form properties
+    public $showLeaveForm = false;
     public $type = '';
-    public $start_date;
-    public $end_date;
+    public $startDate;
+    public $endDate;
     public $reason = '';
     public $attachment;
 
-    protected $queryString = [
-        'search' => ['except' => ''],
-        'statusFilter' => ['except' => ''],
-        'typeFilter' => ['except' => ''],
-        'page' => ['except' => 1],
+    // Tab state
+    public $activeTab = 'pending';
+
+    protected $listeners = [
+        'dateRangeSelected' => 'updateDateRange'
     ];
 
     protected $rules = [
-        'type' => 'required|string',
-        'start_date' => 'required|date|after_or_equal:today',
-        'end_date' => 'required|date|after_or_equal:start_date',
+        'type' => 'required|in:sick,annual,important,other',
+        'startDate' => 'required|date',
+        'endDate' => 'required|date|after_or_equal:startDate',
         'reason' => 'required|string|min:10',
-        'attachment' => 'nullable|file|max:5120', // 5MB Max
+        'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240'
     ];
-
-    protected $listeners = ["set-date" => "setDate"];
 
     public function mount()
     {
-        $this->dateFilter = 'current_month';
+        $this->startDate = now()->format('Y-m-d');
+        $this->endDate = now()->format('Y-m-d');
+    }
+
+    #[On('date-range-selected')]
+    public function handleDateRangeSelected($data)
+    {
+        $this->startDate = $data['startDate'];
+        $this->endDate = $data['endDate'];
+    }
+
+    public function submitLeave()
+    {
+        $this->validate();
+
+        $leaveRequest = new LeaveRequest([
+            'type' => $this->type,
+            'start_date' => $this->startDate,
+            'end_date' => $this->endDate,
+            'reason' => $this->reason,
+            'status' => LeaveRequest::STATUS_PENDING
+        ]);
+
+        if ($this->attachment) {
+            $path = $this->attachment->store('leave-attachments', 'public');
+            $leaveRequest->attachment_path = $path;
+        }
+
+        auth()->user()->leaveRequests()->save($leaveRequest);
+
+        $this->reset(['showLeaveForm', 'type', 'startDate', 'endDate', 'reason', 'attachment']);
+        $this->dispatch('close-modal');
+        session()->flash('message', 'Leave request submitted successfully.');
+    }
+
+    public function cancelRequest($id)
+    {
+        $leaveRequest = auth()->user()->leaveRequests()->findOrFail($id);
+        if ($leaveRequest->canBeCancelled()) {
+            $leaveRequest->cancel();
+            session()->flash('message', 'Leave request cancelled successfully.');
+        }
+    }
+
+    public function getLeaveRequestsProperty()
+    {
+        return auth()->user()->leaveRequests()
+            ->when($this->activeTab === 'pending', fn($query) => $query->pending())
+            ->when($this->activeTab === 'approved', fn($query) => $query->where('status', LeaveRequest::STATUS_APPROVED))
+            ->when($this->activeTab === 'rejected', fn($query) => $query->where('status', LeaveRequest::STATUS_REJECTED))
+            ->when($this->activeTab === 'cancelled', fn($query) => $query->where('status', LeaveRequest::STATUS_CANCEL))
+            ->latest()
+            ->get();
+    }
+
+    public function getLeaveBalanceProperty()
+    {
+        return auth()->user()->currentLeaveBalance();
     }
 
     public function render()
     {
-        $leaveBalance = LeaveBalance::where('user_id', auth()->id())
-            ->where('year', Chronos::now()->year)
-            ->first();
-
-        $leaveRequests = LeaveRequest::query()
-            ->where('user_id', auth()->id())
-            ->when($this->search, function ($query) {
-                $query->where('reason', 'like', '%' . $this->search . '%');
-            })
-            ->when($this->statusFilter, function ($query) {
-                $query->where('status', $this->statusFilter);
-            })
-            ->when($this->typeFilter, function ($query) {
-                $query->where('type', $this->typeFilter);
-            })
-            ->with('approvedBy')
-            ->latest()
-            ->paginate($this->perPage);
-
         return view('livewire.staff.leave', [
-            'leaveBalance' => $leaveBalance,
-            'leaveRequests' => $leaveRequests,
+            'leaveRequests' => $this->leaveRequests,
+            'leaveBalance' => $this->leaveBalance,
+            'leaveTypes' => LeaveRequest::TYPES
         ])->layout('layouts.staff', ['title' => 'Leave Management']);
-    }
-
-    // For Main Leave Page
-    public function setTab($tab)
-    {
-        $this->activeTab = $tab;
-        $this->resetForm();
-    }
-
-    // For Table
-    public function resetFilters()
-    {
-        $this->reset(['search', 'statusFilter', 'typeFilter']);
-    }
-
-    public function cancelLeave($leaveId)
-    {
-        $leave = LeaveRequest::where('user_id', auth()->id())->findOrFail($leaveId);
-
-        if ($leave->canBeCancelled()) {
-            $leave->cancel();
-            $this->dispatch('leave-cancelled', 'Leave request cancelled successfully');
-        }
-    }
-
-    // For Form
-    public function submitForm()
-    {
-        $this->validate();
-
-        try {
-            $leaveData = [
-                'type' => $this->type,
-                'start_date' => $this->start_date,
-                'end_date' => $this->end_date,
-                'reason' => $this->reason,
-                'status' => LeaveRequest::STATUS_PENDING,
-                'user_id' => auth()->id(),
-            ];
-
-            // Handle file upload if attachment exists
-            if ($this->attachment) {
-                $path = $this->attachment->store('leave-attachments', 'public');
-                $leaveData['attachment_path'] = $path;
-            }
-
-            // Calculate duration to check against leave balance
-            $leaveRequest = new LeaveRequest($leaveData);
-            $duration = $leaveRequest->getDurationInDays();
-
-            // Check leave balance
-            $leaveBalance = auth()->user()->currentLeaveBalance();
-            if (!$leaveBalance || $leaveBalance->remaining_balance < $duration) {
-                $this->addError('general', 'Insufficient leave balance for this request.');
-                return;
-            }
-
-            LeaveRequest::create($leaveData);
-
-            $this->dispatch('leave-requested', 'Leave request submitted successfully');
-            $this->resetForm();
-            $this->activeTab = 'requests';
-
-        } catch (\Exception $e) {
-            $this->addError('general', $e->getMessage());
-        }
-    }
-
-    public function updatedStartDate($value)
-    {
-        // Reset end date if start date is after it
-        if ($this->end_date && $value > $this->end_date) {
-            $this->end_date = null;
-        }
-    }
-
-    public function updatedActiveTab($value)
-    {
-        if ($value === 'new-request') {
-            $this->dispatch('init-datepicker');
-        }
-    }
-
-    public function setDate(string $name, string $value)
-    {
-        if ($name === 'start_date' || $name === 'end_date') {
-            $this->$name = $value;
-        }
-    }
-
-    public function resetForm()
-    {
-        $this->reset(['type', 'start_date', 'end_date', 'reason', 'attachment']);
-        $this->resetErrorBag();
     }
 }

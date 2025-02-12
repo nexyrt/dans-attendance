@@ -1,815 +1,292 @@
-<div class="p-4 md:p-8">
-    <div class="max-w-7xl mx-auto">
+<!-- resources/views/livewire/staff/leave.blade.php -->
+<div class="min-h-screen bg-gray-50/30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Page Header -->
+        <div class="md:flex md:items-center md:justify-between mb-8">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Leave Management</h2>
+                <p class="mt-1 text-sm text-gray-500">Manage and track your leave requests</p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <button wire:click="$toggle('showLeaveForm')"
+                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    New Leave Request
+                </button>
+            </div>
+        </div>
 
-        <div class="py-6">
-            <div class="mx-auto px-4 sm:px-6 lg:px-8">
-                <!-- Leave Balance Overview -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <!-- Total Balance Card -->
-                    <div class="relative group">
-                        <div
-                            class="h-full bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-200 hover:shadow-lg">
-                            <div class="flex items-start justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500">Total Balance</p>
-                                    <div class="mt-2 flex items-baseline">
-                                        <p class="text-3xl font-bold text-gray-900">
-                                            {{ $leaveBalance->total_balance ?? 0 }}</p>
-                                        <p class="ml-1 text-lg text-gray-500">days</p>
-                                    </div>
-                                </div>
-                                <div class="p-3 bg-green-50 rounded-lg">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600"
-                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                </div>
-                            </div>
-
-                            <!-- Progress Bar -->
-                            <div class="mt-4">
-                                <div class="relative pt-1">
-                                    <div class="overflow-hidden h-2 text-xs flex rounded-full bg-gray-100">
-                                        <div class="w-full bg-green-100"></div>
-                                    </div>
-                                </div>
-                            </div>
+        <!-- Leave Balance Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white overflow-hidden shadow-sm rounded-xl">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
                         </div>
-
-                        <!-- Hover Card -->
-                        <div
-                            class="hidden group-hover:block absolute top-full left-0 mt-2 w-72 p-4 bg-white rounded-lg shadow-xl border border-gray-100 z-10">
-                            <h4 class="text-sm font-semibold text-gray-900">About Total Balance</h4>
-                            <p class="mt-2 text-sm text-gray-600">This is your annual leave allocation for
-                                {{ now()->year }}. It represents the total number of leave days you're entitled to
-                                this year.</p>
-                        </div>
-                    </div>
-
-                    <!-- Used Balance Card -->
-                    <div class="relative group">
-                        <div
-                            class="h-full bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-200 hover:shadow-lg">
-                            <div class="flex items-start justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500">Used Leave</p>
-                                    <div class="mt-2 flex items-baseline">
-                                        <p class="text-3xl font-bold text-gray-900">
-                                            {{ $leaveBalance->used_balance ?? 0 }}</p>
-                                        <p class="ml-1 text-lg text-gray-500">days</p>
-                                    </div>
-                                </div>
-                                <div class="p-3 bg-blue-50 rounded-lg">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                                    </svg>
-                                </div>
-                            </div>
-
-                            <!-- Progress Bar -->
-                            <div class="mt-4">
-                                <div class="relative pt-1">
-                                    <div class="overflow-hidden h-2 text-xs flex rounded-full bg-gray-100">
-                                        <div style="width: {{ ($leaveBalance->used_balance / $leaveBalance->total_balance) * 100 }}%"
-                                            class="bg-blue-100 rounded-full"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Hover Card -->
-                        <div
-                            class="hidden group-hover:block absolute top-full left-0 mt-2 w-72 p-4 bg-white rounded-lg shadow-xl border border-gray-100 z-10">
-                            <h4 class="text-sm font-semibold text-gray-900">About Used Leave</h4>
-                            <p class="mt-2 text-sm text-gray-600">This shows how many leave days you've used so far this
-                                year. It includes all approved leave requests.</p>
-                            <div class="mt-3 text-xs text-gray-500">
-                                <p>Last leave taken:
-                                    <span class="font-medium text-gray-900">
-                                        {{ optional(auth()->user()->leaveRequests()->where('status', 'approved')->latest()->first())->start_date?->format('M d, Y') ?? 'No leave taken yet' }}
-                                    </span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Remaining Balance Card -->
-                    <div class="relative group">
-                        <div
-                            class="h-full bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-200 hover:shadow-lg">
-                            <div class="flex items-start justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500">Remaining Balance</p>
-                                    <div class="mt-2 flex items-baseline">
-                                        <p class="text-3xl font-bold text-gray-900">
-                                            {{ $leaveBalance->remaining_balance ?? 0 }}</p>
-                                        <p class="ml-1 text-lg text-gray-500">days</p>
-                                    </div>
-                                </div>
-                                <div class="p-3 bg-purple-50 rounded-lg">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600"
-                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                            </div>
-
-                            <!-- Progress Bar -->
-                            <div class="mt-4">
-                                <div class="relative pt-1">
-                                    <div class="overflow-hidden h-2 text-xs flex rounded-full bg-gray-100">
-                                        <div style="width: {{ ($leaveBalance->remaining_balance / $leaveBalance->total_balance) * 100 }}%"
-                                            class="bg-purple-100 rounded-full"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Additional Info for Low Balance -->
-                            @if ($leaveBalance && $leaveBalance->remaining_balance < 5)
-                                <div class="mt-3 flex items-center text-sm text-amber-600">
-                                    <svg class="h-5 w-5 mr-1.5" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                    </svg>
-                                    Low balance alert
-                                </div>
-                            @endif
-                        </div>
-
-                        <!-- Hover Card -->
-                        <div
-                            class="hidden group-hover:block absolute top-full left-0 mt-2 w-72 p-4 bg-white rounded-lg shadow-xl border border-gray-100 z-10">
-                            <h4 class="text-sm font-semibold text-gray-900">About Remaining Balance</h4>
-                            <p class="mt-2 text-sm text-gray-600">This is the number of leave days you still have
-                                available to use this year.</p>
-                            @if ($leaveBalance && $leaveBalance->remaining_balance < 5)
-                                <div class="mt-3 p-2 bg-amber-50 rounded-md">
-                                    <p class="text-xs text-amber-800">You're running low on leave days. Plan your
-                                        remaining leaves carefully.</p>
-                                </div>
-                            @endif
-                            <div class="mt-3 text-xs text-gray-500">
-                                <p>Pending requests:
-                                    <span class="font-medium text-gray-900">
-                                        {{ auth()->user()->leaveRequests()->pending()->count() }} day(s)
-                                    </span>
-                                </p>
-                            </div>
+                        <div class="ml-4">
+                            <h3 class="text-sm font-medium text-gray-500">Total Leave Days</h3>
+                            <p class="mt-1 text-2xl font-semibold text-gray-900">{{ $leaveBalance->total_balance }}</p>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Tab Navigation -->
-                <div class="mb-6">
-                    <nav class="flex space-x-4" aria-label="Tabs">
-                        <button wire:click="setTab('requests')"
-                            class="px-3 py-2 text-sm font-medium rounded-md {{ $activeTab === 'requests' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500 hover:text-gray-700' }}">
-                            My Leave Requests
-                        </button>
-                        <button wire:click="setTab('new-request')"
-                            class="px-3 py-2 text-sm font-medium rounded-md {{ $activeTab === 'new-request' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500 hover:text-gray-700' }}">
-                            New Leave Request
-                        </button>
-                    </nav>
-                </div>
-
-                <!-- Tab Content -->
-                <div>
-                    {{-- Table --}}
-                    @if ($activeTab === 'requests')
-                        <!-- Table Container -->
-                        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-                            <!-- Enhanced Filters Section -->
-                            <div class="bg-white rounded-lg shadow-sm mb-6">
-                                <div class="p-4 sm:p-6">
-                                    <!-- Search and Filter Controls -->
-                                    <div class="md:flex justify-between">
-                                        <!-- Search Box -->
-                                        <div class="max-w-full">
-                                            <label for="default-search"
-                                                class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
-                                            <div class="relative">
-                                                <div
-                                                    class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400"
-                                                        aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                                        fill="none" viewBox="0 0 20 20">
-                                                        <path stroke="currentColor" stroke-linecap="round"
-                                                            stroke-linejoin="round" stroke-width="2"
-                                                            d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
-                                                    </svg>
-                                                </div>
-                                                <input wire:model.live="search" type="text" id="default-search"
-                                                    class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                                    placeholder="Search reasons.." />
-                                            </div>
-                                        </div>
-
-                                        <div class="flex space-x-3">
-                                            <!-- Leave Type Dropdown -->
-                                            <div class="max-w-full mx-auto">
-                                                <select id="leave" wire:model.live="typeFilter"
-                                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                                    <option value="">All type</option>
-                                                    @foreach (App\Models\LeaveRequest::TYPES as $type)
-                                                        <option value="{{ $type }}">{{ ucfirst($type) }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-
-                                            <!-- Leave Type Dropdown -->
-                                            <div class="max-w-full mx-auto">
-                                                <select id="status" wire:model.live="statusFilter"
-                                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                                    <option value="">All status</option>
-                                                    @foreach (App\Models\LeaveRequest::STATUSES as $status)
-                                                        <option value="{{ $status }}">{{ ucfirst($status) }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                    </div>
-
-                                    <!-- Active Filters & Reset -->
-                                    @if ($search || $typeFilter || $statusFilter)
-                                        <div
-                                            class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
-                                            <div class="flex items-center space-x-2">
-                                                <span class="text-sm text-gray-700">Active filters:</span>
-                                                <div class="flex flex-wrap gap-2">
-                                                    @if ($search)
-                                                        <span
-                                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                            Search: "{{ $search }}"
-                                                        </span>
-                                                    @endif
-                                                    @if ($typeFilter)
-                                                        <span
-                                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                            Type: {{ ucfirst($typeFilter) }}
-                                                        </span>
-                                                    @endif
-                                                    @if ($statusFilter)
-                                                        <span
-                                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                            Status: {{ ucfirst($statusFilter) }}
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                            <button wire:click="resetFilters"
-                                                class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5"
-                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                                </svg>
-                                                Reset all filters
-                                            </button>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <!-- Responsive Table -->
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th scope="col"
-                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Type</th>
-                                            <th scope="col"
-                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Duration</th>
-                                            <th scope="col"
-                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Status</th>
-                                            <th scope="col"
-                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Reason</th>
-                                            <th scope="col"
-                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Approver</th>
-                                            <th scope="col"
-                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
-                                        @forelse($leaveRequests as $leave)
-                                            <tr class="hover:bg-gray-50">
-                                                {{-- Type --}}
-                                                <td class="px-6 py-4 text-center">
-                                                    <span
-                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-                                                                {{ match ($leave->type) {
-                                                                    'sick' => 'bg-red-100 text-red-800 border border-red-200',
-                                                                    'annual' => 'bg-blue-100 text-blue-800 border border-blue-200',
-                                                                    'important' => 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-                                                                    default => 'bg-gray-100 text-gray-800 border border-gray-200',
-                                                                } }}">
-                                                        {{ $leave->type }}
-                                                    </span>
-                                                </td>
-
-                                                {{-- Duration --}}
-                                                <td class="px-6 py-4">
-                                                    <div class="text-sm font-medium text-gray-900">
-                                                        {{ $leave->start_date->format('M d, Y') }}
-                                                    </div>
-                                                    @if ($leave->start_date != $leave->end_date)
-                                                        <div class="text-sm text-gray-500">
-                                                            to {{ $leave->end_date->format('M d, Y') }}
-                                                        </div>
-                                                    @endif
-                                                    <div class="text-xs text-gray-500 mt-1">
-                                                        {{ $leave->getDurationInDays() }} day(s)
-                                                    </div>
-                                                </td>
-
-                                                {{-- Status --}}
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span
-                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-                                {{ match ($leave->status) {
-                                    'pending' => 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-                                    'approved' => 'bg-green-100 text-green-800 border border-green-200',
-                                    'rejected' => 'bg-red-100 text-red-800 border border-red-200',
-                                    'cancel' => 'bg-gray-100 text-gray-800 border border-gray-200',
-                                } }}">
-                                                        {{ $leave->status }}
-                                                    </span>
-                                                </td>
-
-                                                {{-- Reason --}}
-                                                <td class="px-6 py-4">
-                                                    <div class="max-w-xs">
-                                                        <div class="text-sm text-gray-900 line-clamp-2"
-                                                            title="{{ $leave->reason }}">
-                                                            {{ $leave->reason }}
-                                                        </div>
-                                                    </div>
-                                                </td>
-
-                                                {{-- Approved By --}}
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    @if ($leave->approved_by)
-                                                        <div class="flex items-center">
-                                                            @if ($leave->approvedBy->image)
-                                                                <img class="h-8 w-8 rounded-full object-cover"
-                                                                    src="{{ asset('storage/' . $leave->approvedBy->image) }}"
-                                                                    alt="">
-                                                            @else
-                                                                <div
-                                                                    class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                                                                    <span class="text-sm font-medium text-indigo-600">
-                                                                        {{ substr($leave->approvedBy->name, 0, 1) }}
-                                                                    </span>
-                                                                </div>
-                                                            @endif
-                                                            <div class="ml-3">
-                                                                <div class="text-sm font-medium text-gray-900">
-                                                                    {{ $leave->approvedBy->name }}
-                                                                </div>
-                                                                <div class="text-xs text-gray-500">
-                                                                    {{ $leave->approved_at ? $leave->approved_at->format('M d, Y H:i') : '' }}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    @else
-                                                        <span class="text-sm text-gray-500 italic">Pending
-                                                            approval</span>
-                                                    @endif
-                                                </td>
-
-                                                {{-- Actions --}}
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                                    @if ($leave->canBeCancelled())
-                                                        <button wire:click="cancelLeave({{ $leave->id }})"
-                                                            wire:confirm="Are you sure you want to cancel this leave request?"
-                                                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                class="h-4 w-4 mr-1.5" fill="none"
-                                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                            </svg>
-                                                            Cancel
-                                                        </button>
-                                                    @else
-                                                        <span class="text-sm text-gray-400 italic">No actions</span>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="5" class="px-6 py-10 text-center text-gray-500">
-                                                    <div class="flex flex-col items-center">
-                                                        <svg class="h-12 w-12 text-gray-400 mb-3" fill="none"
-                                                            stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="1"
-                                                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                                                        </svg>
-                                                        <p class="text-gray-500 text-base">No leave requests found</p>
-                                                        <p class="text-gray-400 text-sm mt-1">Try adjusting your search
-                                                            or filters</p>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <!-- Pagination -->
-                            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
-                                {{ $leaveRequests->links() }}
-                            </div>
+            <div class="bg-white overflow-hidden shadow-sm rounded-xl">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                         </div>
-                    @else
-                        <div class="bg-white rounded-lg shadow-sm">
-                            <!-- Form Header -->
-                            <div class="px-8 py-6 border-b border-gray-200">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-4">
-                                        <div class="p-2.5 bg-indigo-50 rounded-xl">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600"
-                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <h3 class="text-xl font-semibold text-gray-900">Request Leave</h3>
-                                            <p class="text-sm text-gray-500 mt-1">Please complete all required
-                                                information</p>
-                                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-sm font-medium text-gray-500">Available Balance</h3>
+                            <p class="mt-1 text-2xl font-semibold text-gray-900">{{ $leaveBalance->remaining_balance }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow-sm rounded-xl">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 rounded-lg bg-orange-50 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-sm font-medium text-gray-500">Used Leave Days</h3>
+                            <p class="mt-1 text-2xl font-semibold text-gray-900">{{ $leaveBalance->used_balance }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leave Requests Section -->
+        <div class="bg-white shadow-sm rounded-xl overflow-hidden">
+            <!-- Tabs -->
+            <div class="border-b border-gray-200">
+                <nav class="flex -mb-px">
+                    @php
+                        $tabs = [
+                            'pending' => ['label' => 'Pending', 'color' => 'yellow'],
+                            'approved' => ['label' => 'Approved', 'color' => 'green'],
+                            'rejected' => ['label' => 'Rejected', 'color' => 'red'],
+                            'cancelled' => ['label' => 'Cancelled', 'color' => 'gray'],
+                        ];
+                    @endphp
+
+                    @foreach ($tabs as $key => $tab)
+                        <button wire:click="$set('activeTab', '{{ $key }}')"
+                            class="px-6 py-3 border-b-2 text-sm font-medium {{ $activeTab === $key
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                            {{ $tab['label'] }}
+                        </button>
+                    @endforeach
+                </nav>
+            </div>
+
+            <!-- Leave Requests List -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Duration</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Submitted</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @forelse($leaveRequests as $request)
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <span
+                                            class="text-sm font-medium text-gray-900">{{ ucfirst($request->type) }}</span>
                                     </div>
-
-                                    <div class="hidden sm:block">
-                                        <div class="bg-indigo-50 rounded-lg px-4 py-2">
-                                            <p class="text-sm text-indigo-700">Available Balance</p>
-                                            <p class="text-2xl font-bold text-indigo-900">
-                                                {{ $leaveBalance->remaining_balance ?? 0 }} days</p>
-                                        </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">
+                                        {{ \Cake\Chronos\Chronos::parse($request->start_date)->format('M j, Y') }}
+                                        -
+                                        {{ \Cake\Chronos\Chronos::parse($request->end_date)->format('M j, Y') }}
                                     </div>
-                                </div>
-                            </div>
-
-                            <form wire:submit="submitForm">
-                                <div class="px-8 py-6">
-                                    @if ($errors->has('general'))
-                                        <div class="mb-6 rounded-lg bg-red-50 p-4">
-                                            <div class="flex">
-                                                <div class="flex-shrink-0">
-                                                    <svg class="h-5 w-5 text-red-400" fill="currentColor"
-                                                        viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd"
-                                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                                            clip-rule="evenodd" />
-                                                    </svg>
-                                                </div>
-                                                <div class="ml-3">
-                                                    <p class="text-sm font-medium text-red-800">
-                                                        {{ $errors->first('general') }}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endif
-
-                                    <!-- Form Sections -->
-                                    <div class="space-y-8">
-                                        <!-- Leave Type Section -->
-                                        <div class="grid grid-cols-12 gap-8">
-                                            <div class="col-span-12 md:col-span-4">
-                                                <h4 class="text-base font-medium text-gray-900">Leave Type</h4>
-                                                <p class="mt-1 text-sm text-gray-500">Select the type of leave you want
-                                                    to request. Different types may have different approval processes.
-                                                </p>
-                                            </div>
-                                            <div class="col-span-12 md:col-span-8">
-                                                <div class="grid grid-cols-2 gap-4">
-                                                    @foreach (App\Models\LeaveRequest::TYPES as $leaveType)
-                                                        <label
-                                                            class="relative flex flex-col bg-white p-4 border-2 rounded-lg cursor-pointer focus-within:ring-2 focus-within:ring-indigo-500 {{ $type === $leaveType ? 'border-indigo-500' : 'border-gray-300' }}">
-                                                            <span
-                                                                class="block text-sm font-medium text-gray-900">{{ ucfirst($leaveType) }}</span>
-                                                            <span class="mt-1 text-xs text-gray-500">
-                                                                {{ match ($leaveType) {
-                                                                    'sick' => 'For medical reasons',
-                                                                    'annual' => 'Planned vacation',
-                                                                    'important' => 'Important matters',
-                                                                    default => 'Other purposes',
-                                                                } }}
-                                                            </span>
-                                                            <input type="radio" wire:model.live="type"
-                                                                name="type" value="{{ $leaveType }}"
-                                                                class="sr-only">
-                                                            @if ($type === $leaveType)
-                                                                <span class="absolute top-2 right-2 text-indigo-500">
-                                                                    <svg class="h-5 w-5" fill="currentColor"
-                                                                        viewBox="0 0 20 20">
-                                                                        <path fill-rule="evenodd"
-                                                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                                                            clip-rule="evenodd" />
-                                                                    </svg>
-                                                                </span>
-                                                            @endif
-                                                        </label>
-                                                    @endforeach
-                                                </div>
-                                                @error('type')
-                                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                                @enderror
-                                            </div>
-                                        </div>
-
-                                        <!-- Date Range Section -->
-                                        <div class="grid grid-cols-12 gap-8">
-                                            {{-- Left Section --}}
-                                            <div class="col-span-12 md:col-span-4">
-                                                <h4 class="text-base font-medium text-gray-900">Duration</h4>
-                                                <p class="mt-1 text-sm text-gray-500">Select the start and end dates
-                                                    for your leave. The system will automatically calculate the number
-                                                    of working days.</p>
-                                                @if ($start_date && $end_date)
-                                                    <div class="mt-4 p-3 bg-indigo-50 rounded-lg">
-                                                        <span class="text-sm font-medium text-indigo-900">
-                                                            Duration:
-                                                            {{ (new App\Models\LeaveRequest(['start_date' => $start_date, 'end_date' => $end_date]))->getDurationInDays() }}
-                                                            working days
-                                                        </span>
-                                                    </div>
-                                                @endif
-                                            </div>
-
-                                            {{-- Right Section --}}
-                                            <div class="col-span-12 md:col-span-8" x-data="{}"
-                                                x-init="() => {
-                                                    $nextTick(() => {
-                                                        initDatepicker();
-                                                    });
-                                                }"
-                                                @init-datepicker.window="
-                                                    $nextTick(() => {
-                                                        initDatepicker();
-                                                    });
-                                                ">
-                                                <div id="date-range-picker" class="flex items-center">
-                                                    <div class="relative max-w-sm">
-                                                        <div
-                                                            class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                                            <svg class="w-4 h-4 text-gray-500" aria-hidden="true"
-                                                                xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                                                viewBox="0 0 20 20">
-                                                                <path
-                                                                    d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
-                                                            </svg>
-                                                        </div>
-                                                        <input id="datepicker-range-start"
-                                                            wire:model.live='start_date' type="text"
-                                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full ps-10 p-2.5"
-                                                            placeholder="Start date">
-                                                    </div>
-                                                    <span class="mx-4 text-gray-500">to</span>
-                                                    <div class="relative max-w-sm">
-                                                        <div
-                                                            class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                                            <svg class="w-4 h-4 text-gray-500" aria-hidden="true"
-                                                                xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                                                viewBox="0 0 20 20">
-                                                                <path
-                                                                    d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
-                                                            </svg>
-                                                        </div>
-                                                        <input id="datepicker-range-end" wire:model.live='end_date'
-                                                            type="text"
-                                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full ps-10 p-2.5"
-                                                            placeholder="End date">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Reason Section -->
-                                        <div class="grid grid-cols-12 gap-8">
-                                            <div class="col-span-12 md:col-span-4">
-                                                <h4 class="text-base font-medium text-gray-900">Reason</h4>
-                                                <p class="mt-1 text-sm text-gray-500">Provide a detailed explanation
-                                                    for your leave request. This helps in the approval process.</p>
-                                            </div>
-                                            <div class="col-span-12 md:col-span-8">
-                                                <div class="relative">
-                                                    <textarea wire:model="reason" rows="4"
-                                                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                                        placeholder="Please provide details about your leave request..."></textarea>
-                                                    <div class="absolute bottom-3 right-3">
-                                                        <span class="text-sm text-gray-400">{{ strlen($reason) }} /
-                                                            500</span>
-                                                    </div>
-                                                </div>
-                                                @error('reason')
-                                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                                @enderror
-                                            </div>
-                                        </div>
-
-                                        <!-- Attachment Section -->
-                                        <div class="grid grid-cols-12 gap-8">
-                                            <div class="col-span-12 md:col-span-4">
-                                                <h4 class="text-base font-medium text-gray-900">Supporting Documents
-                                                </h4>
-                                                <p class="mt-1 text-sm text-gray-500">Attach any relevant documents to
-                                                    support your leave request (optional).</p>
-                                                <p class="mt-4 text-xs text-gray-500">Accepted formats: PDF, DOC, DOCX,
-                                                    JPG, PNG (max 5MB)</p>
-                                            </div>
-                                            <div class="col-span-12 md:col-span-8">
-                                                <div class="relative">
-                                                    <label
-                                                        class="flex justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-lg appearance-none cursor-pointer hover:border-indigo-500 focus:outline-none">
-                                                        <span class="flex items-center space-x-2">
-                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                class="w-6 h-6 text-gray-600" fill="none"
-                                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2"
-                                                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                                            </svg>
-                                                            @if ($attachment)
-                                                                <span class="font-medium text-gray-600">
-                                                                    {{ $attachment->getClientOriginalName() }}
-                                                                    <span class="text-indigo-600">(Click to
-                                                                        change)</span>
-                                                                </span>
-                                                            @else
-                                                                <span class="font-medium text-gray-600">
-                                                                    Drop files to Attach, or
-                                                                    <span class="text-indigo-600">browse</span>
-                                                                </span>
-                                                            @endif
-                                                        </span>
-                                                        <input type="file" wire:model="attachment" class="hidden"
-                                                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-                                                    </label>
-                                                </div>
-                                                @error('attachment')
-                                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                                @enderror
-                                            </div>
-                                        </div>
-
-                                        <!-- Summary Section -->
-                                        @if ($start_date && $end_date && $reason)
-                                            <div class="mt-8 border-t border-gray-200 pt-8">
-                                                <div class="grid grid-cols-12 gap-8">
-                                                    <div class="col-span-12 md:col-span-4">
-                                                        <h4 class="text-base font-medium text-gray-900">Request Summary
-                                                        </h4>
-                                                        <p class="mt-1 text-sm text-gray-500">Review your leave request
-                                                            details before submitting.</p>
-                                                    </div>
-                                                    <div class="col-span-12 md:col-span-8">
-                                                        <div class="bg-gray-50 rounded-lg p-4">
-                                                            <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                                                <div>
-                                                                    <dt class="text-sm font-medium text-gray-500">Leave
-                                                                        Type</dt>
-                                                                    <dd class="mt-1 text-sm text-gray-900 capitalize">
-                                                                        {{ $type }}</dd>
-                                                                </div>
-                                                                <div>
-                                                                    <dt class="text-sm font-medium text-gray-500">
-                                                                        Duration</dt>
-                                                                    <dd class="mt-1 text-sm text-gray-900">
-                                                                        {{ (new App\Models\LeaveRequest(['start_date' => $start_date, 'end_date' => $end_date]))->getDurationInDays() }}
-                                                                        working days
-                                                                    </dd>
-                                                                </div>
-                                                                <div class="sm:col-span-2">
-                                                                    <dt class="text-sm font-medium text-gray-500">Date
-                                                                        Range</dt>
-                                                                    <dd class="mt-1 text-sm text-gray-900">
-                                                                        {{ $start_date }} to {{ $end_date }}
-                                                                    </dd>
-                                                                </div>
-                                                                <div class="sm:col-span-2">
-                                                                    <dt class="text-sm font-medium text-gray-500">
-                                                                        Reason</dt>
-                                                                    <dd class="mt-1 text-sm text-gray-900">
-                                                                        {{ $reason }}</dd>
-                                                                </div>
-                                                                @if ($attachment)
-                                                                    <div class="sm:col-span-2">
-                                                                        <dt class="text-sm font-medium text-gray-500">
-                                                                            Attachment</dt>
-                                                                        <dd class="mt-1 text-sm text-gray-900">
-                                                                            {{ $attachment->getClientOriginalName() }}
-                                                                        </dd>
-                                                                    </div>
-                                                                @endif
-                                                            </dl>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endif
+                                    <div class="text-sm text-gray-500">
+                                        {{ $request->getDurationInDays() }} days
                                     </div>
-                                </div>
-
-                                <!-- Form Actions -->
-                                <div class="px-8 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
-                                    <div class="flex justify-end space-x-3">
-                                        <button type="button" wire:click="setTab('requests')"
-                                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        {{ $request->status_badge }}">
+                                        {{ ucfirst($request->status) }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ $request->created_at->diffForHumans() }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    @if ($request->canBeCancelled())
+                                        <button wire:click="cancelRequest({{ $request->id }})"
+                                            class="text-red-600 hover:text-red-900">
                                             Cancel
                                         </button>
-                                        <button type="submit"
-                                            class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                                            @if (!$start_date || !$end_date || !$reason) disabled @endif>
-                                            <svg wire:loading wire:target="submitForm"
-                                                class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none"
-                                                viewBox="0 0 24 24">
-                                                <circle class="opacity-25" cx="12" cy="12" r="10"
-                                                    stroke="currentColor" stroke-width="4"></circle>
-                                                <path class="opacity-75" fill="currentColor"
-                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                                </path>
-                                            </svg>
-                                            Submit Request
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-
-                        <!-- Success Message -->
-                        <div x-data="{ show: false, message: '' }"
-                            x-on:leave-requested.window="show = true; message = $event.detail; setTimeout(() => show = false, 3000)"
-                            x-show="show" x-transition class="fixed bottom-4 right-4 z-50">
-                            <div class="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
-                                <span x-text="message"></span>
-                            </div>
-                        </div>
-                    @endif
-                </div>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                                    No leave requests found.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <script>
-        function initDatepicker() {
-            const options = {
-                autoHide: true,
-                format: 'yyyy-mm-dd',
-                minDate: new Date(),
-            };
+    @if ($showLeaveForm)
+        <div class="fixed inset-0 bg-gray-900/50 z-40">
+            <div class="mx-auto mt-10 max-w-3xl">
+                <div class="bg-white rounded-xl shadow-xl divide-y divide-gray-200">
+                    <!-- Modal Header -->
+                    <div class="bg-blue-600 p-6 rounded-t-xl">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-xl font-semibold text-white">New Leave Request</h3>
+                                <p class="mt-1 text-sm text-blue-100">Fill in the details for your leave application</p>
+                            </div>
+                            <button wire:click="$toggle('showLeaveForm')" class="text-white hover:text-blue-100">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
 
-            const startDatePicker = document.getElementById('datepicker-range-start');
-            const endDatePicker = document.getElementById('datepicker-range-end');
+                    <!-- Modal Content -->
+                    <form wire:submit="submitLeave" class="p-6">
+                        @csrf
+                        <div class="space-y-6">
+                            <!-- Leave Type -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-900">Leave Type</label>
+                                <div class="relative mt-2">
+                                    <select wire:model="type"
+                                        class="block w-full rounded-lg border-0 py-3 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-blue-600">
+                                        <option value="">Select leave type</option>
+                                        @foreach ($leaveTypes as $leaveType)
+                                            <option value="{{ $leaveType }}">{{ ucfirst($leaveType) }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @error('type')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
 
-            if (startDatePicker) {
-                new Datepicker(startDatePicker, {
-                    ...options,
-                    onSelect: (selectedDate) => {
-                        // Update Livewire start_date
-                        startDatePicker.dispatchEvent(new Event('input'));
+                            <!-- Date Range -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-900">Date Range</label>
+                                <div class="mt-2">
+                                    <livewire:date-range-picker />
+                                </div>
+                                @error('startDate')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                                @error('endDate')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
 
-                        // Update end date min date
-                        if (endDatePicker._datepicker) {
-                            endDatePicker._datepicker.setOptions({
-                                minDate: selectedDate
-                            });
-                        }
-                    }
-                });
-            }
+                            <!-- Supporting Documents -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-900">Supporting Documents</label>
+                                <div class="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10"
+                                    x-data="{ dragover: false }" x-on:dragover.prevent="dragover = true"
+                                    x-on:dragleave.prevent="dragover = false"
+                                    x-on:drop.prevent="dragover = false; $refs.file.files = $event.dataTransfer.files; $refs.file.dispatchEvent(new Event('change'))"
+                                    :class="{ 'border-blue-500 bg-blue-50': dragover }">
+                                    <div class="text-center">
+                                        <svg class="mx-auto h-12 w-12 text-gray-300" viewBox="0 0 24 24"
+                                            fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd"
+                                                d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                        <div class="mt-4 flex justify-center text-sm leading-6 text-gray-600">
+                                            <label
+                                                class="cursor-pointer rounded-md bg-white font-semibold text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2 hover:text-blue-500">
+                                                <span>Upload a file</span>
+                                                <input type="file" class="sr-only" wire:model.live="attachment"
+                                                    x-ref="file">
+                                            </label>
+                                            <p class="pl-1">or drag and drop</p>
+                                        </div>
+                                        <p class="text-xs leading-5 text-gray-600">PDF, JPG, PNG up to 10MB</p>
+                                    </div>
+                                </div>
+                                @error('attachment')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
 
-            if (endDatePicker) {
-                new Datepicker(endDatePicker, {
-                    ...options,
-                    onSelect: (selectedDate) => {
-                        // Update Livewire end_date
-                        endDatePicker.dispatchEvent(new Event('input'));
-                    }
-                });
-            }
-        }
+                            @if ($attachment)
+                                <p>{{$attachment}}</p>                                
+                            @endif
 
-        // When tab changes, reinitialize datepicker
-        document.addEventListener('livewire:navigated', () => {
-            initDatepicker();
-        });
-    </script>
+                            <!-- Reason -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-900">Reason for Leave</label>
+                                <div class="mt-2">
+                                    <textarea wire:model="reason" rows="4"
+                                        class="block w-full rounded-lg border-0 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                                        placeholder="Please provide a detailed reason for your leave request..."></textarea>
+                                </div>
+                                @error('reason')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="mt-6 flex items-center justify-end gap-x-4">
+                            <button type="button" wire:click="$toggle('showLeaveForm')"
+                                class="rounded-lg px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                class="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+                                Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
