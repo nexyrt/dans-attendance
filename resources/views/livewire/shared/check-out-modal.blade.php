@@ -5,7 +5,7 @@
 @endphp
 
 <x-modals.modal name="checkout" :show="$showModal" maxWidth="2xl">
-    <div class="w-full md:w-[640px]" x-cloak>
+    <div class="w-full md:w-[640px]">
         @if ($todayAttendance && $todayAttendance->check_out)
             {{-- Completed State --}}
             <div class="p-6">
@@ -117,7 +117,7 @@
                     }
                 }
             }" x-init="startTimer()" @success-checkout.window="isSuccess = true"
-                @refresh-page.window="setTimeout(() => { window.location.reload() }, 1500)">
+                @refresh-page.window="setTimeout(() => { window.location.reload() }, 1500)" x-cloak>
                 @if (!$isSuccess)
                     <div class="divide-y divide-gray-200">
                         {{-- Header Section --}}
