@@ -8,6 +8,8 @@ use App\Models\LeaveRequest;
 use Livewire\Attributes\On;
 use Cake\Chronos\Chronos;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 
 class Leave extends Component
 {
@@ -25,6 +27,10 @@ class Leave extends Component
     public $activeTab = 'pending';
     public $previewingAttachment = false;
     public $currentAttachment = null;
+
+    public $previewUrl = null;
+    public $previewType = null;
+    public $showPreview = false;
 
     protected $rules = [
         'type' => 'required|in:sick,annual,important,other',
@@ -60,7 +66,7 @@ class Leave extends Component
     {
         $this->startDate = $data['startDate'];
         $this->endDate = $data['endDate'];
-        
+
         // Validate leave balance and date overlap immediately
         try {
             $this->validateLeaveBalance();
@@ -88,13 +94,13 @@ class Leave extends Component
             ->where(function ($query) {
                 $query->where(function ($q) {
                     $q->where('start_date', '<=', $this->startDate)
-                      ->where('end_date', '>=', $this->startDate);
+                        ->where('end_date', '>=', $this->startDate);
                 })->orWhere(function ($q) {
                     $q->where('start_date', '<=', $this->endDate)
-                      ->where('end_date', '>=', $this->endDate);
+                        ->where('end_date', '>=', $this->endDate);
                 })->orWhere(function ($q) {
                     $q->where('start_date', '>=', $this->startDate)
-                      ->where('end_date', '<=', $this->endDate);
+                        ->where('end_date', '<=', $this->endDate);
                 });
             })
             ->whereNotIn('status', [LeaveRequest::STATUS_REJECTED, LeaveRequest::STATUS_CANCEL])
@@ -131,32 +137,53 @@ class Leave extends Component
     }
 
     public function submitLeave()
-    {
-        $this->validate();
+{
+    $this->validate();
 
-        // Additional validations
-        $this->validateLeaveBalance();
-        $this->validateDateOverlap();
+    $leaveRequest = new LeaveRequest([
+        'type' => $this->type,
+        'start_date' => $this->startDate,
+        'end_date' => $this->endDate,
+        'reason' => $this->reason,
+        'status' => LeaveRequest::STATUS_PENDING
+    ]);
 
-        $leaveRequest = new LeaveRequest([
-            'type' => $this->type,
-            'start_date' => $this->startDate,
-            'end_date' => $this->endDate,
-            'reason' => $this->reason,
-            'status' => LeaveRequest::STATUS_PENDING
-        ]);
+    if ($this->attachment) {
+        try {
+            // Ensure directory exists
+            $uploadPath = public_path('leave-attachments');
+            if (!File::exists($uploadPath)) {
+                File::makeDirectory($uploadPath, 0755, true);
+            }
 
-        if ($this->attachment) {
-            $path = $this->attachment->store('leave-attachments', 'public');
-            $leaveRequest->attachment_path = $path;
+            // Generate unique filename with safe characters
+            $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9.]/', '_', $this->attachment->getClientOriginalName());
+            
+            // Get the temporary file path
+            $tempPath = $this->attachment->getRealPath();
+            
+            // Move file using File facade
+            File::move($tempPath, $uploadPath . DIRECTORY_SEPARATOR . $filename);
+            
+            // Store path in database
+            $leaveRequest->attachment_path = 'leave-attachments/' . $filename;
+            
+        } catch (\Exception $e) {
+            // Log error for debugging
+            \Log::error('File upload failed: ' . $e->getMessage());
+            
+            // Return error to user
+            session()->flash('error', 'File upload failed. Please try again.');
+            return;
         }
-
-        auth()->user()->leaveRequests()->save($leaveRequest);
-
-        $this->reset(['type', 'startDate', 'endDate', 'reason', 'attachment']);
-        $this->activeView = 'requests';
-        session()->flash('message', 'Leave request submitted successfully.');
     }
+
+    auth()->user()->leaveRequests()->save($leaveRequest);
+
+    $this->reset(['type', 'startDate', 'endDate', 'reason', 'attachment']);
+    $this->activeView = 'requests';
+    session()->flash('message', 'Leave request submitted successfully.');
+}
 
     public function cancelRequest($id)
     {
@@ -171,15 +198,21 @@ class Leave extends Component
     {
         $request = auth()->user()->leaveRequests()->findOrFail($requestId);
         if ($request->attachment_path) {
-            $this->currentAttachment = $request->attachment_path;
-            $this->previewingAttachment = true;
+            $this->previewUrl = asset($request->attachment_path);
+            
+            // Get file extension
+            $extension = pathinfo($request->attachment_path, PATHINFO_EXTENSION);
+            $this->previewType = strtolower($extension);
+            
+            $this->showPreview = true;
         }
     }
 
     public function closePreview()
     {
-        $this->previewingAttachment = false;
-        $this->currentAttachment = null;
+        $this->showPreview = false;
+        $this->previewUrl = null;
+        $this->previewType = null;
     }
 
     public function getLeaveRequestsProperty()

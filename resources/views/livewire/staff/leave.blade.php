@@ -348,7 +348,7 @@
                                                         title="{{ $request->reason }}">
                                                         {{ $request->reason }}
                                                     </div>
-                                                    @if ($request->attachment_path)
+                                                    @if (asset($request->attachment_path))
                                                         <div class="mt-1 flex items-center text-sm text-gray-500">
                                                             <svg class="w-4 h-4 mr-1" fill="none"
                                                                 stroke="currentColor" viewBox="0 0 24 24">
@@ -356,7 +356,7 @@
                                                                     stroke-width="2"
                                                                     d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                                                             </svg>
-                                                            Attachment
+                                                            {{ asset($request->attachment_path) }}
                                                         </div>
                                                     @endif
                                                 </td>
@@ -365,9 +365,10 @@
                                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <div class="flex items-center gap-2">
                                                         @if ($request->attachment_path)
+                                                            <!-- Preview Button -->
                                                             <button
                                                                 wire:click="previewAttachment({{ $request->id }})"
-                                                                class="text-gray-500 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100"
+                                                                class="text-gray-500 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100"
                                                                 title="Preview">
                                                                 <svg class="w-5 h-5" fill="none"
                                                                     stroke="currentColor" viewBox="0 0 24 24">
@@ -379,9 +380,10 @@
                                                                         d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                                 </svg>
                                                             </button>
-                                                            <a href="{{ str_replace('/storage/storage/', '/storage/', Storage::url($request->attachment_path)) }}"
-                                                                download
-                                                                class="text-gray-500 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100"
+
+                                                            <!-- Download Button -->
+                                                            <a href="{{ asset($request->attachment_path) }}" download
+                                                                class="text-gray-500 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100"
                                                                 title="Download">
                                                                 <svg class="w-5 h-5" fill="none"
                                                                     stroke="currentColor" viewBox="0 0 24 24">
@@ -428,16 +430,17 @@
                                     </table>
                                 </div>
 
-                                <!-- Attachment Preview Modal -->
-                                @if ($previewingAttachment)
-                                    <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-                                        x-data x-on:keydown.escape.window="$wire.closePreview()">
+                                <!-- Preview Modal -->
+                                @if ($showPreview)
+                                    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" x-data
+                                        @keydown.escape.window="$wire.closePreview()">
                                         <div
-                                            class="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+                                            class="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                                            <!-- Modal Header -->
                                             <div class="flex items-center justify-between p-4 border-b">
-                                                <h3 class="text-lg font-medium text-gray-900">Attachment Preview</h3>
+                                                <h3 class="text-lg font-medium text-gray-900">Document Preview</h3>
                                                 <button wire:click="closePreview"
-                                                    class="text-gray-400 hover:text-gray-500">
+                                                    class="text-gray-400 hover:text-gray-500 p-1">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -445,14 +448,36 @@
                                                     </svg>
                                                 </button>
                                             </div>
+
+                                            <!-- Modal Content -->
                                             <div class="p-4">
-                                                @if (str_ends_with(strtolower($currentAttachment), '.pdf'))
-                                                    <iframe src="{{ Storage::url($currentAttachment) }}"
-                                                        class="w-full h-[60vh]" type="application/pdf"></iframe>
-                                                @else
-                                                    <img src="{{ Storage::url($currentAttachment) }}"
-                                                        alt="Attachment preview"
-                                                        class="max-w-full h-auto mx-auto rounded-lg">
+                                                @if ($previewType === 'pdf')
+                                                    <iframe src="{{ $previewUrl }}" class="w-full h-[70vh] border-0"
+                                                        type="application/pdf"></iframe>
+                                                @elseif(in_array($previewType, ['jpg', 'jpeg', 'png', 'gif']))
+                                                    <img src="{{ $previewUrl }}" alt="Document Preview"
+                                                        class="max-w-full h-auto mx-auto">
+                                                @elseif(in_array($previewType, ['doc', 'docx']))
+                                                    <div class="text-center py-8">
+                                                        <svg class="w-16 h-16 mx-auto text-blue-500 mb-4" fill="none"
+                                                            stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                        </svg>
+                                                        <p class="text-gray-600 mb-4">Preview not available for Word
+                                                            documents</p>
+                                                        <a href="{{ $previewUrl }}" download
+                                                            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
+                                                            <svg class="w-5 h-5 mr-2" fill="none"
+                                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                            </svg>
+                                                            Download Document
+                                                        </a>
+                                                    </div>
                                                 @endif
                                             </div>
                                         </div>
@@ -542,7 +567,7 @@
                                                         a file</span>
                                                     <input id="file-upload" type="file" class="sr-only"
                                                         wire:model.live="attachment" x-ref="file"
-                                                        accept=".pdf,.jpg,.jpeg,.png">
+                                                        accept=".pdf,.jpg,.jpeg,.png,.docx,.doc">
                                                 </label>
                                                 <span class="text-sm text-gray-500"> or drag and drop</span>
                                                 <p class="text-xs text-gray-500 mt-1">PDF, JPG, PNG up to 10MB</p>
