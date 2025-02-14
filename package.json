@@ -6,7 +6,7 @@
         "build": "vite build"
     },
     "devDependencies": {
-        "@tailwindcss/forms": "^0.5.2",
+        "@tailwindcss/forms": "^0.5.10",
         "alpinejs": "^3.13.10",
         "autoprefixer": "^10.4.2",
         "axios": "^1.6.4",
@@ -16,9 +16,10 @@
         "vite": "^5.0.0"
     },
     "dependencies": {
+        "@preline/select": "^2.5.2",
         "boxicons": "^2.1.4",
         "ckeditor4": "^4.24.0",
         "flowbite": "^2.5.2",
-        "preline": "^2.5.1"
+        "preline": "^2.7.0"
     }
 }

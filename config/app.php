@@ -42,7 +42,7 @@ return [
     |
     */
 
-    'debug' => (bool) env('APP_DEBUG', false),
+    'debug' => (bool) env('APP_DEBUG', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -54,6 +54,8 @@ return [
     | your application so that it is used when running Artisan tasks.
     |
     */
+
+    'error_reporting' => E_ALL,
 
     'url' => env('APP_URL', 'http://localhost'),
 

@@ -3,10 +3,11 @@
 namespace App\Livewire\Shared;
 
 use App\Models\Attendance;
+use App\Models\OfficeLocation;
 use App\Models\Schedule;
 use App\Helpers\DateTimeHelper;
+use App\Models\ScheduleException;
 use App\Traits\DateTimeComparison;
-use Cake\Chronos\Chronos;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
@@ -18,15 +19,25 @@ class CheckOutModal extends Component
     public $showModal = false;
     public $currentTime;
     public $attendance;
-    public $todayAttendance; // Add this property to track completed attendance
+    public $todayAttendance;
     public $workingHours;
     public $earlyLeaveReason;
     public $showEarlyLeaveForm = false;
     public $isSuccess = false;
     public $schedule;
     public $hasCompletedAttendance = false;
+    public $exception = null;
 
-    protected $listeners = ['openCheckOutModal' => 'openModal'];
+    // New properties for geolocation
+    public $latitude = null;
+    public $longitude = null;
+    public $errorMessage = null;
+    public $nearestOffice = null;
+    public $nearestOfficeDistance = null;
+
+    protected $listeners = [
+        'openCheckOutModal' => 'openModal'
+    ];
 
     protected $rules = [
         'earlyLeaveReason' => 'required_if:showEarlyLeaveForm,true|string|max:255'
@@ -36,6 +47,166 @@ class CheckOutModal extends Component
     {
         $this->loadTodayAttendance();
         $this->loadSchedule();
+    }
+
+    public function handleLocationUpdate($latitude, $longitude)
+    {
+        try {
+            $this->latitude = $latitude;
+            $this->longitude = $longitude;
+            $this->errorMessage = null;
+
+            $this->nearestOffice = $this->findNearestOffice($latitude, $longitude);
+
+            if (!$this->nearestOffice) {
+                $this->errorMessage = 'No office locations found in database.';
+                return;
+            }
+
+            $distance = $this->calculateDistance(
+                $latitude,
+                $longitude,
+                $this->nearestOffice->latitude,
+                $this->nearestOffice->longitude
+            );
+
+            $this->nearestOfficeDistance = $distance;
+
+            if ($distance > $this->nearestOffice->radius) {
+                $this->errorMessage = "You must be within {$this->nearestOffice->radius}m of {$this->nearestOffice->name} to check out. Currently " . round($distance) . "m away.";
+            }
+
+        } catch (Exception $e) {
+            Log::error('Location update error: ' . $e->getMessage());
+            $this->errorMessage = 'Error processing location data.';
+        }
+    }
+
+    protected function findNearestOffice($latitude, $longitude)
+    {
+        if (!$latitude || !$longitude) {
+            return null;
+        }
+
+        $offices = OfficeLocation::all();
+        $nearestOffice = null;
+        $shortestDistance = PHP_FLOAT_MAX;
+
+        foreach ($offices as $office) {
+            $distance = $this->calculateDistance(
+                $latitude,
+                $longitude,
+                $office->latitude,
+                $office->longitude
+            );
+
+            if ($distance < $shortestDistance) {
+                $nearestOffice = $office;
+                $shortestDistance = $distance;
+            }
+        }
+
+        return $nearestOffice;
+    }
+
+    protected function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371000; // Earth's radius in meters
+
+        $lat1 = deg2rad($lat1);
+        $lon1 = deg2rad($lon1);
+        $lat2 = deg2rad($lat2);
+        $lon2 = deg2rad($lon2);
+
+        $latDelta = $lat2 - $lat1;
+        $lonDelta = $lon2 - $lon1;
+
+        $a = sin($latDelta / 2) * sin($latDelta / 2) +
+            cos($lat1) * cos($lat2) *
+            sin($lonDelta / 2) * sin($lonDelta / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c;
+    }
+
+    public function checkOut()
+    {
+        if ($this->hasCompletedAttendance) {
+            $this->closeModal();
+            return;
+        }
+
+        if ($this->showEarlyLeaveForm) {
+            $this->validate();
+        }
+
+        try {
+            if (!$this->attendance) {
+                throw new Exception('No active attendance record found.');
+            }
+
+            if (!$this->latitude || !$this->longitude) {
+                $this->errorMessage = 'Location data is required for check-out.';
+                return;
+            }
+
+            if (!$this->nearestOffice) {
+                $this->errorMessage = 'No office locations found.';
+                return;
+            }
+
+            if ($this->nearestOfficeDistance > $this->nearestOffice->radius) {
+                $this->errorMessage = 'You must be within office area to check out.';
+                return;
+            }
+
+            $currentTime = DateTimeHelper::now();
+            $checkInTime = DateTimeHelper::parse($this->attendance->check_in);
+
+            // Calculate working hours from check-in time to current time
+            $workingHours = $checkInTime->diffInHours($currentTime, true);
+
+            $updateData = [
+                'check_out' => $currentTime,
+                'working_hours' => round($workingHours, 1),
+                'check_out_latitude' => $this->latitude,
+                'check_out_longitude' => $this->longitude,
+                'check_out_office_id' => $this->nearestOffice->id
+            ];
+
+            if ($this->showEarlyLeaveForm) {
+                $endTime = DateTimeHelper::parse($this->schedule->end_time);
+
+                if ($currentTime->lessThan($endTime)) {
+                    $updateData['status'] = 'early_leave';
+                    $updateData['early_leave_reason'] = $this->earlyLeaveReason;
+                }
+            }
+
+            $this->attendance->update($updateData);
+            $this->loadTodayAttendance();
+            $this->isSuccess = true;
+
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => 'Check-out successful!'
+            ]);
+
+            $this->dispatch('success-checkout');
+            $this->dispatch('refresh-page');
+
+        } catch (Exception $e) {
+            Log::error('Check-out error: ' . $e->getMessage(), [
+                'user_id' => auth()->id(),
+                'attendance_id' => $this->attendance?->id
+            ]);
+
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Failed to process check-out. Please try again.'
+            ]);
+        }
     }
 
     protected function loadTodayAttendance()
@@ -80,8 +251,23 @@ class CheckOutModal extends Component
 
     public function loadSchedule()
     {
-        $today = DateTimeHelper::currentDayName();
-        $this->schedule = Schedule::where('day_of_week', $today)->first();
+        $today = DateTimeHelper::now();
+
+        // Check for exception schedule first
+        $exception = ScheduleException::query()
+            ->whereDate('date', $today->format('Y-m-d'))
+            ->where('status', 'regular')
+            ->first();
+
+        if ($exception) {
+            $this->schedule = new Schedule([
+                'start_time' => $exception->start_time,
+                'end_time' => $exception->end_time
+            ]);
+        } else {
+            // Fall back to default schedule
+            $this->schedule = Schedule::where('day_of_week', strtolower($today->format('l')))->first();
+        }
 
         if ($this->schedule && $this->attendance && !$this->hasCompletedAttendance) {
             $currentTime = DateTimeHelper::now();
@@ -118,56 +304,6 @@ class CheckOutModal extends Component
         }
 
         $this->showModal = true;
-    }
-
-    public function checkOut()
-    {
-        if ($this->hasCompletedAttendance) {
-            $this->closeModal();
-            return;
-        }
-
-        if ($this->showEarlyLeaveForm) {
-            $this->validate();
-        }
-
-        try {
-            if (!$this->attendance) {
-                throw new Exception('No active attendance record found.');
-            }
-
-            $currentTime = DateTimeHelper::now();
-            $updateData = [
-                'check_out' => $currentTime,
-                'working_hours' => $this->workingHours,
-            ];
-
-            if ($this->showEarlyLeaveForm) {
-                $updateData['status'] = 'early_leave';
-                $updateData['early_leave_reason'] = $this->earlyLeaveReason;
-            }
-
-            $this->attendance->update($updateData);
-            $this->loadTodayAttendance(); // Reload attendance after update
-            $this->isSuccess = true;
-            
-            $this->dispatch('notify', [
-                'type' => 'success',
-                'message' => 'Check-out successful!'
-            ]);
-
-            $this->dispatch('success-checkout');
-        } catch (Exception $e) {
-            Log::error('Check-out error: ' . $e->getMessage(), [
-                'user_id' => auth()->id(),
-                'attendance_id' => $this->attendance?->id
-            ]);
-
-            $this->dispatch('notify', [
-                'type' => 'error',
-                'message' => 'Failed to process check-out. Please try again.'
-            ]);
-        }
     }
 
     private function resetState()

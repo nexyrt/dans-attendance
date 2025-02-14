@@ -6,7 +6,6 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
-        "barryvdh/laravel-debugbar": "^3.13",
         "cakephp/chronos": "^3.1",
         "guzzlehttp/guzzle": "^7.2",
         "laravel/breeze": "^1.29",
@@ -20,6 +19,7 @@
         "silviolleite/laravelpwa": "^2.0"
     },
     "require-dev": {
+        "barryvdh/laravel-debugbar": "^3.14",
         "fakerphp/faker": "^1.9.1",
         "laravel/pint": "^1.0",
         "laravel/sail": "^1.18",

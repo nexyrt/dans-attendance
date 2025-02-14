@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Leave;
 
+use App\Exports\LeaveBalanceExport;
 use App\Models\Department;
 use App\Models\LeaveBalance as LeaveBalanceModel;
 use App\Models\User;
@@ -78,6 +79,13 @@ class LeaveBalance extends Component
             'total_remaining_balance' => LeaveBalanceModel::where('year', $year)->sum('remaining_balance'),
         ];
     }
+
+    public function exportToExcell()
+{
+    $statistics = $this->getStatistics();
+    return (new LeaveBalanceExport($this->filters, $statistics))
+        ->download('leave-balances-' . ($this->filters['year'] ?? now()->year) . '.xlsx');
+}
 
     public function render()
     {

@@ -9,79 +9,32 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class LeaveRequestSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        // Get existing users
-        $users = User::all();
-        
-        if ($users->isEmpty()) {
-            $this->command->error('No existing users found. Please seed users first.');
+        // Check if we have enough users of each role
+        $staffCount = User::where('role', 'staff')->count();
+        $managerCount = User::where('role', 'manager')->count();
+        $adminCount = User::where('role', 'admin')->count();  // Changed from hrCount
+        $directorCount = User::where('role', 'director')->count();
+
+        if ($staffCount === 0 || $managerCount === 0 || $adminCount === 0 || $directorCount === 0) {
+            $this->command->error('Missing required users. Please ensure you have users with roles: staff, manager, admin, and director');
             return;
         }
 
-        // Get a random user as manager/approver
-        $manager = $users->random();
+        // Create leave requests with different states
+        LeaveRequest::factory()->count(5)->pendingHR()->create();  // We'll keep the function name for now
+        LeaveRequest::factory()->count(5)->pendingDirector()->create();
+        LeaveRequest::factory()->count(5)->approved()->create();
+        LeaveRequest::factory()->count(3)->rejectedByManager()->create();
+        LeaveRequest::factory()->count(2)->rejectedByHR()->create();  // We'll keep the function name for now
+        LeaveRequest::factory()->count(2)->rejectedByDirector()->create();
+        LeaveRequest::factory()->count(3)->cancelled()->create();
 
-        // Create various types of leave requests for each user
-        foreach ($users as $user) {
+        // Mix of leave types
+        LeaveRequest::factory()->count(3)->sickLeave()->create();
+        LeaveRequest::factory()->count(3)->annualLeave()->create();
 
-            // Skip if the user is the manager
-            if ($user->id === $manager->id) {
-                continue;
-            }
-
-            
-            // Pending leave requests
-            LeaveRequest::factory()
-                ->count(2)
-                ->pending()
-                ->create([
-                    'user_id' => $user->id
-                ]);
-
-            // Approved leave requests
-            LeaveRequest::factory()
-                ->count(3)
-                ->approved()
-                ->create([
-                    'user_id' => $user->id,
-                    'approved_by' => $manager->id
-                ]);
-
-            // Rejected leave requests
-            LeaveRequest::factory()
-                ->count(1)
-                ->rejected()
-                ->create([
-                    'user_id' => $user->id,
-                    'approved_by' => $manager->id
-                ]);
-
-            // Specific types of leaves
-            // Sick leave
-            LeaveRequest::factory()
-                ->sickLeave()
-                ->create([
-                    'user_id' => $user->id,
-                    'start_date' => now()->subDays(5),
-                    'end_date' => now()->subDays(3)
-                ]);
-
-            // Annual leave
-            LeaveRequest::factory()
-                ->annualLeave()
-                ->create([
-                    'user_id' => $user->id
-                ]);
-        }
-
-        // Create some upcoming leave requests
-        LeaveRequest::factory()
-            ->count(5)
-            ->pending()
-            ->create([
-                'start_date' => now()->addDays(random_int(1, 30)),
-                'user_id' => $users->random()->id
-            ]);
+        $this->command->info('Leave requests created successfully!');
     }
 }

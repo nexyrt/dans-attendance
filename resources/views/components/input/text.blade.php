@@ -1,3 +1,5 @@
+{{-- resources/views/components/text/dropdown.blade.php --}}
+
 @props(['disabled' => false])
 
 <input {{ $disabled ? 'disabled' : '' }} {!! $attributes->merge([

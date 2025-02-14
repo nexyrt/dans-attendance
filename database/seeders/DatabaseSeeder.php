@@ -3,7 +3,8 @@
 namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use App\Models\LeaveBalance;
+use App\Models\Department;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -16,12 +17,13 @@ class DatabaseSeeder extends Seeder
         $this->call([
             DepartmentSeeder::class,
             UsersTableSeeder::class,
-            AttendanceTableSeeder::class,
             ScheduleSeeder::class,
-            HolidaySeeder::class,
             ScheduleExceptionSeeder::class,
-            LeaveBalanceSeeder::class,
+            OfficeLocationSeeder::class,
+            SalaryHistorySeeder::class,
+            AttendanceSeeder::class,
             LeaveRequestSeeder::class,
+            LeaveBalanceSeeder::class
         ]);
 
     }
