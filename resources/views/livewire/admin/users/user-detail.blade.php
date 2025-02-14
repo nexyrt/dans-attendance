@@ -44,10 +44,6 @@
                     <h2 class="text-xl font-semibold text-white mb-2">{{ $user->name }}</h2>
                     <div class="grid grid-cols-3 gap-8 text-sm">
                         <div>
-                            <div class="text-white/60 mb-1">Role</div>
-                            <div class="text-white">{{ $user->position }}</div>
-                        </div>
-                        <div>
                             <div class="text-white/60 mb-1">Phone Number</div>
                             <div class="text-white">{{ $user->phone_number }}</div>
                         </div>

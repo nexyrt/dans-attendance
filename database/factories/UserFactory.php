@@ -19,7 +19,7 @@ class UserFactory extends Factory
             'name' => $this->faker->name(),
             'email' => $this->faker->unique()->safeEmail(),
             'password' => bcrypt('password'),
-            'role' => $this->faker->randomElement(['staff', 'manager']),
+            'role' => $this->faker->randomElement(['staff', 'manager', 'admin', 'director']),
             'department_id' => Department::inRandomOrder()->first()->id, // Better way to get random department
             'phone_number' => $this->faker->phoneNumber(),
             'birthdate' => $this->faker->dateTimeBetween('-40 years', '-20 years')->format('Y-m-d'),

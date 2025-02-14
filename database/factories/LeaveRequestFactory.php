@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\LeaveRequest;
 use Cake\Chronos\Chronos;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class LeaveRequestFactory extends Factory
 {
@@ -16,18 +17,23 @@ class LeaveRequestFactory extends Factory
         $startDate = Chronos::now()->subDays($this->faker->numberBetween(1, 30));
         $endDate = (clone $startDate)->addDays($this->faker->numberBetween(1, 5));
 
-        // Get existing staff/manager users instead of creating new ones
-        $users = User::whereIn('role', ['staff', 'manager'])->pluck('id')->toArray();
-        $approvers = User::where('role', 'manager')->pluck('id')->toArray();
-
         return [
-            'user_id' => $this->faker->randomElement($users),
+            'user_id' => User::factory(),
             'type' => $this->faker->randomElement(['sick', 'annual', 'important', 'other']),
             'start_date' => $startDate,
             'end_date' => $endDate,
             'reason' => $this->faker->sentence(),
-            'status' => $this->faker->randomElement(['pending', 'approved', 'rejected', 'cancel']),
+            'status' => 'pending_manager',
             'attachment_path' => $this->faker->optional(0.3)->filePath(),
+            'manager_id' => null,
+            'manager_approved_at' => null,
+            'manager_signature' => null,
+            'hr_id' => null,
+            'hr_approved_at' => null,
+            'hr_signature' => null,
+            'director_id' => null,
+            'director_approved_at' => null,
+            'director_signature' => null,
         ];
     }
 
@@ -35,23 +41,38 @@ class LeaveRequestFactory extends Factory
     {
         return $this->afterMaking(function (LeaveRequest $leave) {
             // No additional configuration needed
-        })->afterCreating(function (LeaveRequest $leave) {
-            if ($leave->status !== 'pending' && $leave->status !== 'cancel') {
-                $approvers = User::where('role', 'manager')->pluck('id')->toArray();
-                $leave->approved_by = $this->faker->randomElement($approvers);
-                $leave->approved_at = Chronos::now();
-                $leave->save();
-            }
         });
     }
 
-    public function pending()
+    public function pendingHR()
     {
         return $this->state(function (array $attributes) {
+            $managers = User::where('role', 'manager')->get();
+
             return [
-                'status' => 'pending',
-                'approved_by' => null,
-                'approved_at' => null
+                'status' => 'pending_admin',  // Make sure this matches the enum
+                'manager_id' => $managers->random()->id,
+                'manager_approved_at' => now(),
+                'manager_signature' => 'signature_' . Str::random(10),
+            ];
+        });
+    }
+
+
+    public function pendingDirector()
+    {
+        return $this->state(function (array $attributes) {
+            $managers = User::where('role', 'manager')->get();
+            $admins = User::where('role', 'admin')->get();  // Changed from hr
+
+            return [
+                'status' => 'pending_director',
+                'manager_id' => $managers->random()->id,
+                'manager_approved_at' => now(),
+                'manager_signature' => 'signature_' . Str::random(10),
+                'hr_id' => $admins->random()->id,  // You might want to rename this column too
+                'hr_approved_at' => now()->addHours(2),
+                'hr_signature' => 'signature_' . Str::random(10),
             ];
         });
     }
@@ -59,25 +80,69 @@ class LeaveRequestFactory extends Factory
     public function approved()
     {
         return $this->state(function (array $attributes) {
-            $approvers = User::where('role', 'manager')->pluck('id')->toArray();
+            $managers = User::where('role', 'manager')->get();
+            $admins = User::where('role', 'admin')->get();  // Changed from hr
+            $directors = User::where('role', 'director')->get();
+
             return [
                 'status' => 'approved',
-                'approved_by' => $this->faker->randomElement($approvers),
-                'approved_at' => Chronos::now()
+                'manager_id' => $managers->random()->id,
+                'manager_approved_at' => now(),
+                'manager_signature' => 'signature_' . Str::random(10),
+                'hr_id' => $admins->random()->id,  // You might want to rename this column too
+                'hr_approved_at' => now()->addHours(2),
+                'hr_signature' => 'signature_' . Str::random(10),
+                'director_id' => $directors->random()->id,
+                'director_approved_at' => now()->addHours(4),
+                'director_signature' => 'signature_' . Str::random(10),
             ];
         });
     }
 
-    public function rejected()
+    public function rejectedByManager()
     {
-        return $this->state(function (array $attributes) {
-            $approvers = User::where('role', 'manager')->pluck('id')->toArray();
-            return [
-                'status' => 'rejected',
-                'approved_by' => $this->faker->randomElement($approvers),
-                'approved_at' => Chronos::now()
-            ];
-        });
+        return $this->state(fn(array $attributes) => [
+            'status' => 'rejected_manager',
+            'manager_id' => User::where('role', 'manager')->first()->id,
+            'manager_approved_at' => now(),
+            'manager_signature' => 'signature_' . Str::random(10),
+        ]);
+    }
+
+    public function rejectedByHR()
+    {
+        return $this->state(fn(array $attributes) => [
+            'status' => 'rejected_admin',  // Make sure this matches the enum
+            'manager_id' => User::where('role', 'manager')->first()->id,
+            'manager_approved_at' => now(),
+            'manager_signature' => 'signature_' . Str::random(10),
+            'hr_id' => User::where('role', 'admin')->first()->id,
+            'hr_approved_at' => now()->addHour(),
+            'hr_signature' => 'signature_' . Str::random(10),
+        ]);
+    }
+
+    public function rejectedByDirector()
+    {
+        return $this->state(fn(array $attributes) => [
+            'status' => 'rejected_director',
+            'manager_id' => User::where('role', 'manager')->first()->id,
+            'manager_approved_at' => now(),
+            'manager_signature' => 'signature_' . Str::random(10),
+            'hr_id' => User::where('role', 'admin')->first()->id,
+            'hr_approved_at' => now()->addHour(),
+            'hr_signature' => 'signature_' . Str::random(10),
+            'director_id' => User::where('role', 'director')->first()->id,
+            'director_approved_at' => now()->addHours(2),
+            'director_signature' => 'signature_' . Str::random(10),
+        ]);
+    }
+
+    public function cancelled()
+    {
+        return $this->state(fn(array $attributes) => [
+            'status' => 'cancel'
+        ]);
     }
 
     public function sickLeave()

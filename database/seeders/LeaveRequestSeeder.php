@@ -11,18 +11,30 @@ class LeaveRequestSeeder extends Seeder
 {
     public function run(): void
     {
-        // Ensure we have some users first
-        if (User::count() === 0) {
-            $this->command->error('No users found. Please run UserSeeder first.');
+        // Check if we have enough users of each role
+        $staffCount = User::where('role', 'staff')->count();
+        $managerCount = User::where('role', 'manager')->count();
+        $adminCount = User::where('role', 'admin')->count();  // Changed from hrCount
+        $directorCount = User::where('role', 'director')->count();
+
+        if ($staffCount === 0 || $managerCount === 0 || $adminCount === 0 || $directorCount === 0) {
+            $this->command->error('Missing required users. Please ensure you have users with roles: staff, manager, admin, and director');
             return;
         }
 
-        // Create 20 leave requests with different states
-        LeaveRequest::factory()->count(8)->pending()->create();
-        LeaveRequest::factory()->count(7)->approved()->create();
-        LeaveRequest::factory()->count(3)->rejected()->create();
-        LeaveRequest::factory()->count(2)->state(['status' => 'cancel'])->create();
+        // Create leave requests with different states
+        LeaveRequest::factory()->count(5)->pendingHR()->create();  // We'll keep the function name for now
+        LeaveRequest::factory()->count(5)->pendingDirector()->create();
+        LeaveRequest::factory()->count(5)->approved()->create();
+        LeaveRequest::factory()->count(3)->rejectedByManager()->create();
+        LeaveRequest::factory()->count(2)->rejectedByHR()->create();  // We'll keep the function name for now
+        LeaveRequest::factory()->count(2)->rejectedByDirector()->create();
+        LeaveRequest::factory()->count(3)->cancelled()->create();
 
-        $this->command->info('20 Leave requests created successfully!');
+        // Mix of leave types
+        LeaveRequest::factory()->count(3)->sickLeave()->create();
+        LeaveRequest::factory()->count(3)->annualLeave()->create();
+
+        $this->command->info('Leave requests created successfully!');
     }
 }

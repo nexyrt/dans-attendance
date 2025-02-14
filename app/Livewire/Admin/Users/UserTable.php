@@ -19,7 +19,6 @@ class UserTable extends Component
 
     public $editModal = false;
     public $department = '';
-    public $position = '';
     public $name;
     public $email;
     public $phone_number;
@@ -36,7 +35,6 @@ class UserTable extends Component
     public $selectedDepartments = [];
     public $selectedRoles = [];
     public $departmentFilter = '';
-    public $positionFilter = '';
 
     public function toggleAllRoles()
     {
@@ -79,17 +77,11 @@ class UserTable extends Component
         $this->resetPage();
     }
 
-    public function updatedPositionFilter()
-    {
-        $this->resetPage();
-    }
-
 
     protected $listeners = ['openEditModal' => '$refresh'];
 
     protected $queryString = [
         'department' => ['except' => ''],
-        'position' => ['except' => ''],
         'name' => ['except' => '']
     ];
 
@@ -214,7 +206,6 @@ class UserTable extends Component
         $stats = [
             'total_employees' => User::count(),
             'departments' => Department::whereHas('users')->count(),
-            'positions' => User::distinct('position')->count('position')
         ];
 
         return view('livewire.admin.users.user-management', [

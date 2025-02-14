@@ -12,18 +12,16 @@ class LeaveBalanceSeeder extends Seeder
 {
     public function run(): void
     {
-        // Clear existing leave balances
         LeaveBalance::truncate();
 
-        // Get all users
         $users = User::all();
+        $currentYear = now()->year;
 
         foreach ($users as $user) {
-            // Create one leave balance record for each user for current year
             LeaveBalance::create([
                 'user_id' => $user->id,
-                'year' => now()->year,
-                'total_balance' => 12, // Default annual leave balance
+                'year' => $currentYear,
+                'total_balance' => 12, // Annual leave
                 'used_balance' => 0,
                 'remaining_balance' => 12
             ]);
