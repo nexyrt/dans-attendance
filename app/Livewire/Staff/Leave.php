@@ -27,7 +27,6 @@ class Leave extends Component
     public $activeTab = 'pending';
     public $previewingAttachment = false;
     public $currentAttachment = null;
-
     public $previewUrl = null;
     public $previewType = null;
     public $showPreview = false;
@@ -67,7 +66,6 @@ class Leave extends Component
         $this->startDate = $data['startDate'];
         $this->endDate = $data['endDate'];
 
-        // Validate leave balance and date overlap immediately
         try {
             $this->validateLeaveBalance();
             $this->validateDateOverlap();
@@ -103,7 +101,12 @@ class Leave extends Component
                         ->where('end_date', '<=', $this->endDate);
                 });
             })
-            ->whereNotIn('status', [LeaveRequest::STATUS_REJECTED, LeaveRequest::STATUS_CANCEL])
+            ->whereNotIn('status', [
+                LeaveRequest::STATUS_REJECTED_MANAGER,
+                LeaveRequest::STATUS_REJECTED_HR,
+                LeaveRequest::STATUS_REJECTED_DIRECTOR,
+                LeaveRequest::STATUS_CANCEL
+            ])
             ->first();
 
         if ($overlappingLeave) {
@@ -137,53 +140,52 @@ class Leave extends Component
     }
 
     public function submitLeave()
-{
-    $this->validate();
+    {
+        $this->validate();
 
-    $leaveRequest = new LeaveRequest([
-        'type' => $this->type,
-        'start_date' => $this->startDate,
-        'end_date' => $this->endDate,
-        'reason' => $this->reason,
-        'status' => LeaveRequest::STATUS_PENDING
-    ]);
-
-    if ($this->attachment) {
         try {
-            // Ensure directory exists
-            $uploadPath = public_path('leave-attachments');
-            if (!File::exists($uploadPath)) {
-                File::makeDirectory($uploadPath, 0755, true);
+            // Validate leave balance and date overlap before proceeding
+            $this->validateLeaveBalance();
+            $this->validateDateOverlap();
+            
+            $leaveRequest = new LeaveRequest([
+                'user_id' => auth()->id(),
+                'type' => $this->type,
+                'start_date' => $this->startDate,
+                'end_date' => $this->endDate,
+                'reason' => $this->reason,
+                'status' => LeaveRequest::STATUS_PENDING_MANAGER
+            ]);
+
+            if ($this->attachment) {
+                try {
+                    $uploadPath = public_path('leave-attachments');
+                    if (!File::exists($uploadPath)) {
+                        File::makeDirectory($uploadPath, 0755, true);
+                    }
+
+                    $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9.]/', '_', $this->attachment->getClientOriginalName());
+                    $tempPath = $this->attachment->getRealPath();
+                    File::move($tempPath, $uploadPath . DIRECTORY_SEPARATOR . $filename);
+                    
+                    $leaveRequest->attachment_path = 'leave-attachments/' . $filename;
+                } catch (\Exception $e) {
+                    Log::error('File upload failed: ' . $e->getMessage());
+                    session()->flash('error', 'File upload failed. Please try again.');
+                    return;
+                }
             }
 
-            // Generate unique filename with safe characters
-            $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9.]/', '_', $this->attachment->getClientOriginalName());
-            
-            // Get the temporary file path
-            $tempPath = $this->attachment->getRealPath();
-            
-            // Move file using File facade
-            File::move($tempPath, $uploadPath . DIRECTORY_SEPARATOR . $filename);
-            
-            // Store path in database
-            $leaveRequest->attachment_path = 'leave-attachments/' . $filename;
-            
-        } catch (\Exception $e) {
-            // Log error for debugging
-            \Log::error('File upload failed: ' . $e->getMessage());
-            
-            // Return error to user
-            session()->flash('error', 'File upload failed. Please try again.');
-            return;
+            auth()->user()->leaveRequests()->save($leaveRequest);
+
+            $this->reset(['type', 'startDate', 'endDate', 'reason', 'attachment']);
+            $this->activeView = 'requests';
+            session()->flash('message', 'Leave request submitted successfully.');
+
+        } catch (ValidationException $e) {
+            $this->addError('dates', $e->getMessage());
         }
     }
-
-    auth()->user()->leaveRequests()->save($leaveRequest);
-
-    $this->reset(['type', 'startDate', 'endDate', 'reason', 'attachment']);
-    $this->activeView = 'requests';
-    session()->flash('message', 'Leave request submitted successfully.');
-}
 
     public function cancelRequest($id)
     {
@@ -199,11 +201,11 @@ class Leave extends Component
         $request = auth()->user()->leaveRequests()->findOrFail($requestId);
         if ($request->attachment_path) {
             $this->previewUrl = asset($request->attachment_path);
-            
+
             // Get file extension
             $extension = pathinfo($request->attachment_path, PATHINFO_EXTENSION);
             $this->previewType = strtolower($extension);
-            
+
             $this->showPreview = true;
         }
     }
@@ -218,11 +220,25 @@ class Leave extends Component
     public function getLeaveRequestsProperty()
     {
         return auth()->user()->leaveRequests()
-            ->when($this->activeTab === 'pending', fn($query) => $query->pending())
-            ->when($this->activeTab === 'approved', fn($query) => $query->where('status', LeaveRequest::STATUS_APPROVED))
-            ->when($this->activeTab === 'rejected', fn($query) => $query->where('status', LeaveRequest::STATUS_REJECTED))
-            ->when($this->activeTab === 'cancelled', fn($query) => $query->where('status', LeaveRequest::STATUS_CANCEL))
-            ->with('approvedBy') // Eager load approver relationship
+            ->when($this->activeTab === 'pending', function ($query) {
+                $query->whereIn('status', [
+                    LeaveRequest::STATUS_PENDING_MANAGER,
+                    LeaveRequest::STATUS_PENDING_HR,
+                    LeaveRequest::STATUS_PENDING_DIRECTOR
+                ]);
+            })
+            ->when($this->activeTab === 'approved', fn($query) =>
+                $query->where('status', LeaveRequest::STATUS_APPROVED))
+            ->when($this->activeTab === 'rejected', function ($query) {
+                $query->whereIn('status', [
+                    LeaveRequest::STATUS_REJECTED_MANAGER,
+                    LeaveRequest::STATUS_REJECTED_HR,
+                    LeaveRequest::STATUS_REJECTED_DIRECTOR
+                ]);
+            })
+            ->when($this->activeTab === 'cancelled', fn($query) =>
+                $query->where('status', LeaveRequest::STATUS_CANCEL))
+            ->with(['manager', 'hr', 'director'])
             ->latest()
             ->get();
     }
@@ -230,6 +246,24 @@ class Leave extends Component
     public function getLeaveBalanceProperty()
     {
         return auth()->user()->currentLeaveBalance();
+    }
+
+    public function getStatusBadgeClass($status)
+    {
+        return match ($status) {
+            LeaveRequest::STATUS_PENDING_MANAGER,
+            LeaveRequest::STATUS_PENDING_HR,
+            LeaveRequest::STATUS_PENDING_DIRECTOR => 'bg-yellow-100 text-yellow-800',
+
+            LeaveRequest::STATUS_APPROVED => 'bg-green-100 text-green-800',
+
+            LeaveRequest::STATUS_REJECTED_MANAGER,
+            LeaveRequest::STATUS_REJECTED_HR,
+            LeaveRequest::STATUS_REJECTED_DIRECTOR => 'bg-red-100 text-red-800',
+
+            LeaveRequest::STATUS_CANCEL => 'bg-gray-100 text-gray-800',
+            default => 'bg-gray-100 text-gray-800'
+        };
     }
 
     public function getDurationProperty()
@@ -240,8 +274,47 @@ class Leave extends Component
     public function getPendingCountProperty()
     {
         return auth()->user()->leaveRequests()
-            ->where('status', LeaveRequest::STATUS_PENDING)
-            ->count();
+            ->whereIn('status', [
+                LeaveRequest::STATUS_PENDING_MANAGER,
+                LeaveRequest::STATUS_PENDING_HR,
+                LeaveRequest::STATUS_PENDING_DIRECTOR
+            ])->count();
+    }
+    public function getApprovalStatus($request)
+    {
+        $status = match ($request->status) {
+            LeaveRequest::STATUS_PENDING_MANAGER => 'Pending Manager Approval',
+            LeaveRequest::STATUS_PENDING_HR => 'Pending HR Approval',
+            LeaveRequest::STATUS_PENDING_DIRECTOR => 'Pending Director Approval',
+            LeaveRequest::STATUS_APPROVED => 'Approved',
+            LeaveRequest::STATUS_REJECTED_MANAGER => 'Rejected by Manager',
+            LeaveRequest::STATUS_REJECTED_HR => 'Rejected by HR',
+            LeaveRequest::STATUS_REJECTED_DIRECTOR => 'Rejected by Director',
+            LeaveRequest::STATUS_CANCEL => 'Cancelled',
+            default => 'Unknown Status'
+        };
+
+        $details = [];
+
+        if ($request->manager_approved_at) {
+            $details[] = "Manager: " . ($request->manager ? $request->manager->name : 'Unknown') .
+                " on " . $request->manager_approved_at->format('M j, Y');
+        }
+
+        if ($request->hr_approved_at) {
+            $details[] = "HR: " . ($request->hr ? $request->hr->name : 'Unknown') .
+                " on " . $request->hr_approved_at->format('M j, Y');
+        }
+
+        if ($request->director_approved_at) {
+            $details[] = "Director: " . ($request->director ? $request->director->name : 'Unknown') .
+                " on " . $request->director_approved_at->format('M j, Y');
+        }
+
+        return [
+            'status' => $status,
+            'details' => $details
+        ];
     }
 
     public function getApprovedCountProperty()
@@ -254,8 +327,11 @@ class Leave extends Component
     public function getRejectedCountProperty()
     {
         return auth()->user()->leaveRequests()
-            ->where('status', LeaveRequest::STATUS_REJECTED)
-            ->count();
+            ->whereIn('status', [
+                LeaveRequest::STATUS_REJECTED_MANAGER,
+                LeaveRequest::STATUS_REJECTED_HR,
+                LeaveRequest::STATUS_REJECTED_DIRECTOR
+            ])->count();
     }
 
     public function getCancelledCountProperty()
