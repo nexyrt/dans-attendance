@@ -21,11 +21,14 @@ use App\Livewire\Admin\Leave\{
 };
 use App\Livewire\Admin\Attendances\AttendanceRecord;
 use App\Livewire\Staff\{
-    Dashboard,
-    Attendance,
-    Leave,
-    Payroll,
-    Profile
+    Dashboard as StaffDashboard,
+    Attendance as StaffAttendance,
+    Leave as StaffLeave,
+    Payroll as StaffPayroll,
+    Profile as StaffProfile,
+};
+use App\Livewire\Manager\{
+    Leave as ManagerLeave,
 };
 
 /*
@@ -92,11 +95,11 @@ Route::middleware(['auth', 'role:staff'])
     ->prefix('staff')
     ->name('staff.')
     ->group(function () {
-        Route::get('/dashboard', Dashboard::class)->name('dashboard');
-        Route::get('/attendance', Attendance::class)->name('attendance.index');
-        Route::get('/leave', Leave::class)->name('leave.index');
-        Route::get('/payroll', Payroll::class)->name('payroll.index');
-        Route::get('/profile', Profile::class)->name('profile.index');
+        Route::get('/dashboard', StaffDashboard::class)->name('dashboard');
+        Route::get('/attendance', StaffAttendance::class)->name('attendance.index');
+        Route::get('/leave', StaffLeave::class)->name('leave.index');
+        Route::get('/payroll', StaffPayroll::class)->name('payroll.index');
+        Route::get('/profile', StaffProfile::class)->name('profile.index');
     });
 
 /*
@@ -109,7 +112,7 @@ Route::middleware(['auth', 'role:manager'])
     ->prefix('manager')
     ->name('manager.')
     ->group(function () {
-        Route::get('/dashboard', [StaffDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/leave', ManagerLeave::class)->name('leave.index');
     });
 
 /*
