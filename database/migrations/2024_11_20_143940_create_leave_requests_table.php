@@ -19,11 +19,11 @@ return new class extends Migration
             $table->text('reason');
             $table->enum('status', [
                 'pending_manager',
-                'pending_admin',  // changed from pending_hr
+                'pending_hr',  // changed from pending_hr
                 'pending_director',
                 'approved',
                 'rejected_manager',
-                'rejected_admin',  // changed from rejected_hr
+                'rejected_hr',  // changed from rejected_hr
                 'rejected_director',
                 'cancel'
             ])->default('pending_manager');
@@ -43,7 +43,9 @@ return new class extends Migration
             $table->foreignId('director_id')->nullable()->constrained('users');
             $table->timestamp('director_approved_at')->nullable();
             $table->string('director_signature')->nullable();
-        
+
+            $table->string('rejection_reason')->nullable();
+            
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         

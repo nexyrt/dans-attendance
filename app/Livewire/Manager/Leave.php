@@ -27,31 +27,54 @@ class Leave extends Component
         $this->selectedDepartment = auth()->user()->department_id;
     }
 
+    public function closeRejectModal()
+    {
+        $this->showRejectModal = false;
+        $this->selectedRequest = null;
+        $this->rejectReason = '';
+        $this->resetValidation();
+    }
+
     public function approveRequest($requestId)
     {
         $request = LeaveRequest::findOrFail($requestId);
-        
+
         if ($request->status !== LeaveRequest::STATUS_PENDING_MANAGER) {
-            session()->flash('error', 'This request cannot be approved at this time.');
+            session()->flash('message', 'This request cannot be approved at this time.');
+            session()->flash('type', 'error');
             return;
         }
 
-        DB::transaction(function () use ($request) {
-            $request->update([
-                'status' => LeaveRequest::STATUS_PENDING_HR,
-                'manager_id' => auth()->id(),
-                'manager_approved_at' => now(),
-            ]);
-        });
+        try {
+            $request = LeaveRequest::findOrFail($requestId);
+            
+            // Debug information
+            \Log::info('Current status: ' . $request->status);
+            \Log::info('Attempting to update to: ' . LeaveRequest::STATUS_PENDING_HR);
+            \Log::info('Manager ID: ' . auth()->id());
 
-        session()->flash('message', 'Leave request approved successfully.');
+            DB::transaction(function () use ($request) {
+                $request->update([
+                    'status' => LeaveRequest::STATUS_PENDING_HR, // Make sure this matches your enum
+                    'manager_id' => auth()->id(),
+                    'manager_approved_at' => now(),
+                ]);
+            });
+
+            session()->flash('message', 'Leave request approved successfully.');
+            session()->flash('type', 'success');
+        } catch (\Exception $e) {
+            session()->flash('message', 'Cek Laravel Log');
+            session()->flash('type', 'error');
+            \Log::info($e);
+        }
     }
 
-    public function showRejectModal($requestId)
+    public function showModalReject($requestId)
     {
         $this->selectedRequest = LeaveRequest::findOrFail($requestId);
+        $this->rejectReason = ''; // Clear any previous reason
         $this->showRejectModal = true;
-        dump($this->showRejectModal);
     }
 
     public function rejectRequest()
@@ -76,7 +99,7 @@ class Leave extends Component
         $this->selectedRequest = null;
         $this->rejectReason = '';
         $this->showRejectModal = false;
-        
+
         session()->flash('message', 'Leave request rejected successfully.');
     }
 
@@ -104,33 +127,35 @@ class Leave extends Component
             ->whereHas('user', function ($query) {
                 $query->where('department_id', $this->selectedDepartment);
             })
-            ->when($this->activeTab === 'pending', function($query) {
+            ->when($this->activeTab === 'pending', function ($query) {
                 $query->where('status', LeaveRequest::STATUS_PENDING_MANAGER);
             })
-            ->when($this->activeTab === 'approved', function($query) {
+            ->when($this->activeTab === 'approved', function ($query) {
                 $query->whereIn('status', [
                     LeaveRequest::STATUS_PENDING_HR,
                     LeaveRequest::STATUS_PENDING_DIRECTOR,
                     LeaveRequest::STATUS_APPROVED
                 ]);
             })
-            ->when($this->activeTab === 'rejected', function($query) {
+            ->when($this->activeTab === 'rejected', function ($query) {
                 $query->where('status', LeaveRequest::STATUS_REJECTED_MANAGER);
             })
-            ->with(['user' => function($query) {
-                $query->with(['department']);
-            }])
+            ->with([
+                'user' => function ($query) {
+                    $query->with(['department']);
+                }
+            ])
             ->latest()
             ->get()
-            ->map(function($request) {
+            ->map(function ($request) {
                 // Get current leave balance for the user
                 $leaveBalance = $request->user->leaveBalances()
                     ->where('year', now()->year)
                     ->first();
-                
+
                 // Add leave balance to the user object
                 $request->user->currentLeaveBalance = $leaveBalance;
-                
+
                 return $request;
             });
     }
@@ -139,13 +164,15 @@ class Leave extends Component
     {
         $users = User::where('department_id', $this->selectedDepartment)
             ->where('id', '!=', auth()->id())
-            ->with(['leaveRequests' => function($query) {
-                $query->whereYear('created_at', now()->year);
-            }])
+            ->with([
+                'leaveRequests' => function ($query) {
+                    $query->whereYear('created_at', now()->year);
+                }
+            ])
             ->get();
 
         // Manually load leave balances
-        foreach($users as $user) {
+        foreach ($users as $user) {
             $user->currentLeaveBalance = $user->leaveBalances()
                 ->where('year', now()->year)
                 ->first();
@@ -180,9 +207,9 @@ class Leave extends Component
             ->whereHas('user', function ($query) {
                 $query->where('department_id', $this->selectedDepartment);
             })
-            ->when(is_array($status), function($query) use ($status) {
+            ->when(is_array($status), function ($query) use ($status) {
                 $query->whereIn('status', $status);
-            }, function($query) use ($status) {
+            }, function ($query) use ($status) {
                 $query->where('status', $status);
             })
             ->count();

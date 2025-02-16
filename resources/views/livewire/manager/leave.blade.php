@@ -1,6 +1,7 @@
 <!-- resources/views/livewire/manager/leave.blade.php -->
 <div class="min-h-screen py-8 space-y-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
         <!-- Stats Overview -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <!-- Pending Requests Card -->
@@ -151,6 +152,7 @@
                 </div>
             </div>
         </div>
+
         <!-- Main Content Area -->
         <div class="bg-white/95 backdrop-blur-sm rounded-xl shadow-sm">
             <!-- Tabs -->
@@ -382,12 +384,11 @@
                                                 Approve
                                             </button>
 
-                                            <button wire:click="showRejectModal({{ $request->id }})"
+                                            <button wire:click="showModalReject({{ $request->id }})" type="button"
                                                 class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-lg shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M6 18L18 6M6 6l12 12" />
                                                 </svg>
                                                 Reject
                                             </button>

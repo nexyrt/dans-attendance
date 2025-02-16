@@ -28,6 +28,7 @@ use App\Livewire\Staff\{
     Profile as StaffProfile,
 };
 use App\Livewire\Manager\{
+    Dashboard as ManagerDashboard,
     Leave as ManagerLeave,
 };
 
@@ -112,6 +113,7 @@ Route::middleware(['auth', 'role:manager'])
     ->prefix('manager')
     ->name('manager.')
     ->group(function () {
+        Route::get('/dashboard', ManagerDashboard::class)->name('dashboard');
         Route::get('/leave', ManagerLeave::class)->name('leave.index');
     });
 

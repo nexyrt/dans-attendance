@@ -53,16 +53,14 @@ class LeaveRequest extends Model
         'end_date',
         'reason',
         'status',
-        'attachment_path',
         'manager_id',
         'manager_approved_at',
-        'manager_signature',
         'hr_id',
         'hr_approved_at',
-        'hr_signature',
         'director_id',
         'director_approved_at',
-        'director_signature'
+        'attachment_path',
+        'rejection_reason'
     ];
 
     protected $casts = [
@@ -163,16 +161,16 @@ class LeaveRequest extends Model
     public function getStatusBadgeAttribute(): string
     {
         return match ($this->status) {
-            self::STATUS_PENDING_MANAGER, 
-            self::STATUS_PENDING_HR, 
+            self::STATUS_PENDING_MANAGER,
+            self::STATUS_PENDING_HR,
             self::STATUS_PENDING_DIRECTOR => 'bg-yellow-100 text-yellow-800',
-            
+
             self::STATUS_APPROVED => 'bg-green-100 text-green-800',
-            
+
             self::STATUS_REJECTED_MANAGER,
             self::STATUS_REJECTED_HR,
             self::STATUS_REJECTED_DIRECTOR => 'bg-red-100 text-red-800',
-            
+
             self::STATUS_CANCEL => 'bg-gray-100 text-gray-800',
             default => 'bg-gray-100 text-gray-800'
         };
