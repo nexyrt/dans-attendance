@@ -1,5 +1,5 @@
 {{-- resources/views/livewire/date-range-picker.blade.php --}}
-<div class="w-full" x-data="{ open: @entangle('isOpen') }">
+<div class="w-full relative" x-data="{ open: @entangle('isOpen') }">
     {{-- Trigger Button --}}
     <button type="button" @click="open = !open"
         class="inline-flex w-full items-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
@@ -13,7 +13,7 @@
 
     {{-- Calendar Dropdown --}}
     <div x-show="open" @click.away="open = false"
-        class="absolute mt-2 w-80 bg-white border shadow-lg rounded-xl overflow-hidden dark:bg-neutral-900 dark:border-neutral-700 z-99"
+        class="absolute mt-2 w-80 bg-white border shadow-lg rounded-xl overflow-y-hidden dark:bg-neutral-900 dark:border-neutral-700 z-99"
         x-transition:enter="transition ease-out duration-100"
         x-transition:enter-start="transform opacity-0 scale-95"
         x-transition:enter-end="transform opacity-100 scale-100"

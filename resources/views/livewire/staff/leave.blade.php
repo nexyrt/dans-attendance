@@ -1,6 +1,7 @@
 <!-- resources/views/livewire/staff/leave.blade.php -->
 <div class="min-h-screen bg-gray-50/30 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
         <!-- Leave Balance Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
             <!-- Available Balance -->
@@ -92,9 +93,7 @@
             </div>
         </div>
 
-        @livewire('signature')
-
-        <!-- Main Content Area -->
+        {{-- Main content area --}}
         <div class="bg-white rounded-xl shadow-sm">
             <!-- Main Navigation -->
             <div class="border-b border-gray-200">
@@ -219,10 +218,8 @@
                                 </nav>
                             </div>
                         </div>
-
                         <!-- Leave Requests Table View -->
                         <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                            <!-- Table Container -->
                             <div class="overflow-x-auto">
                                 <table class="min-w-full divide-y divide-gray-200">
                                     <thead class="bg-gray-50">
@@ -233,7 +230,7 @@
                                             </th>
                                             <th scope="col"
                                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                                                Status
+                                                Status & Approvals
                                             </th>
                                             <th scope="col"
                                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
@@ -310,28 +307,30 @@
                                                     </div>
                                                 </td>
 
-                                                <!-- Status -->
+                                                <!-- Status & Approvals -->
                                                 <td class="px-6 py-4 whitespace-nowrap">
                                                     <span @class([
                                                         'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize',
-                                                        'bg-yellow-100 text-yellow-800' => $request->status === 'pending',
-                                                        'bg-green-100 text-green-800' => $request->status === 'approved',
-                                                        'bg-red-100 text-red-800' => $request->status === 'rejected',
-                                                        'bg-gray-100 text-gray-800' => $request->status === 'cancelled',
+                                                        $this->getStatusBadgeClass($request->status),
                                                     ])>
-                                                        {{ $request->status }}
+                                                        {{ $this->getApprovalStatus($request)['status'] }}
                                                     </span>
-                                                    @if ($request->approved_by)
-                                                        <div class="mt-1 flex items-center text-sm text-gray-500">
-                                                            <svg class="w-4 h-4 mr-1" fill="none"
-                                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2"
-                                                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                            </svg>
-                                                            {{ $request->approvedBy->name }}
-                                                        </div>
-                                                    @endif
+
+                                                    <!-- Approval Timeline -->
+                                                    <div class="mt-2 space-y-1.5">
+                                                        @foreach ($this->getApprovalStatus($request)['details'] as $detail)
+                                                            <div class="flex items-center text-sm text-gray-500">
+                                                                <svg class="w-4 h-4 mr-1.5 flex-shrink-0"
+                                                                    fill="none" stroke="currentColor"
+                                                                    viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                                </svg>
+                                                                <span class="truncate">{{ $detail }}</span>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
                                                 </td>
 
                                                 <!-- Dates -->
@@ -350,15 +349,15 @@
                                                         title="{{ $request->reason }}">
                                                         {{ $request->reason }}
                                                     </div>
-                                                    @if (asset($request->attachment_path))
+                                                    @if ($request->attachment_path)
                                                         <div class="mt-1 flex items-center text-sm text-gray-500">
-                                                            <svg class="w-4 h-4 mr-1" fill="none"
+                                                            <svg class="w-4 h-4 mr-1.5" fill="none"
                                                                 stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round"
                                                                     stroke-width="2"
                                                                     d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                                                             </svg>
-                                                            {{ asset($request->attachment_path) }}
+                                                            <span class="truncate">Attachment</span>
                                                         </div>
                                                     @endif
                                                 </td>
@@ -398,7 +397,7 @@
                                                         @if ($request->canBeCancelled())
                                                             <button wire:click="cancelRequest({{ $request->id }})"
                                                                 wire:confirm="Are you sure you want to cancel this leave request?"
-                                                                class="text-red-500 hover:text-red-700 p-1 rounded-lg hover:bg-red-50"
+                                                                class="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50"
                                                                 title="Cancel">
                                                                 <svg class="w-5 h-5" fill="none"
                                                                     stroke="currentColor" viewBox="0 0 24 24">
@@ -433,58 +432,7 @@
                                 </div>
 
                                 <!-- Preview Modal -->
-                                @if ($showPreview)
-                                    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" x-data
-                                        @keydown.escape.window="$wire.closePreview()">
-                                        <div
-                                            class="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-                                            <!-- Modal Header -->
-                                            <div class="flex items-center justify-between p-4 border-b">
-                                                <h3 class="text-lg font-medium text-gray-900">Document Preview</h3>
-                                                <button wire:click="closePreview"
-                                                    class="text-gray-400 hover:text-gray-500 p-1">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-
-                                            <!-- Modal Content -->
-                                            <div class="p-4">
-                                                @if ($previewType === 'pdf')
-                                                    <iframe src="{{ $previewUrl }}" class="w-full h-[70vh] border-0"
-                                                        type="application/pdf"></iframe>
-                                                @elseif(in_array($previewType, ['jpg', 'jpeg', 'png', 'gif']))
-                                                    <img src="{{ $previewUrl }}" alt="Document Preview"
-                                                        class="max-w-full h-auto mx-auto">
-                                                @elseif(in_array($previewType, ['doc', 'docx']))
-                                                    <div class="text-center py-8">
-                                                        <svg class="w-16 h-16 mx-auto text-blue-500 mb-4" fill="none"
-                                                            stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                        </svg>
-                                                        <p class="text-gray-600 mb-4">Preview not available for Word
-                                                            documents</p>
-                                                        <a href="{{ $previewUrl }}" download
-                                                            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
-                                                            <svg class="w-5 h-5 mr-2" fill="none"
-                                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2"
-                                                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                            </svg>
-                                                            Download Document
-                                                        </a>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
+                                <x-modals.preview-modal :show="$showPreview" :preview-url="$previewUrl" :preview-type="$previewType" />
                             </div>
                         </div>
                     @else
@@ -501,7 +449,8 @@
                                         @error('type')
                                             <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
                                         @enderror
-                                        <!-- Add Duration Display under Date Range -->
+
+                                        <!-- Duration Display -->
                                         @if ($startDate && $endDate)
                                             <div class="mt-2 flex items-center space-x-2 text-sm">
                                                 <span class="font-medium text-gray-700">Duration:</span>
@@ -514,13 +463,12 @@
                                                     {{ $duration }} working days
                                                 </span>
                                                 <span class="text-gray-500">(Balance:
-                                                    {{ $leaveBalance->remaining_balance }}
-                                                    days)</span>
+                                                    {{ $leaveBalance->remaining_balance }} days)</span>
                                             </div>
                                         @endif
                                     </div>
 
-                                    <!-- After the Date Range Picker -->
+                                    <!-- Date Range Picker -->
                                     <div>
                                         <label class="block text-sm font-medium text-gray-900 mb-2">Date Range</label>
                                         <div class="mt-2">
@@ -543,8 +491,6 @@
                                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                         @enderror
                                     </div>
-
-
                                 </div>
 
                                 <!-- Supporting Documents -->
@@ -607,13 +553,11 @@
                                 <!-- Reason -->
                                 <div class="w-full">
                                     <label class="block text-sm font-medium text-gray-900 mb-2">Reason for Leave</label>
-                                    <div>
-                                        <textarea wire:model.live="reason" rows="4"
-                                            class="block w-full rounded-lg border-gray-200 resize-none focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                            placeholder="Please provide a detailed reason for your leave request..."></textarea>
-                                        <div class="absolute bottom-3 right-3 text-xs text-gray-400">
-                                            {{ strlen($reason) }}/500
-                                        </div>
+                                    <textarea wire:model.live="reason" rows="4"
+                                        class="block w-full rounded-lg border-gray-200 resize-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                        placeholder="Please provide a detailed reason for your leave request..."></textarea>
+                                    <div class="absolute bottom-3 right-3 text-xs text-gray-400">
+                                        {{ strlen($reason) }}/500
                                     </div>
                                     @error('reason')
                                         <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>

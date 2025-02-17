@@ -86,31 +86,6 @@ class User extends Authenticatable
         return $this->hasMany(LeaveRequest::class, 'approved_by');
     }
 
-    public function financialDetails(): HasOne
-    {
-        return $this->hasOne(EmployeeFinancialDetail::class);
-    }
-
-    public function deductions()
-    {
-        return $this->hasMany(Deduction::class);
-    }
-
-    public function allowances()
-    {
-        return $this->hasMany(Allowance::class);
-    }
-
-    public function payrolls()
-    {
-        return $this->hasMany(Payroll::class);
-    }
-
-    public function payrollBatches()
-    {
-        return $this->hasMany(PayrollBatch::class);
-    }
-
     /**
      * Get current year's leave balance
      */

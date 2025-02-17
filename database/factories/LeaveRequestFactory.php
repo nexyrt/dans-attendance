@@ -23,7 +23,7 @@ class LeaveRequestFactory extends Factory
             'start_date' => $startDate,
             'end_date' => $endDate,
             'reason' => $this->faker->sentence(),
-            'status' => 'pending_manager',
+            'status' => LeaveRequest::STATUS_PENDING_MANAGER, // Use constant instead of string
             'attachment_path' => $this->faker->optional(0.3)->filePath(),
             'manager_id' => null,
             'manager_approved_at' => null,
@@ -34,6 +34,7 @@ class LeaveRequestFactory extends Factory
             'director_id' => null,
             'director_approved_at' => null,
             'director_signature' => null,
+            'rejection_reason' => null,
         ];
     }
 
@@ -50,7 +51,7 @@ class LeaveRequestFactory extends Factory
             $managers = User::where('role', 'manager')->get();
 
             return [
-                'status' => 'pending_admin',  // Make sure this matches the enum
+                'status' => LeaveRequest::STATUS_PENDING_HR, // Changed from pending_admin
                 'manager_id' => $managers->random()->id,
                 'manager_approved_at' => now(),
                 'manager_signature' => 'signature_' . Str::random(10),
@@ -112,7 +113,7 @@ class LeaveRequestFactory extends Factory
     public function rejectedByHR()
     {
         return $this->state(fn(array $attributes) => [
-            'status' => 'rejected_admin',  // Make sure this matches the enum
+            'status' => LeaveRequest::STATUS_REJECTED_HR, // Changed from rejected_admin
             'manager_id' => User::where('role', 'manager')->first()->id,
             'manager_approved_at' => now(),
             'manager_signature' => 'signature_' . Str::random(10),
