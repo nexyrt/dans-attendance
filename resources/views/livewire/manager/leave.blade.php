@@ -3,7 +3,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <!-- Stats Overview -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-5">
             <!-- Pending Requests Card -->
             <div class="bg-white/95 backdrop-blur-sm overflow-hidden shadow-sm rounded-xl">
                 <div class="p-5">
@@ -157,7 +157,7 @@
         <div class="bg-white/95 backdrop-blur-sm rounded-xl shadow-sm">
             <!-- Tabs -->
             <div class="border-b border-gray-200">
-                <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                <nav class="flex space-x-8 px-6 overflow-x-auto" aria-label="Tabs">
                     <button wire:click="$set('activeTab', 'pending')"
                         class="inline-flex items-center py-4 px-1 gap-2 border-b-2 whitespace-nowrap font-medium text-sm transition-colors duration-200
                         {{ $activeTab === 'pending' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
