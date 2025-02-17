@@ -93,6 +93,8 @@
             </div>
         </div>
 
+        @livewire('signature')
+
         {{-- Main content area --}}
         <div class="bg-white rounded-xl shadow-sm">
             <!-- Main Navigation -->
