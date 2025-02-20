@@ -343,7 +343,7 @@
                                         <span class="text-xs">({{ $request->getDurationInDays() }} days)</span>
                                     </div>
                                 </td>
-                                
+
                                 <!-- Status -->
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @if ($request->attachment_path)
@@ -373,8 +373,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end gap-2">
                                         @if ($activeTab === 'pending')
-                                            <button wire:click="approveRequest({{ $request->id }})"
-                                                wire:confirm="Are you sure you want to approve this leave request?"
+                                            <button wire:click="openSignatureModal({{ $request->id }})"
                                                 class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
                                                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor"
                                                     viewBox="0 0 24 24">
@@ -386,9 +385,10 @@
 
                                             <button wire:click="showModalReject({{ $request->id }})" type="button"
                                                 class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-lg shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M6 18L18 6M6 6l12 12" />
+                                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                                 </svg>
                                                 Reject
                                             </button>
@@ -455,6 +455,56 @@
             <div>
                 <!-- Preview Modal -->
                 <x-modals.preview-modal :show="$showPreview" :preview-url="$previewUrl" :preview-type="$previewType" />
+
+                <!-- Signature Modal -->
+                <x-modals.modal name="signature-modal" maxWidth="md">
+                    <div class="p-6">
+                        <h2 class="text-lg font-medium text-gray-900 mb-4">
+                            Digital Signature
+                        </h2>
+            
+                        <!-- Your signature pad component -->
+                        <div x-data="signaturePad(@entangle('signature'))">
+                            <div class="mb-4">
+                                <canvas 
+                                    x-ref="signature_canvas" 
+                                    class="border rounded shadow w-full" 
+                                    height="200">
+                                </canvas>
+                            </div>
+                            
+                            <div class="mt-4 flex justify-end space-x-3">
+                                <button
+                                    type="button"
+                                    x-on:click="$dispatch('close-modal', 'signature-modal')"
+                                    class="bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200">
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    wire:click="saveSignatureAndApprove"
+                                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                                    Submit Approval
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                        document.addEventListener('alpine:init', () => {
+                            Alpine.data('signaturePad', (value) => ({
+                                signaturePadInstance: null,
+                                value: value,
+                                init(){
+                                    this.signaturePadInstance = new SignaturePad(this.$refs.signature_canvas);
+                                    this.signaturePadInstance.addEventListener("endStroke", ()=>{
+                                       this.value = this.signaturePadInstance.toDataURL('image/png');
+                                    });
+                                },
+                            }))
+                        })
+                    </script>
+                </x-modals.modal>
 
                 <!-- Reject Modal -->
                 @if ($showRejectModal)

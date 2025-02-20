@@ -55,10 +55,13 @@ class LeaveRequest extends Model
         'status',
         'manager_id',
         'manager_approved_at',
+        'manager_signature',
         'hr_id',
         'hr_approved_at',
+        'hr_signature',
         'director_id',
         'director_approved_at',
+        'director_signature',
         'attachment_path',
         'rejection_reason'
     ];

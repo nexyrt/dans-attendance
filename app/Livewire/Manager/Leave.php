@@ -4,15 +4,22 @@ namespace App\Livewire\Manager;
 
 use App\Models\User;
 use App\Models\LeaveRequest;
+use Auth;
+use File;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\On;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpWord\TemplateProcessor;
+use Str;
 
 class Leave extends Component
 {
     use WithFileUploads;
 
+    /**
+     * Component Properties
+     */
     public $activeTab = 'pending';
     public $showPreview = false;
     public $previewUrl = null;
@@ -21,12 +28,20 @@ class Leave extends Component
     public $rejectReason = '';
     public $selectedRequest = null;
     public $selectedDepartment = null;
+    public $signature = '';
+    public $selectedLeaveRequest = null;
 
+    /**
+     * Initialize Component
+     */
     public function mount()
     {
         $this->selectedDepartment = auth()->user()->department_id;
     }
 
+    /**
+     * Modal Handlers
+     */
     public function closeRejectModal()
     {
         $this->showRejectModal = false;
@@ -35,45 +50,185 @@ class Leave extends Component
         $this->resetValidation();
     }
 
-    public function approveRequest($requestId)
+    public function openSignatureModal($leaveRequestId)
     {
-        $request = LeaveRequest::findOrFail($requestId);
+        $this->selectedLeaveRequest = LeaveRequest::find($leaveRequestId);
+        $this->dispatch('open-modal', 'signature-modal');
+    }
 
-        if ($request->status !== LeaveRequest::STATUS_PENDING_MANAGER) {
-            session()->flash('message', 'This request cannot be approved at this time.');
-            session()->flash('type', 'error');
-            return;
-        }
-
+    /**
+     * Document Signature Handler
+     */
+    private function addSignatureToDocument($signaturePath)
+    {
         try {
-            $request = LeaveRequest::findOrFail($requestId);
-            
-            // Debug information
-            \Log::info('Current status: ' . $request->status);
-            \Log::info('Attempting to update to: ' . LeaveRequest::STATUS_PENDING_HR);
-            \Log::info('Manager ID: ' . auth()->id());
+            // Check if document exists
+            if (!$this->selectedLeaveRequest->attachment_path || 
+                !File::exists(public_path($this->selectedLeaveRequest->attachment_path))) {
+                return false;
+            }
 
-            DB::transaction(function () use ($request) {
-                $request->update([
-                    'status' => LeaveRequest::STATUS_PENDING_HR, // Make sure this matches your enum
-                    'manager_id' => auth()->id(),
-                    'manager_approved_at' => now(),
-                ]);
-            });
+            // Initialize template processor with the document
+            $templateProcessor = new TemplateProcessor(
+                public_path($this->selectedLeaveRequest->attachment_path)
+            );
 
-            session()->flash('message', 'Leave request approved successfully.');
-            session()->flash('type', 'success');
+            // Determine signature placeholder based on user role
+            $role = auth()->user()->role;
+            $placeholder = match($role) {
+                'manager' => 'manager_signature',
+                'admin' => 'hr_signature',
+                'director' => 'director_signature',
+                default => null
+            };
+
+            if (!$placeholder) return false;
+
+            // Add signature to document
+            $templateProcessor->setImageValue($placeholder, public_path($signaturePath));
+
+            // Save document with the same filename (override)
+            $templateProcessor->saveAs(public_path($this->selectedLeaveRequest->attachment_path));
+
+            return true;
         } catch (\Exception $e) {
-            session()->flash('message', 'Cek Laravel Log');
-            session()->flash('type', 'error');
-            \Log::info($e);
+            \Log::error('Error adding signature to document: ' . $e->getMessage());
+            return false;
         }
     }
 
+    /**
+     * Signature Approval Process
+     */
+    public function saveSignatureAndApprove()
+    {
+        // Validate signature
+        $this->validate([
+            'signature' => 'required'
+        ]);
+
+        $user = Auth::user();
+        $currentTime = now();
+
+        // Create signatures directory if not exists
+        $directory = public_path('signatures');
+        if (!File::exists($directory)) {
+            File::makeDirectory($directory, 0755, true);
+        }
+
+        // Generate signature filename
+        $filename = sprintf(
+            '%s_%s_%s.png',
+            strtolower($user->role),
+            Str::slug($user->name),
+            $user->id
+        );
+
+        // Save signature image
+        $imageData = base64_decode(Str::of($this->signature)->after(','));
+        $signaturePath = 'signatures/' . $filename;
+        File::put(public_path($signaturePath), $imageData);
+
+        // Add signature to document
+        $documentSigned = $this->addSignatureToDocument($signaturePath);
+
+        // Process approval based on role
+        $status = match($user->role) {
+            'manager' => [
+                'status' => 'pending_hr',
+                'manager_id' => $user->id,
+                'manager_approved_at' => $currentTime,
+                'manager_signature' => $signaturePath,
+                'message' => 'Leave request approved and sent to HR.'
+            ],
+            'admin' => [
+                'status' => 'pending_director',
+                'hr_id' => $user->id,
+                'hr_approved_at' => $currentTime,
+                'hr_signature' => $signaturePath,
+                'message' => 'Leave request approved and sent to Director.'
+            ],
+            'director' => [
+                'status' => 'approved',
+                'director_id' => $user->id,
+                'director_approved_at' => $currentTime,
+                'director_signature' => $signaturePath,
+                'message' => 'Leave request has been fully approved.'
+            ],
+            default => null
+        };
+
+        if ($status) {
+            if ($status['status'] === 'approved') {
+                $this->finalizeApproval($user, $currentTime, $signaturePath);
+            } else {
+                $this->selectedLeaveRequest->update(collect($status)->except('message')->toArray());
+            }
+            
+            session()->flash('message', $status['message'] . ($documentSigned ? ' Document has been signed.' : ''));
+        }
+
+        $this->dispatch('close-modal', 'signature-modal');
+        $this->resetSignature();
+    }
+
+    /**
+     * Final Approval Handler
+     */
+    private function finalizeApproval($user, $currentTime, $signaturePath)
+    {
+        DB::transaction(function () use ($user, $currentTime, $signaturePath) {
+            // Update leave request status
+            $this->selectedLeaveRequest->update([
+                'status' => 'approved',
+                'director_id' => $user->id,
+                'director_approved_at' => $currentTime,
+                'director_signature' => $signaturePath
+            ]);
+
+            // Update leave balance
+            $leaveBalance = $this->selectedLeaveRequest->user->currentLeaveBalance();
+            if ($leaveBalance) {
+                $usedDays = $this->selectedLeaveRequest->getDurationInDays();
+                $leaveBalance->updateBalance(
+                    $leaveBalance->used_balance + $usedDays
+                );
+
+                // Create attendance records
+                $startDate = $this->selectedLeaveRequest->start_date;
+                $endDate = $this->selectedLeaveRequest->end_date;
+                $currentDate = clone $startDate;
+
+                while ($currentDate <= $endDate) {
+                    if (!$currentDate->isWeekend()) {
+                        $this->selectedLeaveRequest->user->attendances()->create([
+                            'date' => $currentDate,
+                            'status' => 'holiday',
+                            'notes' => 'Approved leave: ' . $this->selectedLeaveRequest->type
+                        ]);
+                    }
+                    $currentDate->addDay();
+                }
+            }
+        });
+    }
+
+    /**
+     * Reset Handlers
+     */
+    private function resetSignature()
+    {
+        $this->selectedLeaveRequest = null;
+        $this->signature = '';
+    }
+
+    /**
+     * Reject Process Handlers
+     */
     public function showModalReject($requestId)
     {
         $this->selectedRequest = LeaveRequest::findOrFail($requestId);
-        $this->rejectReason = ''; // Clear any previous reason
+        $this->rejectReason = '';
         $this->showRejectModal = true;
     }
 
@@ -103,6 +258,9 @@ class Leave extends Component
         session()->flash('message', 'Leave request rejected successfully.');
     }
 
+    /**
+     * Preview Handlers
+     */
     public function previewAttachment($requestId)
     {
         $request = LeaveRequest::findOrFail($requestId);
@@ -120,6 +278,9 @@ class Leave extends Component
         $this->previewType = null;
     }
 
+    /**
+     * Data Getters
+     */
     public function getLeaveRequestsProperty()
     {
         return LeaveRequest::query()
@@ -140,47 +301,35 @@ class Leave extends Component
             ->when($this->activeTab === 'rejected', function ($query) {
                 $query->where('status', LeaveRequest::STATUS_REJECTED_MANAGER);
             })
-            ->with([
-                'user' => function ($query) {
-                    $query->with(['department']);
-                }
-            ])
+            ->with(['user.department'])
             ->latest()
             ->get()
             ->map(function ($request) {
-                // Get current leave balance for the user
-                $leaveBalance = $request->user->leaveBalances()
+                $request->user->currentLeaveBalance = $request->user->leaveBalances()
                     ->where('year', now()->year)
                     ->first();
-
-                // Add leave balance to the user object
-                $request->user->currentLeaveBalance = $leaveBalance;
-
                 return $request;
             });
     }
 
     public function getTeamLeaveBalancesProperty()
     {
-        $users = User::where('department_id', $this->selectedDepartment)
+        return User::where('department_id', $this->selectedDepartment)
             ->where('id', '!=', auth()->id())
-            ->with([
-                'leaveRequests' => function ($query) {
-                    $query->whereYear('created_at', now()->year);
-                }
-            ])
-            ->get();
-
-        // Manually load leave balances
-        foreach ($users as $user) {
-            $user->currentLeaveBalance = $user->leaveBalances()
-                ->where('year', now()->year)
-                ->first();
-        }
-
-        return $users;
+            ->with(['leaveRequests' => function ($query) {
+                $query->whereYear('created_at', now()->year);
+            }])
+            ->get()
+            ->each(function ($user) {
+                $user->currentLeaveBalance = $user->leaveBalances()
+                    ->where('year', now()->year)
+                    ->first();
+            });
     }
 
+    /**
+     * Counter Getters
+     */
     public function getPendingCountProperty()
     {
         return $this->getDepartmentRequestsCount(LeaveRequest::STATUS_PENDING_MANAGER);
@@ -215,6 +364,9 @@ class Leave extends Component
             ->count();
     }
 
+    /**
+     * Render Component
+     */
     public function render()
     {
         return view('livewire.manager.leave', [
