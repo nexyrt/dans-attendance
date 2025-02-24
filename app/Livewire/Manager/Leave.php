@@ -63,8 +63,10 @@ class Leave extends Component
     {
         try {
             // Check if document exists
-            if (!$this->selectedLeaveRequest->attachment_path || 
-                !File::exists(public_path($this->selectedLeaveRequest->attachment_path))) {
+            if (
+                !$this->selectedLeaveRequest->attachment_path ||
+                !File::exists(public_path($this->selectedLeaveRequest->attachment_path))
+            ) {
                 return false;
             }
 
@@ -73,19 +75,40 @@ class Leave extends Component
                 public_path($this->selectedLeaveRequest->attachment_path)
             );
 
-            // Determine signature placeholder based on user role
-            $role = auth()->user()->role;
-            $placeholder = match($role) {
-                'manager' => 'manager_signature',
-                'admin' => 'hr_signature',
-                'director' => 'director_signature',
+            // Get current user and their department
+            $user = auth()->user();
+            $department = $user->department;
+
+            // Determine placeholder based on user role
+            $role = $user->role;
+            $placeholders = match ($role) {
+                'manager' => [
+                    'signature' => 'manager_signature',
+                    'name' => 'manager_name',
+                    'department' => 'department_name'
+                ],
+                'admin' => [
+                    'signature' => 'hr_signature',
+                    'name' => 'hr_name',
+                    'department' => 'hr_department'
+                ],
+                'director' => [
+                    'signature' => 'director_signature',
+                    'name' => 'director_name',
+                    'department' => 'director_department'
+                ],
                 default => null
             };
 
-            if (!$placeholder) return false;
+            if (!$placeholders)
+                return false;
 
-            // Add signature to document
-            $templateProcessor->setImageValue($placeholder, public_path($signaturePath));
+            // Set signature image
+            $templateProcessor->setImageValue($placeholders['signature'], public_path($signaturePath));
+
+            // Set name and department values
+            $templateProcessor->setValue($placeholders['name'], $user->name);
+            $templateProcessor->setValue($placeholders['department'], $department->name);
 
             // Save document with the same filename (override)
             $templateProcessor->saveAs(public_path($this->selectedLeaveRequest->attachment_path));
@@ -133,7 +156,7 @@ class Leave extends Component
         $documentSigned = $this->addSignatureToDocument($signaturePath);
 
         // Process approval based on role
-        $status = match($user->role) {
+        $status = match ($user->role) {
             'manager' => [
                 'status' => 'pending_hr',
                 'manager_id' => $user->id,
@@ -164,7 +187,7 @@ class Leave extends Component
             } else {
                 $this->selectedLeaveRequest->update(collect($status)->except('message')->toArray());
             }
-            
+
             session()->flash('message', $status['message'] . ($documentSigned ? ' Document has been signed.' : ''));
         }
 
@@ -316,9 +339,11 @@ class Leave extends Component
     {
         return User::where('department_id', $this->selectedDepartment)
             ->where('id', '!=', auth()->id())
-            ->with(['leaveRequests' => function ($query) {
-                $query->whereYear('created_at', now()->year);
-            }])
+            ->with([
+                'leaveRequests' => function ($query) {
+                    $query->whereYear('created_at', now()->year);
+                }
+            ])
             ->get()
             ->each(function ($user) {
                 $user->currentLeaveBalance = $user->leaveBalances()
