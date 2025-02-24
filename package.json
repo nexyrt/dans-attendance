@@ -20,6 +20,8 @@
         "boxicons": "^2.1.4",
         "ckeditor4": "^4.24.0",
         "flowbite": "^2.5.2",
+        "moment": "^2.30.1",
+        "pikaday": "^1.8.2",
         "preline": "^2.7.0"
     }
 }

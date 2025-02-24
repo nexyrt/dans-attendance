@@ -31,6 +31,11 @@ use App\Livewire\Manager\{
     Dashboard as ManagerDashboard,
     Leave as ManagerLeave,
 };
+use App\Livewire\Director\{
+    Dashboard as DirectorDashboard,
+    Users as DirectorUsers,
+    Leave as DirectorLeave,
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -115,6 +120,21 @@ Route::middleware(['auth', 'role:manager'])
     ->group(function () {
         Route::get('/dashboard', ManagerDashboard::class)->name('dashboard');
         Route::get('/leave', ManagerLeave::class)->name('leave.index');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Manager Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:director'])
+    ->prefix('director')
+    ->name('director.')
+    ->group(function () {
+        Route::get('/dashboard', DirectorDashboard::class)->name('dashboard');
+        Route::get('/users', DirectorUsers::class)->name('users.index');
+        Route::get('/leave', DirectorLeave::class)->name('leave.index');
     });
 
 /*
