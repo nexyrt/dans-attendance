@@ -18,6 +18,9 @@ class HomeController extends Controller
             if ($user->role == 'manager') {
                 return redirect('/manager/dashboard')->with(['user', $user]);
             }
+            if ($user->role == 'director') {
+                return redirect('/director/dashboard')->with(['user', $user]);
+            }
             if ($user->role == 'staff') {
                 return redirect('/staff/dashboard')->with(['user', $user]);
             }

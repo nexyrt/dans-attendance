@@ -351,7 +351,7 @@ class Leave extends Component
 
     public function render()
     {
-        $this->dispatch('tab-changed');
+        $this->dispatch('refresh-preline');
         return view('livewire.staff.leave', [
             'leaveRequests' => $this->leaveRequests,
             'leaveBalance' => $this->leaveBalance,

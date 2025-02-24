@@ -5,7 +5,7 @@ import './attendance-modal';
 import './leave-flowbite-components';
 
 document.addEventListener('livewire:init', () => {
-    Livewire.on('tab-changed', () => {
+    Livewire.on('refresh-preline', () => {
         setTimeout(() => {
             HSStaticMethods.autoInit();
         });
