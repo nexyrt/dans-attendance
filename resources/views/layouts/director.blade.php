@@ -90,15 +90,27 @@
                                     ],
                                     [
                                         'route' => 'director.users.index',
-                                        'label' => 'Users Management',
+                                        'label' => 'Users',
                                         'icon' =>
-                                            '<path d="M5 21C5 17.134 8.13401 14 12 14C15.866 14 19 17.134 19 21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>w',
+                                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />',
                                     ],
                                     [
-                                        'route' => 'director.leave.index',
-                                        'label' => 'Leave Management',
+                                        'route' => 'director.attendances.index',
+                                        'label' => 'Attendances',
                                         'icon' =>
-                                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />',
+                                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />',
+                                    ],
+                                    [
+                                        'route' => 'director.leaves.index',
+                                        'label' => 'Leaves',
+                                        'icon' =>
+                                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />',
+                                    ],
+                                    [
+                                        'route' => 'director.office.index',
+                                        'label' => 'Office',
+                                        'icon' =>
+                                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />',
                                     ],
                                 ];
                             @endphp
@@ -107,15 +119,15 @@
                                 <a href="{{ route($nav['route']) }}"
                                     @click.prevent="window.innerWidth < 1024 ? (isSidebarOpen = false, window.location.href = '{{ route($nav['route']) }}') : window.location.href = '{{ route($nav['route']) }}'"
                                     class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 
-                                    {{ request()->routeIs($nav['route'] . '*')
-                                        ? 'bg-primary-50 text-primary-600'
-                                        : 'text-gray-600 hover:bg-gray-50/80' }}">
+                {{ request()->routeIs($nav['route'] . '*')
+                    ? 'bg-primary-50 text-primary-600'
+                    : 'text-gray-600 hover:bg-gray-50/80' }}">
                                     <div class="flex items-center">
                                         <div
                                             class="{{ request()->routeIs($nav['route'] . '*')
                                                 ? 'bg-primary-100/50'
                                                 : 'bg-gray-100/50 group-hover:bg-primary-50/50' }} 
-                                                p-2 rounded-lg transition-colors duration-200">
+                            p-2 rounded-lg transition-colors duration-200">
                                             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"
                                                 stroke="currentColor">
                                                 {!! $nav['icon'] !!}
