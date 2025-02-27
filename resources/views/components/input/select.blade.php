@@ -20,7 +20,7 @@
     >
         <option value="">{{ $placeholder }}</option>
         @foreach($options as $option)
-            <option value="{{ $option }}">{{ ucfirst($option) }}</option>
+            <option value="{{ $option }}">{{ ucfirst(str_replace('_', ' ',$option)) }}</option>
         @endforeach
     </select>
 </div>

@@ -6,7 +6,7 @@
             <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
                 <h2 class="text-xl font-semibold text-gray-800"></h2>
 
-                <button type="button" x-data="{}" x-on:click="$dispatch('open-modal', 'create-user-modal')"
+                <button type="button" x-data="{}" {{-- x-on:click="$dispatch('open-modal', 'create-user-modal')" --}} wire:click='create'
                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                     <div class="flex items-center">
                         <svg class="h-5 w-5 mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none"
