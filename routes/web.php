@@ -34,7 +34,9 @@ use App\Livewire\Manager\{
 use App\Livewire\Director\{
     Dashboard as DirectorDashboard,
     Users as DirectorUsers,
-    Leave as DirectorLeave,
+    Leave as DirectorLeaves,
+    Attendances as DirectorAttendances,
+    Offices as DirectorOffices,
 };
 
 /*
@@ -134,7 +136,9 @@ Route::middleware(['auth', 'role:director'])
     ->group(function () {
         Route::get('/dashboard', DirectorDashboard::class)->name('dashboard');
         Route::get('/users', DirectorUsers::class)->name('users.index');
-        Route::get('/leave', DirectorLeave::class)->name('leave.index');
+        Route::get('/leave', DirectorLeaves::class)->name('leaves.index');
+        Route::get('/attendances', DirectorAttendances::class)->name('attendances.index');
+        Route::get('/office', DirectorOffices::class)->name('office.index');
     });
 
 /*
