@@ -1,5 +1,5 @@
 <!-- resources/views/livewire/director/users.blade.php -->
-<div class="max-w-7xl mx-auto py-6">
+<div class="max-w-6xl mx-auto py-6">
     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
         <!-- Header with filters and actions -->
         <div class="px-6 py-4 border-b border-gray-200">

@@ -1,6 +1,6 @@
-<div class="flex h-screen gap-5">
+<div class="flex max-w-7xl gap-5 mx-5 py-5">
     {{-- Left Sidebar --}}
-    <div class="w-96 bg-white rounded-2xl shadow-lg flex flex-col h-full">
+    <div class="w-96 bg-white rounded-2xl h-[85vh] shadow-lg flex flex-col">
         {{-- Header Section --}}
         <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-500 to-blue-600 rounded-t-2xl">
             <div class="flex items-center space-x-3">
@@ -126,10 +126,10 @@
     </div>
 
     {{-- Map Section --}}
-    <div class="flex-1 h-screen">
+    <div class="flex-1">
         <style>
             #map {
-                height: 100%;
+                height: 85vh;
                 width: 100%;
                 border-radius: 16px;
             }

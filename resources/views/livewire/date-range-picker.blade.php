@@ -2,7 +2,7 @@
 <div class="w-full relative" x-data="{ open: @entangle('isOpen') }">
     {{-- Trigger Button --}}
     <button type="button" @click="open = !open"
-        class="inline-flex w-full items-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+        class="inline-flex w-full whitespace-nowrap items-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
         <svg class="mr-2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
             stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -43,8 +43,6 @@
                             <option value="{{ $month['value'] }}">{{ $month['label'] }}</option>
                         @endforeach
                     </select>
-
-                    <span class="text-gray-800 dark:text-neutral-200">/</span>
 
                     <select wire:model.live="currentYear"
                         class="form-select py-0.5 pl-2 pr-8 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md text-sm dark:bg-neutral-800 dark:border-neutral-600 dark:text-neutral-200">
