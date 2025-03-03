@@ -19,7 +19,6 @@ class UsersController extends Controller
             'password' => 'required|string|min:8',
             'role' => 'required|string|in:manager,admin,staff',
             'department' => 'required|string',
-            'position' => 'required|string|in:direktur,manager,staff',
             'phone_number' => 'nullable|string|max:255',
             'birthdate' => 'nullable|date',
             'address' => 'nullable|string',
@@ -41,7 +40,6 @@ class UsersController extends Controller
             $user->password = Hash::make($request->password);
             $user->role = $request->role;
             $user->department_id = $request->department;
-            $user->position = $request->position;
             $user->phone_number = $request->phone_number;
             $user->birthdate = $request->birthdate;
             $user->address = $request->address;
@@ -76,7 +74,6 @@ class UsersController extends Controller
                 'password' => 'nullable|string|min:8',
                 'role' => 'required|string',
                 'department_id' => 'required|string',
-                'position' => 'required|string',
                 'phone_number' => 'nullable|string|max:15',
                 'birthdate' => 'nullable|date',
                 'address' => 'nullable|string',
@@ -90,7 +87,7 @@ class UsersController extends Controller
                 $imageName = str_replace(' ', '_', $request->name) . '_' . time() . '.' . $request->file('image')->getClientOriginalExtension();
                 $request->file('image')->move(public_path('images/users'), $imageName);
                 $data['image'] = 'images/users/' . $imageName;  // Use the same path format as in store method
-                
+
                 // Optional: Delete old image if exists
                 if ($user->image && file_exists(public_path($user->image))) {
                     unlink(public_path($user->image));
@@ -134,5 +131,12 @@ class UsersController extends Controller
             return redirect()->back()->withErrors($e->getMessage());
         }
 
+    }
+
+    public function detail(User $user)
+    {
+        return view('admin.users.detail', [
+            'user' => $user
+        ]);
     }
 }

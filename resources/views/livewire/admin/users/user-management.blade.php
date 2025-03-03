@@ -60,36 +60,6 @@
                 </span>
             </div>
         </div>
-
-        <!-- Positions Card -->
-        <div class="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-lg border border-gray-200 dark:border-gray-700 p-4 
-            transition-all duration-300 hover:shadow-lg hover:scale-105 group">
-            <div class="flex items-center justify-between mb-3">
-                <h3
-                    class="text-sm font-medium text-gray-600 dark:text-gray-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                    Positions
-                </h3>
-                <div
-                    class="p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50 transition-colors">
-                    <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
-                        </path>
-                    </svg>
-                </div>
-            </div>
-            <div class="flex items-center justify-between">
-                <span
-                    class="text-2xl font-semibold text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                    {{ $stats['positions'] }}
-                </span>
-                <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2.5 py-0.5 rounded-full
-                    group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50 transition-colors">
-                    Available
-                </span>
-            </div>
-        </div>
     </div>
 
 
@@ -249,14 +219,14 @@
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Users Records</h3>
                 <div class="flex items-center gap-3">
                     <!-- Export Button -->
-                    <a href="{{ route('admin.users.export', ['department' => $department, 'position' => $position, 'name' => $name]) }}"
-                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50">
+                    <button wire:click="export"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
                         Export
-                    </a>
+                    </button>
                     <!-- Print Button -->
                     <button wire:click="printData" wire:loading.attr="disabled"
                         class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50">
@@ -301,9 +271,6 @@
                         <!-- Role Details -->
                         <td class="px-6 py-4">
                             <div class="space-y-1">
-                                <div class="font-medium text-gray-900 dark:text-white capitalize">
-                                    {{ $user->position }}
-                                </div>
                                 <span
                                     class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                                     {{ $user->department->name }}
@@ -568,26 +535,6 @@
                             </div>
 
                             <div>
-                                <label class="text-xs font-medium text-gray-600">Position</label>
-                                <div class="relative mt-1">
-                                    <select name="position" required
-                                        class="block w-full appearance-none rounded-md border-gray-200 bg-white pl-3 pr-10 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                                        <option value="">Select Position</option>
-                                        <option value="direktur">Direktur</option>
-                                        <option value="staff">Staff</option>
-                                        <option value="supervisor">Supervisor</option>
-                                    </select>
-                                    <div
-                                        class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div>
                                 <label class="text-xs font-medium text-gray-600">Role</label>
                                 <div class="relative mt-1">
                                     <select name="role" required
@@ -769,27 +716,6 @@
                                         <option value="{{ $dept->id }}" name="department_id">
                                             {{ $dept->name }}</option>
                                         @endforeach
-                                    </select>
-                                    <div
-                                        class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="text-xs font-medium text-gray-600">Position</label>
-                                <div class="relative mt-1">
-                                    <select name="position" required :value="currUser?.position ?? ''"
-                                        class="block w-full appearance-none rounded-md border-gray-200 bg-white pl-3 pr-10 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                                        <option value="">Select Position</option>
-                                        <option value="Direktur">Director</option>
-                                        <option value="Manager">Manager</option>
-                                        <option value="Staff">Staff</option>
-                                        <option value="Supervisi">Supervisor</option>
                                     </select>
                                     <div
                                         class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">

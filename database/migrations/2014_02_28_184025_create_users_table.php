@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -16,18 +15,16 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
-            $table->enum('role', ['staff', 'manager', 'admin'])->default('admin');
-            $table->string('position');
-            $table->string('image')->nullable();
-            $table->decimal('salary', 10, 2)->nullable();
-            $table->text('address')->nullable();
-            $table->string('phone_number')->nullable();
+            $table->enum('role', ['staff', 'manager', 'admin', 'director'])->default('staff');
+            $table->string('phone_number', 20)->nullable();
             $table->date('birthdate')->nullable();
-            $table->timestamp('email_verified_at')->nullable();
-
-            $table->foreignId('department_id')->constrained('departments')->onDelete('cascade')->nullable();
-            $table->rememberToken();    
+            $table->decimal('salary', 12, 2)->nullable();
+            $table->text('address')->nullable();
+            $table->string('image')->nullable();
+            $table->foreignId('department_id')->nullable()->constrained()->nullOnDelete();
+            $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

@@ -12,29 +12,20 @@ class UserFactory extends Factory
 {
     protected static ?string $password;
 
+    // UserFactory.php
     public function definition(): array
     {
-
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'role' => fake()->randomElement(['admin', 'manager', 'staff']),
-            'department_id' => Department::inRandomOrder()->first()->id,
-            'position' => $this->faker->randomElement(['Manager', 'Staff']),
-            'salary' => $this->faker->randomNumber(5),
-            'address' => $this->faker->address,
-            'phone_number' => $this->faker->phoneNumber,
-            'birthdate' => $this->faker->date,
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
+            'name' => $this->faker->name(),
+            'email' => $this->faker->unique()->safeEmail(),
+            'password' => bcrypt('password'),
+            'role' => $this->faker->randomElement(['staff', 'manager', 'admin', 'director']),
+            'department_id' => Department::inRandomOrder()->first()->id, // Better way to get random department
+            'phone_number' => $this->faker->phoneNumber(),
+            'birthdate' => $this->faker->dateTimeBetween('-40 years', '-20 years')->format('Y-m-d'),
+            'salary' => $this->faker->numberBetween(3000000, 10000000),
+            'address' => $this->faker->address(),
             'remember_token' => Str::random(10),
         ];
-    }
-
-    public function unverified(): static
-    {
-        return $this->state(fn(array $attributes) => [
-            'email_verified_at' => null,
-        ]);
     }
 }

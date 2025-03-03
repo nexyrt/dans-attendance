@@ -4,7 +4,8 @@ namespace Database\Factories;
 
 use App\Models\Attendance;
 use App\Models\User;
-use Carbon\Carbon;
+use App\Models\OfficeLocation;
+use Cake\Chronos\Chronos;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class AttendanceFactory extends Factory
@@ -13,120 +14,86 @@ class AttendanceFactory extends Factory
 
     public function definition(): array
     {
-        $date = $this->faker->dateTimeBetween(
-            Carbon::now()->startOfYear(),
-            Carbon::now()->endOfYear()
+        $office = OfficeLocation::inRandomOrder()->first();
+        $date = $this->faker->dateTimeBetween('-3 months', 'now');
+        $checkIn = Chronos::parse($date)->setTime(
+            $this->faker->numberBetween(7, 9),
+            $this->faker->numberBetween(0, 59)
         );
         
-        // Set random check-in time between 7:00 and 9:00
-        $checkIn = Carbon::parse($date)->setHour(rand(7, 9))->setMinute(rand(0, 59));
+        // 80% chance of checking out
+        $hasCheckOut = $this->faker->boolean(80);
+        $checkOut = $hasCheckOut ? (clone $checkIn)->addHours($this->faker->numberBetween(8, 10)) : null;
         
-        // Set check-out time 7-9 hours after check-in
-        $checkOut = (clone $checkIn)->addHours(rand(7, 9))->addMinutes(rand(0, 59));
-        
-        // Calculate working hours
-        $workingHours = $checkIn->floatDiffInHours($checkOut);
-        
+        // Calculate working hours if check out exists
+        $workingHours = $hasCheckOut ? 
+            round($checkIn->diffInHours($checkOut, true), 2) : 
+            null;
+
         // Determine status based on check-in time
-        $status = match(true) {
-            $checkIn->format('H:i') > '08:30' => 'late',
-            $checkOut->format('H:i') < '17:00' => 'early_leave',
-            default => 'present'
-        };
+        $status = $this->determineStatus($checkIn);
+
+        // Generate coordinates near the office location
+        $checkInCoordinates = $this->generateNearbyCoordinates($office);
+        $checkOutCoordinates = $hasCheckOut ? $this->generateNearbyCoordinates($office) : null;
 
         return [
-            'user_id' => User::all()->random()->id,
             'date' => $date,
             'check_in' => $checkIn,
             'check_out' => $checkOut,
             'status' => $status,
-            'working_hours' => number_format($workingHours, 2),
-            'early_leave_reason' => $status === 'early_leave' ? $this->faker->sentence : null,
-            'notes' => $this->faker->boolean(30) ? $this->faker->sentence : null,
+            'working_hours' => $workingHours,
+            'early_leave_reason' => $status === 'early_leave' ? $this->faker->sentence() : null,
+            'notes' => $this->faker->boolean(30) ? $this->faker->sentence() : null,
+            
+            // Location data
+            'check_in_latitude' => $checkInCoordinates['latitude'],
+            'check_in_longitude' => $checkInCoordinates['longitude'],
+            'check_out_latitude' => $checkOutCoordinates ? $checkOutCoordinates['latitude'] : null,
+            'check_out_longitude' => $checkOutCoordinates ? $checkOutCoordinates['longitude'] : null,
+            'check_in_office_id' => $office->id,
+            'check_out_office_id' => $hasCheckOut ? $office->id : null,
+            
+            // Device info
+            'device_type' => $this->faker->randomElement(['Android', 'iOS', 'Web']),
         ];
     }
 
     /**
-     * Indicate that the attendance is for today.
+     * Determine attendance status based on check-in time
      */
-    public function today()
+    private function determineStatus(Chronos $checkIn): string
     {
-        return $this->state(function (array $attributes) {
-            return [
-                'date' => now()->toDateString(),
-            ];
-        });
+        $hour = $checkIn->hour;
+        
+        if ($hour < 8) {
+            return 'present';
+        } elseif ($hour < 9) {
+            return $this->faker->randomElement(['present', 'late']);
+        } elseif ($hour >= 9) {
+            return 'late';
+        }
+
+        return 'present';
     }
 
     /**
-     * Indicate that the attendance is marked as present.
+     * Generate coordinates within office radius
      */
-    public function present()
+    private function generateNearbyCoordinates(OfficeLocation $office): array
     {
-        return $this->state(function (array $attributes) {
-            $checkIn = Carbon::parse($attributes['date'])->setHour(8)->setMinute(rand(0, 30));
-            $checkOut = (clone $checkIn)->addHours(8)->addMinutes(rand(0, 30));
-            
-            return [
-                'check_in' => $checkIn,
-                'check_out' => $checkOut,
-                'status' => 'present',
-                'working_hours' => number_format($checkIn->floatDiffInHours($checkOut), 2),
-            ];
-        });
-    }
+        // Convert office radius from meters to degrees (approximate)
+        $radiusInDegrees = $office->radius / 111320; // 1 degree = 111.32 km
 
-    /**
-     * Indicate that the attendance is marked as late.
-     */
-    public function late()
-    {
-        return $this->state(function (array $attributes) {
-            $checkIn = Carbon::parse($attributes['date'])->setHour(9)->setMinute(rand(0, 59));
-            $checkOut = (clone $checkIn)->addHours(8);
-            
-            return [
-                'check_in' => $checkIn,
-                'check_out' => $checkOut,
-                'status' => 'late',
-                'working_hours' => number_format($checkIn->floatDiffInHours($checkOut), 2),
-                'notes' => $this->faker->sentence,
-            ];
-        });
-    }
-
-    /**
-     * Indicate that the attendance has early leave.
-     */
-    public function earlyLeave()
-    {
-        return $this->state(function (array $attributes) {
-            $checkIn = Carbon::parse($attributes['date'])->setHour(8)->setMinute(rand(0, 30));
-            $checkOut = (clone $checkIn)->addHours(6); // Leave early after 6 hours
-            
-            return [
-                'check_in' => $checkIn,
-                'check_out' => $checkOut,
-                'status' => 'early_leave',
-                'working_hours' => number_format($checkIn->floatDiffInHours($checkOut), 2),
-                'early_leave_reason' => $this->faker->sentence,
-            ];
-        });
-    }
-
-    /**
-     * Indicate that the day is a holiday.
-     */
-    public function holiday()
-    {
-        return $this->state(function (array $attributes) {
-            return [
-                'check_in' => null,
-                'check_out' => null,
-                'status' => 'holiday',
-                'working_hours' => 0,
-                'notes' => $this->faker->sentence,
-            ];
-        });
+        return [
+            'latitude' => $this->faker->latitude(
+                $office->latitude - $radiusInDegrees,
+                $office->latitude + $radiusInDegrees
+            ),
+            'longitude' => $this->faker->longitude(
+                $office->longitude - $radiusInDegrees,
+                $office->longitude + $radiusInDegrees
+            ),
+        ];
     }
 }

@@ -6,13 +6,9 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/css/app.css',
-                'resources/js/app.js',
+                'resources/js/app.js'
             ],
             refresh: true,
         }),
     ],
-    server: {
-        host: '192.168.1.222',  // Your desired host
-        port: 8001,  // Your desired port
-    },
 });

@@ -22,7 +22,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (!file_exists(public_path('leave-attachments'))) {
+            mkdir(public_path('leave-attachments'), 0777, true);
+        }
+        
         Blade::component('notification', \App\View\Components\Shared\Notification::class);
         Livewire::component('shared.check-out-modal', CheckOutModal::class);
+        Livewire::component('shared.check-in-modal', \App\Livewire\Shared\CheckInModal::class);
     }
 }

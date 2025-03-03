@@ -15,10 +15,11 @@ return new class extends Migration
             $table->id();
             $table->string('title')->nullable();
             $table->date('date');
-            $table->time('start_time')->nullable();
-            $table->time('end_time')->nullable();
-            $table->enum('status', ['regular', 'wfh', 'halfday','holiday']);
-            $table->text('note')->nullable();
+            $table->enum('status', ['regular', 'event', 'holiday']);
+            $table->time('start_time')->nullable(); 
+            $table->time('end_time')->nullable();   
+            $table->integer('late_tolerance')->nullable()->default(30);
+            $table->text('note')->nullable();       
             $table->timestamps();
         });
     }
