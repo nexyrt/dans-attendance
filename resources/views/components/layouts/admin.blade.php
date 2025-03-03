@@ -46,11 +46,11 @@
                         <a href="/" class="flex items-center space-x-3">
                             <div
                                 class="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700">
-                                <img src="{{ asset('images/dans.png') }}" alt="DANS" class="h-6 w-6">
+                                <img src="{{ asset('images/jkb.png') }}" alt="DANS" class="h-6 w-6">
                             </div>
                             <span
                                 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-800">
-                                DANS
+                                JKB
                             </span>
                         </a>
                         <button @click="open = false" class="lg:hidden p-2 rounded-lg hover:bg-gray-100">
