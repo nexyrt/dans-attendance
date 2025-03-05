@@ -1,10 +1,11 @@
-<!-- resources/views/livewire/director/leave.blade.php -->
+<!-- resources/views/livewire/hr/leave.blade.php -->
 <div class="min-h-screen py-8 space-y-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
         <!-- Stats Overview -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-5">
             <!-- Pending Requests Card -->
-            <div class="bg-white overflow-hidden shadow-sm rounded-xl">
+            <div class="bg-white/95 backdrop-blur-sm overflow-hidden shadow-sm rounded-xl">
                 <div class="p-5">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
@@ -19,7 +20,7 @@
                         <div class="ml-5 w-0 flex-1">
                             <dl>
                                 <dt class="text-sm font-medium text-gray-500 truncate">
-                                    Pending Approval
+                                    Pending Requests
                                 </dt>
                                 <dd class="flex items-baseline">
                                     <div class="text-2xl font-semibold text-gray-900">
@@ -41,7 +42,7 @@
             </div>
 
             <!-- Approved Requests Card -->
-            <div class="bg-white overflow-hidden shadow-sm rounded-xl">
+            <div class="bg-white/95 backdrop-blur-sm overflow-hidden shadow-sm rounded-xl">
                 <div class="p-5">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
@@ -78,7 +79,7 @@
             </div>
 
             <!-- Rejected Requests Card -->
-            <div class="bg-white overflow-hidden shadow-sm rounded-xl">
+            <div class="bg-white/95 backdrop-blur-sm overflow-hidden shadow-sm rounded-xl">
                 <div class="p-5">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
@@ -113,106 +114,10 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Department Filter Card -->
-            <div class="bg-white overflow-hidden shadow-sm rounded-xl">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-14 h-14 rounded-xl bg-blue-50 flex items-center justify-center">
-                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate mb-2">
-                                    Department Filter
-                                </dt>
-                                <dd class="flex items-baseline">
-                                    <div class="w-full">
-                                        <select wire:model.live="selectedDepartment"
-                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
-                                            <option value="">All Departments</option>
-                                            @foreach ($departments as $department)
-                                                <option value="{{ $department->id }}">{{ $department->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-blue-50 px-5 py-3">
-                    <div class="text-sm">
-                        <button wire:click="updateDepartmentFilter(null)"
-                            class="font-medium text-blue-700 hover:text-blue-900">
-                            Reset filter
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Analytics Dashboard -->
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
-            <!-- Department Statistics -->
-            <div class="bg-white shadow-sm rounded-xl col-span-1">
-                <div class="px-4 py-3 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">Department Statistics</h3>
-                </div>
-                <div class="p-4">
-                    <div class="overflow-hidden">
-                        <div class="space-y-4">
-                            @foreach ($departmentStats as $stat)
-                                <div class="bg-gray-50 rounded-lg p-3">
-                                    <div class="flex justify-between items-center mb-2">
-                                        <h4 class="font-medium text-gray-900">{{ $stat->department_name }}</h4>
-                                        <button wire:click="updateDepartmentFilter({{ $stat->department_id }})"
-                                            class="text-xs text-primary-600 hover:text-primary-800 font-medium">
-                                            Filter
-                                        </button>
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-2 text-center">
-                                        <div class="bg-yellow-50 py-2 px-1 rounded">
-                                            <span class="block text-xs text-yellow-700">Pending</span>
-                                            <span class="font-medium text-yellow-800">{{ $stat->pending_count }}</span>
-                                        </div>
-                                        <div class="bg-green-50 py-2 px-1 rounded">
-                                            <span class="block text-xs text-green-700">Approved</span>
-                                            <span class="font-medium text-green-800">{{ $stat->approved_count }}</span>
-                                        </div>
-                                        <div class="bg-red-50 py-2 px-1 rounded">
-                                            <span class="block text-xs text-red-700">Rejected</span>
-                                            <span class="font-medium text-red-800">{{ $stat->rejected_count }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Monthly Statistics Chart -->
-            <div class="bg-white shadow-sm rounded-xl col-span-1 xl:col-span-2">
-                <div class="px-4 py-3 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">Monthly Statistics ({{ now()->year }})</h3>
-                </div>
-                <div class="p-4 h-80">
-                    @livewire('livewire-column-chart', [
-                        'columnChartModel' => $monthlyColumnChartModel,
-                    ])
-                </div>
-            </div>
         </div>
 
         <!-- Main Content Area -->
-        <div class="bg-white shadow-sm rounded-xl overflow-hidden">
+        <div class="bg-white/95 backdrop-blur-sm rounded-xl shadow-sm">
             <!-- Tabs -->
             <div class="border-b border-gray-200">
                 <nav class="flex space-x-8 px-6 overflow-x-auto" aria-label="Tabs">
@@ -305,7 +210,7 @@
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Previous Approvals
+                                Manager Approval
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -319,7 +224,7 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse($leaveRequests as $request)
-                            <tr class="hover:bg-gray-50">
+                            <tr class="hover:bg-gray-50/50">
                                 <!-- Employee -->
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center max-w-md">
@@ -406,50 +311,18 @@
                                     </div>
                                 </td>
 
-                                <!-- Previous Approvals -->
+                                <!-- Manager Approval -->
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="space-y-1">
-                                        <!-- Manager approval -->
-                                        <div class="flex items-center text-xs">
-                                            <div
-                                                class="w-4 h-4 rounded-full flex items-center justify-center 
-                                                {{ $request->manager_approved_at ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400' }}">
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            </div>
-                                            <span class="ml-1.5 text-gray-500">
-                                                Manager:
-                                                <span class="font-medium">
-                                                    {{ $request->manager->name ?? 'Not assigned' }}
-                                                </span>
-                                            </span>
+                                    <div class="text-sm">
+                                        <div class="font-medium text-gray-700">
+                                            {{ $request->manager->name ?? 'N/A' }}
                                         </div>
-
-                                        <!-- HR approval -->
-                                        <div class="flex items-center text-xs">
-                                            <div
-                                                class="w-4 h-4 rounded-full flex items-center justify-center 
-                                                {{ $request->hr_approved_at ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400' }}">
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            </div>
-                                            <span class="ml-1.5 text-gray-500">
-                                                HR:
-                                                <span class="font-medium">
-                                                    {{ $request->hr->name ?? 'Not assigned' }}
-                                                </span>
-                                            </span>
-                                        </div>
-
-                                        <!-- Date info -->
-                                        <div class="text-xs text-gray-400 mt-1">
-                                            {{ $request->hr_approved_at ? $request->hr_approved_at->format('M j, Y H:i') : 'Pending' }}
+                                        <div class="text-gray-500">
+                                            @if($request->manager_approved_at)
+                                                {{ $request->manager_approved_at->format('M j, Y H:i') }}
+                                            @else
+                                                Not approved yet
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
@@ -490,7 +363,7 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round"
                                                         stroke-width="2" d="M5 13l4 4L19 7" />
                                                 </svg>
-                                                Final Approval
+                                                Approve
                                             </button>
 
                                             <button wire:click="showModalReject({{ $request->id }})" type="button"
@@ -545,7 +418,7 @@
                                                 requests</h3>
                                             <p class="text-sm text-gray-500">
                                                 @if ($activeTab === 'pending')
-                                                    There are no pending leave requests awaiting your final approval.
+                                                    There are no pending leave requests to review at this time.
                                                 @elseif($activeTab === 'approved')
                                                     No approved leave requests found.
                                                 @else
@@ -570,24 +443,31 @@
                 <x-modals.modal name="signature-modal" maxWidth="md">
                     <div class="p-6">
                         <h2 class="text-lg font-medium text-gray-900 mb-4">
-                            Director Digital Signature
+                            Digital Signature
                         </h2>
-
+            
                         <!-- Your signature pad component -->
                         <div x-data="signaturePad(@entangle('signature'))">
                             <div class="mb-4">
-                                <canvas x-ref="signature_canvas" class="border rounded shadow w-full" height="200">
+                                <canvas 
+                                    x-ref="signature_canvas" 
+                                    class="border rounded shadow w-full" 
+                                    height="200">
                                 </canvas>
                             </div>
-
+                            
                             <div class="mt-4 flex justify-end space-x-3">
-                                <button type="button" x-on:click="$dispatch('close-modal', 'signature-modal')"
+                                <button
+                                    type="button"
+                                    x-on:click="$dispatch('close-modal', 'signature-modal')"
                                     class="bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200">
                                     Cancel
                                 </button>
-                                <button type="button" wire:click="saveSignatureAndApprove"
+                                <button
+                                    type="button"
+                                    wire:click="saveSignatureAndApprove"
                                     class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                                    Final Approval
+                                    Submit Approval
                                 </button>
                             </div>
                         </div>
@@ -598,10 +478,10 @@
                             Alpine.data('signaturePad', (value) => ({
                                 signaturePadInstance: null,
                                 value: value,
-                                init() {
+                                init(){
                                     this.signaturePadInstance = new SignaturePad(this.$refs.signature_canvas);
-                                    this.signaturePadInstance.addEventListener("endStroke", () => {
-                                        this.value = this.signaturePadInstance.toDataURL('image/png');
+                                    this.signaturePadInstance.addEventListener("endStroke", ()=>{
+                                       this.value = this.signaturePadInstance.toDataURL('image/png');
                                     });
                                 },
                             }))
@@ -651,14 +531,6 @@
                                                 {{ $selectedRequest->start_date->format('M j, Y') }} -
                                                 {{ $selectedRequest->end_date->format('M j, Y') }}
                                                 ({{ $selectedRequest->getDurationInDays() }} days)
-                                            </p>
-                                            <p><span class="font-medium">Manager Approval:</span>
-                                                {{ $selectedRequest->manager ? $selectedRequest->manager->name : 'N/A' }}
-                                                ({{ $selectedRequest->manager_approved_at ? $selectedRequest->manager_approved_at->format('M j, Y') : 'Not provided' }})
-                                            </p>
-                                            <p><span class="font-medium">HR Approval:</span>
-                                                {{ $selectedRequest->hr ? $selectedRequest->hr->name : 'N/A' }}
-                                                ({{ $selectedRequest->hr_approved_at ? $selectedRequest->hr_approved_at->format('M j, Y') : 'Not provided' }})
                                             </p>
                                         </div>
                                     </div>
@@ -733,3 +605,4 @@
             @endif
         </div>
     </div>
+</div>

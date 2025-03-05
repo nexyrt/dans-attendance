@@ -34,7 +34,7 @@
                 <div>
                     <label for="department_filter"
                         class="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                    <x-input.select wire:model.live="department" id="department_filter" :options="$departments->pluck('name')->toArray()"
+                    <x-input.select wire:model.live="department" id="department_filter" :options="$departments->pluck('name')"
                         placeholder="All Departments" />
                 </div>
 
