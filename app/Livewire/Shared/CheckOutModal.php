@@ -16,22 +16,30 @@ class CheckOutModal extends Component
 {
     use DateTimeComparison;
 
+    // UI State Properties
     public $showModal = false;
+    public $isSuccess = false;
+    public $errorMessage = null;
+    public $showEarlyLeaveForm = false;
+
+    // Attendance Properties
     public $currentTime;
     public $attendance;
     public $todayAttendance;
     public $workingHours;
-    public $earlyLeaveReason;
-    public $showEarlyLeaveForm = false;
-    public $isSuccess = false;
-    public $schedule;
     public $hasCompletedAttendance = false;
+
+    // Form Inputs
+    public $earlyLeaveReason;
+    public $notes; // New field for activity notes
+
+    // Schedule Properties
+    public $schedule;
     public $exception = null;
 
-    // New properties for geolocation
+    // Location Properties
     public $latitude = null;
     public $longitude = null;
-    public $errorMessage = null;
     public $nearestOffice = null;
     public $nearestOfficeDistance = null;
 
@@ -40,7 +48,8 @@ class CheckOutModal extends Component
     ];
 
     protected $rules = [
-        'earlyLeaveReason' => 'required_if:showEarlyLeaveForm,true|string|max:255'
+        'earlyLeaveReason' => 'required_if:showEarlyLeaveForm,true|string|max:255',
+        'notes' => 'nullable|string|max:1000' // New validation rule
     ];
 
     public function mount()
@@ -49,6 +58,182 @@ class CheckOutModal extends Component
         $this->loadSchedule();
     }
 
+    public function render()
+    {
+        $this->currentTime = DateTimeHelper::now()->format('H:i:s');
+        return view('livewire.shared.check-out-modal');
+    }
+
+    /**
+     * Open the check-out modal
+     */
+    public function openModal()
+    {
+        $this->resetState();
+        $this->loadTodayAttendance();
+        $this->loadSchedule();
+
+        if ($this->hasCompletedAttendance) {
+            $this->showModal = true;
+            return;
+        }
+
+        if (!$this->attendance) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Please check-in first before attempting to check-out.'
+            ]);
+            return;
+        }
+
+        $this->showModal = true;
+    }
+
+    /**
+     * Close the modal and reset state
+     */
+    public function closeModal()
+    {
+        $this->showModal = false;
+        $this->resetState();
+    }
+
+    /**
+     * Process the check-out action
+     */
+    public function checkOut()
+    {
+        if ($this->hasCompletedAttendance) {
+            $this->closeModal();
+            return;
+        }
+
+        if ($this->showEarlyLeaveForm) {
+            $this->validate();
+        }
+
+        try {
+            if (!$this->validateCheckOutRequirements()) {
+                return;
+            }
+
+            $currentTime = DateTimeHelper::now();
+            $checkInTime = DateTimeHelper::parse($this->attendance->check_in);
+
+            // Calculate working hours from check-in time to current time
+            $workingHours = $checkInTime->diffInHours($currentTime, true);
+
+            $updateData = $this->prepareCheckOutData($currentTime, $workingHours);
+
+            $this->attendance->update($updateData);
+            $this->handleSuccessfulCheckOut();
+
+        } catch (Exception $e) {
+            $this->handleCheckOutError($e);
+        }
+    }
+
+    /**
+     * Validate all requirements for check-out are met
+     * 
+     * @return bool
+     */
+    protected function validateCheckOutRequirements()
+    {
+        if (!$this->attendance) {
+            $this->errorMessage = 'No active attendance record found.';
+            return false;
+        }
+
+        if (!$this->latitude || !$this->longitude) {
+            $this->errorMessage = 'Location data is required for check-out.';
+            return false;
+        }
+
+        if (!$this->nearestOffice) {
+            $this->errorMessage = 'No office locations found.';
+            return false;
+        }
+
+        if ($this->nearestOfficeDistance > $this->nearestOffice->radius) {
+            $this->errorMessage = 'You must be within office area to check out.';
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Prepare the data for check-out update
+     * 
+     * @param \Carbon\Carbon $currentTime
+     * @param float $workingHours
+     * @return array
+     */
+    protected function prepareCheckOutData($currentTime, $workingHours)
+    {
+        $updateData = [
+            'check_out' => $currentTime,
+            'working_hours' => round($workingHours, 1),
+            'check_out_latitude' => $this->latitude,
+            'check_out_longitude' => $this->longitude,
+            'check_out_office_id' => $this->nearestOffice->id,
+            'notes' => $this->notes // Added notes field
+        ];
+
+        if ($this->showEarlyLeaveForm) {
+            $endTime = DateTimeHelper::parse($this->schedule->end_time);
+
+            if ($currentTime->lessThan($endTime)) {
+                $updateData['status'] = 'early_leave';
+                $updateData['early_leave_reason'] = $this->earlyLeaveReason;
+            }
+        }
+
+        return $updateData;
+    }
+
+    /**
+     * Handle successful check-out actions
+     */
+    protected function handleSuccessfulCheckOut()
+    {
+        $this->loadTodayAttendance();
+        $this->isSuccess = true;
+
+        $this->dispatch('notify', [
+            'type' => 'success',
+            'message' => 'Check-out successful!'
+        ]);
+
+        $this->dispatch('success-checkout');
+        $this->dispatch('refresh-page');
+    }
+
+    /**
+     * Handle check-out errors
+     * 
+     * @param Exception $e
+     */
+    protected function handleCheckOutError(Exception $e)
+    {
+        Log::error('Check-out error: ' . $e->getMessage(), [
+            'user_id' => auth()->id(),
+            'attendance_id' => $this->attendance?->id
+        ]);
+
+        $this->dispatch('notify', [
+            'type' => 'error',
+            'message' => 'Failed to process check-out. Please try again.'
+        ]);
+    }
+
+    /**
+     * Process location data received from the front-end
+     * 
+     * @param float|null $latitude
+     * @param float|null $longitude
+     */
     public function handleLocationUpdate($latitude, $longitude)
     {
         try {
@@ -82,6 +267,13 @@ class CheckOutModal extends Component
         }
     }
 
+    /**
+     * Find the nearest office to the given coordinates
+     * 
+     * @param float|null $latitude
+     * @param float|null $longitude
+     * @return OfficeLocation|null
+     */
     protected function findNearestOffice($latitude, $longitude)
     {
         if (!$latitude || !$longitude) {
@@ -109,6 +301,15 @@ class CheckOutModal extends Component
         return $nearestOffice;
     }
 
+    /**
+     * Calculate distance between two geographical coordinates
+     * 
+     * @param float $lat1
+     * @param float $lon1
+     * @param float $lat2
+     * @param float $lon2
+     * @return float
+     */
     protected function calculateDistance($lat1, $lon1, $lat2, $lon2)
     {
         $earthRadius = 6371000; // Earth's radius in meters
@@ -130,85 +331,9 @@ class CheckOutModal extends Component
         return $earthRadius * $c;
     }
 
-    public function checkOut()
-    {
-        if ($this->hasCompletedAttendance) {
-            $this->closeModal();
-            return;
-        }
-
-        if ($this->showEarlyLeaveForm) {
-            $this->validate();
-        }
-
-        try {
-            if (!$this->attendance) {
-                throw new Exception('No active attendance record found.');
-            }
-
-            if (!$this->latitude || !$this->longitude) {
-                $this->errorMessage = 'Location data is required for check-out.';
-                return;
-            }
-
-            if (!$this->nearestOffice) {
-                $this->errorMessage = 'No office locations found.';
-                return;
-            }
-
-            if ($this->nearestOfficeDistance > $this->nearestOffice->radius) {
-                $this->errorMessage = 'You must be within office area to check out.';
-                return;
-            }
-
-            $currentTime = DateTimeHelper::now();
-            $checkInTime = DateTimeHelper::parse($this->attendance->check_in);
-
-            // Calculate working hours from check-in time to current time
-            $workingHours = $checkInTime->diffInHours($currentTime, true);
-
-            $updateData = [
-                'check_out' => $currentTime,
-                'working_hours' => round($workingHours, 1),
-                'check_out_latitude' => $this->latitude,
-                'check_out_longitude' => $this->longitude,
-                'check_out_office_id' => $this->nearestOffice->id
-            ];
-
-            if ($this->showEarlyLeaveForm) {
-                $endTime = DateTimeHelper::parse($this->schedule->end_time);
-
-                if ($currentTime->lessThan($endTime)) {
-                    $updateData['status'] = 'early_leave';
-                    $updateData['early_leave_reason'] = $this->earlyLeaveReason;
-                }
-            }
-
-            $this->attendance->update($updateData);
-            $this->loadTodayAttendance();
-            $this->isSuccess = true;
-
-            $this->dispatch('notify', [
-                'type' => 'success',
-                'message' => 'Check-out successful!'
-            ]);
-
-            $this->dispatch('success-checkout');
-            $this->dispatch('refresh-page');
-
-        } catch (Exception $e) {
-            Log::error('Check-out error: ' . $e->getMessage(), [
-                'user_id' => auth()->id(),
-                'attendance_id' => $this->attendance?->id
-            ]);
-
-            $this->dispatch('notify', [
-                'type' => 'error',
-                'message' => 'Failed to process check-out. Please try again.'
-            ]);
-        }
-    }
-
+    /**
+     * Load today's attendance record
+     */
     protected function loadTodayAttendance()
     {
         $this->todayAttendance = Attendance::where('user_id', auth()->id())
@@ -228,6 +353,9 @@ class CheckOutModal extends Component
         $this->setActiveAttendanceState();
     }
 
+    /**
+     * Set state for completed attendance
+     */
     protected function setCompletedAttendanceState()
     {
         $this->attendance = $this->todayAttendance;
@@ -235,6 +363,9 @@ class CheckOutModal extends Component
         $this->workingHours = $this->todayAttendance->working_hours;
     }
 
+    /**
+     * Set state for active attendance
+     */
     protected function setActiveAttendanceState()
     {
         $this->attendance = $this->todayAttendance;
@@ -242,6 +373,9 @@ class CheckOutModal extends Component
         $this->calculateWorkingHours();
     }
 
+    /**
+     * Reset attendance state
+     */
     protected function resetAttendanceState()
     {
         $this->attendance = null;
@@ -249,6 +383,9 @@ class CheckOutModal extends Component
         $this->workingHours = 0;
     }
 
+    /**
+     * Load schedule for today
+     */
     public function loadSchedule()
     {
         $today = DateTimeHelper::now();
@@ -276,6 +413,9 @@ class CheckOutModal extends Component
         }
     }
 
+    /**
+     * Calculate working hours for current session
+     */
     public function calculateWorkingHours()
     {
         if ($this->attendance && $this->attendance->check_in) {
@@ -284,55 +424,36 @@ class CheckOutModal extends Component
         }
     }
 
-    public function openModal()
-    {
-        $this->resetState();
-        $this->loadTodayAttendance();
-        $this->loadSchedule();
-
-        if ($this->hasCompletedAttendance) {
-            $this->showModal = true;
-            return;
-        }
-
-        if (!$this->attendance) {
-            $this->dispatch('notify', [
-                'type' => 'error',
-                'message' => 'Please check-in first before attempting to check-out.'
-            ]);
-            return;
-        }
-
-        $this->showModal = true;
-    }
-
+    /**
+     * Reset component state
+     */
     private function resetState()
     {
         $this->isSuccess = false;
         $this->earlyLeaveReason = '';
+        $this->notes = ''; // Reset notes
         $this->showEarlyLeaveForm = false;
         $this->resetAttendanceState();
     }
 
-    public function closeModal()
-    {
-        $this->showModal = false;
-        $this->resetState();
-    }
-
+    /**
+     * Format date for display
+     * 
+     * @param mixed $date
+     * @return string
+     */
     public function formatDate($date)
     {
         return $date ? DateTimeHelper::parse($date)->format('H:i:s') : '--:--:--';
     }
 
+    /**
+     * Get current date formatted for display
+     * 
+     * @return string
+     */
     public function getCurrentDate()
     {
         return DateTimeHelper::now()->format('l, d F Y');
-    }
-
-    public function render()
-    {
-        $this->currentTime = DateTimeHelper::now()->format('H:i:s');
-        return view('livewire.shared.check-out-modal');
     }
 }

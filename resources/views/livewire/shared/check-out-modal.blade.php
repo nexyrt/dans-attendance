@@ -48,6 +48,14 @@
                         </div>
                     </div>
 
+                    {{-- Notes Display --}}
+                    @if($todayAttendance->notes)
+                    <div class="bg-gray-50 rounded-xl p-4 mb-6 text-left">
+                        <h3 class="text-sm font-medium text-gray-900 mb-2">Activity Notes</h3>
+                        <p class="text-sm text-gray-600">{{ $todayAttendance->notes }}</p>
+                    </div>
+                    @endif
+
                     {{-- Close Button --}}
                     <button type="button" wire:click="$dispatch('close-modal', 'checkout')"
                         class="w-full rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-150">
@@ -63,6 +71,7 @@
                 seconds: '00',
                 isLoadingLocation: false,
                 locationError: false,
+                isSuccess: false,
                 startTimer() {
                     this.updateTime();
                     this.getLocation();
@@ -220,6 +229,19 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        {{-- Activity Notes Section (NEW) --}}
+                        <div class="p-6">
+                            <h3 class="text-sm font-medium text-gray-900 mb-3">Activity Notes</h3>
+                            <textarea 
+                                wire:model="notes"
+                                class="w-full rounded-lg border-gray-200 resize-none text-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                rows="3" 
+                                placeholder="Summarize your activities for today..."></textarea>
+                            @error('notes')
+                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         {{-- Early Leave Form --}}
