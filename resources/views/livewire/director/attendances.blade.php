@@ -23,13 +23,13 @@
     <!-- Filters Section -->
     <div class="mb-6 bg-white rounded-lg shadow-sm p-4 border border-gray-200">
         <div class="grid grid-cols-1 gap-y-4 sm:grid-cols-2 sm:gap-x-6 md:grid-cols-3 lg:grid-cols-4 xl:gap-x-8">
-            {{-- <div>
-                    <label for="department" class="block text-sm font-medium text-gray-700">Department</label>
-                    <div class="mt-1">
-                        <x-input.select wire:model.live="selectedDepartment" id="department" name="department"
-                            placeholder="All Departments" :options="$departments"/>
-                    </div>
-                </div> --}}
+            <div>
+                <label for="department" class="block text-sm font-medium text-gray-700">Department</label>
+                <div class="mt-1">
+                    <x-input.select wire:model.live="selectedDepartment" id="department" name="department"
+                        placeholder="All Departments" :options="$departments" />
+                </div>
+            </div>
 
             <div>
                 <label for="status" class="block text-sm font-medium text-gray-700">Status</label>

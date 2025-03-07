@@ -48,6 +48,14 @@
                         </div>
                     </div>
 
+                    {{-- Notes Display --}}
+                    @if ($todayAttendance->notes)
+                        <div class="bg-gray-50 rounded-xl p-4 mb-6 text-left">
+                            <h3 class="text-sm font-medium text-gray-900 mb-2">Activity Notes</h3>
+                            <p class="text-sm text-gray-600">{{ $todayAttendance->notes }}</p>
+                        </div>
+                    @endif
+
                     {{-- Close Button --}}
                     <button type="button" wire:click="$dispatch('close-modal', 'checkout')"
                         class="w-full rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-150">
@@ -63,6 +71,7 @@
                 seconds: '00',
                 isLoadingLocation: false,
                 locationError: false,
+                isSuccess: false,
                 startTimer() {
                     this.updateTime();
                     this.getLocation();
@@ -222,6 +231,83 @@
                             </div>
                         </div>
 
+                        {{-- Activity Notes Section --}}
+                        <div class="p-6">
+                            <h3 class="text-sm font-medium text-gray-900 mb-3">
+                                Activity Notes <span class="text-red-500">*</span>
+                            </h3>
+
+                            <div wire:ignore x-data="{
+                                quillEditor: null,
+                                characterCount: 0,
+                            
+                                init() {
+                                    // Initialize Quill editor (requires importing Quill in app.js)
+                                    if (typeof window.Quill === 'undefined') {
+                                        console.error('Quill is not available. Make sure it is properly imported in app.js');
+                                        return;
+                                    }
+                            
+                                    this.quillEditor = new window.Quill(this.$refs.quillEditor, {
+                                        theme: 'snow',
+                                        placeholder: 'Summarize your activities for today (minimum 15 characters required)...',
+                                        modules: {
+                                            toolbar: [
+                                                ['bold', 'italic', 'underline'],
+                                                [{ 'list': 'ordered' }, { 'list': 'bullet' }]
+                                            ]
+                                        }
+                                    });
+                            
+                                    // Set initial content if available
+                                    if (@js($notes)) {
+                                        this.quillEditor.root.innerHTML = @js($notes);
+                                        this.updateCharacterCount();
+                                    }
+                            
+                                    // Update Livewire property when content changes
+                                    this.quillEditor.on('text-change', () => {
+                                        const content = this.quillEditor.root.innerHTML;
+                                        @this.set('notes', content);
+                                        this.updateCharacterCount();
+                                    });
+                                },
+                            
+                                updateCharacterCount() {
+                                    // Get plain text content (strip HTML)
+                                    const tempDiv = document.createElement('div');
+                                    tempDiv.innerHTML = this.quillEditor.root.innerHTML;
+                                    const plainText = tempDiv.textContent.trim();
+                            
+                                    // Update character count
+                                    this.characterCount = plainText.length;
+                            
+                                    // Validate character count for visual feedback
+                                    if (this.characterCount < 15) {
+                                        @this.set('notesValid', false);
+                                    } else {
+                                        @this.set('notesValid', true);
+                                    }
+                                }
+                            }">
+
+                                {{-- Quill Editor Container --}}
+                                <div x-ref="quillEditor" style="min-height: 120px;"></div>
+
+                                {{-- Character Count Indicator --}}
+                                <div class="mt-2 text-xs flex justify-between">
+                                    <span
+                                        x-html="characterCount < 15 ? 
+                                                '<span class=\'text-red-500\'>Minimum 15 characters required</span>' : 
+                                                '<span class=\'text-green-500\'>Characters: ' + characterCount + '</span>'">
+                                    </span>
+                                    <span x-show="characterCount < 15" class="text-red-500">
+                                        You need <span x-text="15 - characterCount"></span> more characters
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
                         {{-- Early Leave Form --}}
                         @if ($showEarlyLeaveForm)
                             <div class="p-6">
@@ -296,4 +382,6 @@
             </div>
         @endif
     </div>
+
+
 </x-modals.modal>

@@ -274,6 +274,8 @@
         <livewire:shared.check-out-modal />
 
         @livewireScripts
+
+        
     </body>
 
 </html>
