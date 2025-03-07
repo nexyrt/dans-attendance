@@ -10,7 +10,7 @@
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link rel="icon" href="{{ asset('images/dans.png') }}">
+    <link rel="icon" href="{{ asset('images/jkb.png') }}">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
@@ -46,11 +46,11 @@
                         <a href="/" class="flex items-center space-x-3">
                             <div
                                 class="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700">
-                                <img src="{{ asset('images/dans.png') }}" alt="DANS" class="h-6 w-6">
+                                <img src="{{ asset('images/icon-jkb.png') }}" alt="DANS" class="h-6 w-6">
                             </div>
                             <span
                                 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-800">
-                                DANS
+                                JKB
                             </span>
                         </a>
                         <button @click="open = false" class="lg:hidden p-2 rounded-lg hover:bg-gray-100">
@@ -312,6 +312,7 @@
             });
         });
     </script> --}}
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 </body>
 
 </html>
