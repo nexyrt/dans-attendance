@@ -31,7 +31,7 @@ class CheckOutModal extends Component
 
     // Form Inputs
     public $earlyLeaveReason;
-    public $notes; // New field for activity notes
+    public $notes;
 
     // Schedule Properties
     public $schedule;
@@ -49,7 +49,7 @@ class CheckOutModal extends Component
 
     protected $rules = [
         'earlyLeaveReason' => 'required_if:showEarlyLeaveForm,true|string|max:255',
-        'notes' => 'nullable|string|max:1000' // New validation rule
+        'notes' => 'required|string|max:1000'
     ];
 
     public function mount()
@@ -65,40 +65,6 @@ class CheckOutModal extends Component
     }
 
     /**
-     * Open the check-out modal
-     */
-    public function openModal()
-    {
-        $this->resetState();
-        $this->loadTodayAttendance();
-        $this->loadSchedule();
-
-        if ($this->hasCompletedAttendance) {
-            $this->showModal = true;
-            return;
-        }
-
-        if (!$this->attendance) {
-            $this->dispatch('notify', [
-                'type' => 'error',
-                'message' => 'Please check-in first before attempting to check-out.'
-            ]);
-            return;
-        }
-
-        $this->showModal = true;
-    }
-
-    /**
-     * Close the modal and reset state
-     */
-    public function closeModal()
-    {
-        $this->showModal = false;
-        $this->resetState();
-    }
-
-    /**
      * Process the check-out action
      */
     public function checkOut()
@@ -108,9 +74,8 @@ class CheckOutModal extends Component
             return;
         }
 
-        if ($this->showEarlyLeaveForm) {
-            $this->validate();
-        }
+        // Validate all form fields including notes
+        $this->validate();
 
         try {
             if (!$this->validateCheckOutRequirements()) {
@@ -178,7 +143,7 @@ class CheckOutModal extends Component
             'check_out_latitude' => $this->latitude,
             'check_out_longitude' => $this->longitude,
             'check_out_office_id' => $this->nearestOffice->id,
-            'notes' => $this->notes // Added notes field
+            'notes' => $this->notes
         ];
 
         if ($this->showEarlyLeaveForm) {
@@ -425,13 +390,47 @@ class CheckOutModal extends Component
     }
 
     /**
+     * Open the check-out modal
+     */
+    public function openModal()
+    {
+        $this->resetState();
+        $this->loadTodayAttendance();
+        $this->loadSchedule();
+
+        if ($this->hasCompletedAttendance) {
+            $this->showModal = true;
+            return;
+        }
+
+        if (!$this->attendance) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Please check-in first before attempting to check-out.'
+            ]);
+            return;
+        }
+
+        $this->showModal = true;
+    }
+
+    /**
+     * Close the modal and reset state
+     */
+    public function closeModal()
+    {
+        $this->showModal = false;
+        $this->resetState();
+    }
+
+    /**
      * Reset component state
      */
     private function resetState()
     {
         $this->isSuccess = false;
         $this->earlyLeaveReason = '';
-        $this->notes = ''; // Reset notes
+        $this->notes = '';
         $this->showEarlyLeaveForm = false;
         $this->resetAttendanceState();
     }

@@ -49,11 +49,11 @@
                     </div>
 
                     {{-- Notes Display --}}
-                    @if($todayAttendance->notes)
-                    <div class="bg-gray-50 rounded-xl p-4 mb-6 text-left">
-                        <h3 class="text-sm font-medium text-gray-900 mb-2">Activity Notes</h3>
-                        <p class="text-sm text-gray-600">{{ $todayAttendance->notes }}</p>
-                    </div>
+                    @if ($todayAttendance->notes)
+                        <div class="bg-gray-50 rounded-xl p-4 mb-6 text-left">
+                            <h3 class="text-sm font-medium text-gray-900 mb-2">Activity Notes</h3>
+                            <p class="text-sm text-gray-600">{{ $todayAttendance->notes }}</p>
+                        </div>
                     @endif
 
                     {{-- Close Button --}}
@@ -231,18 +231,63 @@
                             </div>
                         </div>
 
-                        {{-- Activity Notes Section (NEW) --}}
                         <div class="p-6">
-                            <h3 class="text-sm font-medium text-gray-900 mb-3">Activity Notes</h3>
-                            <textarea 
-                                wire:model="notes"
-                                class="w-full rounded-lg border-gray-200 resize-none text-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                                rows="3" 
-                                placeholder="Summarize your activities for today..."></textarea>
+                            <h3 class="text-sm font-medium text-gray-900 mb-3">
+                                Activity Notes <span class="text-red-500">*</span>
+                            </h3>
+                            
+                            <!-- Alpine.js + Quill integration -->
+                            <div x-data="{
+                                    quill: null,
+                                    content: @entangle('notes').live,
+                                    init() {
+                                        // Ensure Quill is available
+                                        if (typeof window.Quill === 'undefined') {
+                                            console.error('Quill is not available. Make sure it is properly imported in app.js');
+                                            return;
+                                        }
+                                        
+                                        // Initialize Quill
+                                        this.quill = new window.Quill(this.$refs.quillEditor, {
+                                            theme: 'snow',
+                                        });
+                                        
+                                        // Set initial content if available
+                                        if (this.content) {
+                                            this.quill.root.innerHTML = this.content;
+                                        }
+                                        
+                                        // Update Alpine data when editor changes
+                                        this.quill.on('text-change', () => {
+                                            this.content = this.quill.root.innerHTML;
+                                        });
+                                    }
+                                }" 
+                                wire:ignore
+                            >
+                                <!-- Quill container -->
+                                <div x-ref="quillEditor" style="min-height: 120px; border: 1px solid #ccc;"></div>
+                            </div>
+                            
                             @error('notes')
                                 <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
                             @enderror
                         </div>
+
+                        <p>{{$this->notes}}</p>
+
+                        {{-- Activity Notes Section --}}
+                        {{-- <div class="p-6">
+                            <h3 class="text-sm font-medium text-gray-900 mb-3">
+                                Activity Notes <span class="text-red-500">*</span>
+                            </h3>
+                            <textarea wire:model="notes"
+                                class="w-full rounded-lg border-gray-200 resize-none text-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                rows="3" placeholder="Summarize your activities for today..."></textarea>
+                            @error('notes')
+                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div> --}}
 
                         {{-- Early Leave Form --}}
                         @if ($showEarlyLeaveForm)
@@ -318,4 +363,6 @@
             </div>
         @endif
     </div>
+
+
 </x-modals.modal>

@@ -1,0 +1,17 @@
+/* Basic Quill styling */
+.ql-toolbar.ql-snow {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    border-color: #e5e7eb;
+}
+
+.ql-container.ql-snow {
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+    border-color: #e5e7eb;
+    min-height: 120px;
+}
+
+.ql-editor {
+    min-height: 120px;
+}
