@@ -113,21 +113,24 @@
                                             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />',
                                     ],
                                 ];
+
+                                // Add the new schedules routes
+                                $schedulesActive = request()->routeIs('director.schedules.*');
                             @endphp
 
                             @foreach ($navigation as $nav)
                                 <a href="{{ route($nav['route']) }}"
                                     @click.prevent="window.innerWidth < 1024 ? (isSidebarOpen = false, window.location.href = '{{ route($nav['route']) }}') : window.location.href = '{{ route($nav['route']) }}'"
                                     class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 
-                {{ request()->routeIs($nav['route'] . '*')
-                    ? 'bg-primary-50 text-primary-600'
-                    : 'text-gray-600 hover:bg-gray-50/80' }}">
+            {{ request()->routeIs($nav['route'] . '*')
+                ? 'bg-primary-50 text-primary-600'
+                : 'text-gray-600 hover:bg-gray-50/80' }}">
                                     <div class="flex items-center">
                                         <div
                                             class="{{ request()->routeIs($nav['route'] . '*')
                                                 ? 'bg-primary-100/50'
                                                 : 'bg-gray-100/50 group-hover:bg-primary-50/50' }} 
-                            p-2 rounded-lg transition-colors duration-200">
+                        p-2 rounded-lg transition-colors duration-200">
                                             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"
                                                 stroke="currentColor">
                                                 {!! $nav['icon'] !!}
@@ -144,6 +147,73 @@
                                     @endif
                                 </a>
                             @endforeach
+
+                            <!-- Schedules Dropdown Menu -->
+                            <div x-data="{ open: {{ $schedulesActive ? 'true' : 'false' }} }" class="space-y-1">
+                                <!-- Dropdown Toggle -->
+                                <button @click="open = !open"
+                                    class="w-full group flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200
+                {{ $schedulesActive ? 'bg-primary-50 text-primary-600' : 'text-gray-600 hover:bg-gray-50/80' }}">
+                                    <div class="flex items-center">
+                                        <div
+                                            class="{{ $schedulesActive ? 'bg-primary-100/50' : 'bg-gray-100/50 group-hover:bg-primary-50/50' }} 
+                        p-2 rounded-lg transition-colors duration-200">
+                                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                            </svg>
+                                        </div>
+                                        <span
+                                            class="ml-3 transition-transform duration-200 group-hover:translate-x-0.5">
+                                            Schedules
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-center">
+                                        @if ($schedulesActive)
+                                            <div class="w-1 h-6 bg-primary-500 rounded-full mr-2"></div>
+                                        @endif
+
+                                        <svg class="w-4 h-4 transition-transform duration-200"
+                                            :class="{ 'rotate-90': open }" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </div>
+                                </button>
+
+                                <!-- Dropdown Menu Items -->
+                                <div x-show="open" x-transition:enter="transition ease-out duration-100"
+                                    x-transition:enter-start="transform opacity-0 scale-95"
+                                    x-transition:enter-end="transform opacity-100 scale-100" class="pl-10 space-y-1">
+
+                                    <!-- Default Schedules -->
+                                    <a href="{{ route('director.schedules.default') }}"
+                                        @click.prevent="window.innerWidth < 1024 ? (isSidebarOpen = false, window.location.href = '{{ route('director.schedules.default') }}') : window.location.href = '{{ route('director.schedules.default') }}'"
+                                        class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200
+                    {{ request()->routeIs('director.schedules.default') ? 'bg-primary-50 text-primary-600' : 'text-gray-600 hover:bg-gray-50/80' }}">
+                                        <span class="truncate">Default Schedules</span>
+
+                                        @if (request()->routeIs('director.schedules.default'))
+                                            <div class="ml-auto w-1 h-4 bg-primary-500 rounded-full"></div>
+                                        @endif
+                                    </a>
+
+                                    <!-- Schedules Calendar -->
+                                    <a href="{{ route('director.schedules.calendar') }}"
+                                        @click.prevent="window.innerWidth < 1024 ? (isSidebarOpen = false, window.location.href = '{{ route('director.schedules.calendar') }}') : window.location.href = '{{ route('director.schedules.calendar') }}'"
+                                        class="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200
+                    {{ request()->routeIs('director.schedules.calendar') ? 'bg-primary-50 text-primary-600' : 'text-gray-600 hover:bg-gray-50/80' }}">
+                                        <span class="truncate">Schedules Calendar</span>
+
+                                        @if (request()->routeIs('director.schedules.calendar'))
+                                            <div class="ml-auto w-1 h-4 bg-primary-500 rounded-full"></div>
+                                        @endif
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </nav>
                 </aside>

@@ -188,7 +188,7 @@ class Attendances extends Component
         // Apply department filter
         if ($this->selectedDepartment) {
             $query->whereHas('user', function ($q) {
-                $q->where('department_id', $this->selectedDepartment);
+                $q->where('department_id', Department::where('name', $this->selectedDepartment)->pluck('id'));
             });
         }
         

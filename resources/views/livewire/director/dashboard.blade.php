@@ -1,5 +1,5 @@
 <!-- resources/views/livewire/director/dashboard.blade.php -->
-<div class="max-w-7xl mx-auto">
+<div class="max-w-6xl mx-auto">
     <div class="container mx-auto py-8">
 
         <!-- Loading Overlay -->

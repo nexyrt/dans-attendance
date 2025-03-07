@@ -243,17 +243,8 @@ class Users extends Component
                         ->orWhere('phone_number', 'like', '%' . $this->search . '%');
                 });
             })
-            ->when($this->department, function ($query) use ($departmentsList) {
-                // Find the department by name and use its ID for filtering
-                $dept = $departmentsList->where('name', $this->department)->first();
-                if ($dept) {
-                    return $query->where('department_id', $dept->id);
-                }
-                return $query;
-            })
-            ->when($this->role, function ($query) {
-                return $query->where('role', $this->role);
-            })
+            ->when($this->department, fn($query) => $query->where('department_id', Department::where('name', $this->department)->pluck('id')->first()))
+            ->when($this->role, fn($query) => $query->where('role', $this->role))
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
 

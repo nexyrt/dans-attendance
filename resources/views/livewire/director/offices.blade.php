@@ -1,4 +1,4 @@
-<div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+<div class="">
     {{-- Left Sidebar --}}
     <div class="md:col-span-1 w-full bg-white rounded-2xl shadow-lg flex flex-col">
         {{-- Header Section --}}

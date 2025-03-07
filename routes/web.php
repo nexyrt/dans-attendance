@@ -20,6 +20,7 @@ use App\Livewire\Admin\Leave\{
     LeaveRequestsTable
 };
 use App\Livewire\Admin\Attendances\AttendanceRecord;
+
 use App\Livewire\Staff\{
     Dashboard as StaffDashboard,
     Attendance as StaffAttendance,
@@ -27,16 +28,24 @@ use App\Livewire\Staff\{
     Payroll as StaffPayroll,
     Profile as StaffProfile,
 };
+
 use App\Livewire\Manager\{
     Dashboard as ManagerDashboard,
     Leave as ManagerLeave,
 };
+
+use App\Livewire\Director\Schedules\SchedulesCalendar as DirectorSchedulesCalendar;
+use App\Livewire\Director\Schedules\DefaultSchedules as DirectorDefaultSchedule;
 use App\Livewire\Director\{
     Dashboard as DirectorDashboard,
     Users as DirectorUsers,
     Leave as DirectorLeaves,
     Attendances as DirectorAttendances,
     Offices as DirectorOffices,
+};
+
+use App\Livewire\Hr\{
+    Leave as HrLeave,
 };
 
 /*
@@ -85,6 +94,7 @@ Route::prefix('admin')
             Route::get('/', [LeaveDashboard::class, 'index'])->name('dashboard');
             Route::get('/leave-request', LeaveRequestsTable::class)->name('leave-request');
             Route::get('/leave-balance', LeaveBalance::class)->name('leave-balance');
+            Route::get('/hr-leave', HrLeave::class)->name('hr-leave');
         });
 
         // Office
@@ -139,6 +149,8 @@ Route::middleware(['auth', 'role:director'])
         Route::get('/leave', DirectorLeaves::class)->name('leaves.index');
         Route::get('/attendances', DirectorAttendances::class)->name('attendances.index');
         Route::get('/office', DirectorOffices::class)->name('office.index');
+        Route::get('/default-schedules', DirectorDefaultSchedule::class)->name('schedules.default');
+        Route::get('/schedules-calendar', DirectorSchedulesCalendar::class)->name('schedules.calendar');
     });
 
 /*
