@@ -10,6 +10,9 @@ use Cake\Chronos\Chronos;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use PhpOffice\PhpWord\TemplateProcessor;
+use Auth;
 
 class Leave extends Component
 {
@@ -21,6 +24,10 @@ class Leave extends Component
     public $endDate;
     public $reason = '';
     public $attachment;
+    
+    // Signature properties
+    public $signature = '';
+    public $tempLeaveRequest = null;
 
     // View states
     public $activeView = 'requests';
@@ -29,7 +36,7 @@ class Leave extends Component
     public $currentAttachment = null;
     public $previewUrl = null;
     public $previewType = null;
-    public $showPreview = false;
+    public $showPreview = false; // Initialize to false to prevent modal from showing on load
 
     protected $rules = [
         'type' => 'required|in:sick,annual,important,other',
@@ -51,7 +58,8 @@ class Leave extends Component
         'reason.min' => 'Reason must be at least 10 characters.',
         'reason.max' => 'Reason cannot exceed 500 characters.',
         'attachment.mimes' => 'Attachment must be a PDF, Word document, or image file.',
-        'attachment.max' => 'Attachment size cannot exceed 10MB.'
+        'attachment.max' => 'Attachment size cannot exceed 10MB.',
+        'signature.required' => 'Your signature is required to submit the leave request.'
     ];
 
     public function mount()
@@ -139,16 +147,27 @@ class Leave extends Component
         return $duration;
     }
 
-    public function submitLeave()
+    /**
+     * Open signature modal for the leave request submission
+     */
+    public function openSignatureModal()
     {
-        $this->validate();
+        // Validate form inputs before showing signature modal
+        $this->validate([
+            'type' => 'required|in:sick,annual,important,other',
+            'startDate' => 'required|date',
+            'endDate' => 'required|date|after_or_equal:startDate',
+            'reason' => 'required|string|min:10|max:500',
+            'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240'
+        ]);
 
         try {
-            // Validate leave balance and date overlap before proceeding
+            // Additional validation before showing signature pad
             $this->validateLeaveBalance();
             $this->validateDateOverlap();
             
-            $leaveRequest = new LeaveRequest([
+            // Create temporary leave request
+            $this->tempLeaveRequest = new LeaveRequest([
                 'user_id' => auth()->id(),
                 'type' => $this->type,
                 'start_date' => $this->startDate,
@@ -157,6 +176,131 @@ class Leave extends Component
                 'status' => LeaveRequest::STATUS_PENDING_MANAGER
             ]);
 
+            // Show signature modal
+            $this->dispatch('open-modal', 'signature-modal');
+        } catch (ValidationException $e) {
+            $this->addError('dates', $e->getMessage());
+        }
+    }
+
+    /**
+     * Close signature modal
+     */
+    public function closeSignatureModal()
+    {
+        $this->dispatch('close-modal', 'signature-modal');
+        $this->signature = '';
+        $this->tempLeaveRequest = null;
+    }
+
+    /**
+     * Document Generator with Signature
+     */
+    private function generateLeaveDocument($leaveRequest, $signaturePath)
+{
+    try {
+        $templatePath = public_path('templates/Format-Izin-Cuti.docx');
+        $user = auth()->user();
+        $department = $user->department;
+
+        // Create a unique filename for the generated document
+        $outputFilename = 'leave_request_' . $leaveRequest->id . '_' . time() . '.docx';
+        $outputPath = public_path('leave-documents/' . $outputFilename);
+        
+        // Ensure the directory exists
+        if (!file_exists(public_path('leave-documents'))) {
+            mkdir(public_path('leave-documents'), 0755, true);
+        }
+
+        // Create template processor
+        $templateProcessor = new TemplateProcessor($templatePath);
+        
+        // Set basic information
+        $templateProcessor->setValue('tanggal hari ini', now()->format('d F Y'));
+        $templateProcessor->setValue('Nama Pemohon', $user->name);
+        $templateProcessor->setValue('Jabatan Pemohon', $user->position ?? 'Staff');
+        $templateProcessor->setValue('Jabatan_Departemen', ($user->position ?? 'Staff') . '_' . ($department->name ?? 'General'));
+        
+        // Get formatted leave type
+        $leaveType = $this->getFormattedLeaveType($leaveRequest->type);
+        $templateProcessor->setValue('leave_type', $leaveType);
+        
+        // Set leave information
+        $duration = $leaveRequest->getDurationInDays();
+        $templateProcessor->setValue('Durasi Cuti', $duration);
+        // Fixed date formatting, removing locale() method
+        $templateProcessor->setValue('Tanggal Mulai Cuti', \Carbon\Carbon::parse($leaveRequest->start_date)->format('d F Y'));
+        $templateProcessor->setValue('Tanggal Selesai Cuti', \Carbon\Carbon::parse($leaveRequest->end_date)->format('d F Y'));
+        $templateProcessor->setValue('reason', $leaveRequest->reason);
+        
+        // Set department information
+        $templateProcessor->setValue('department_name', $department->name ?? 'General');
+        
+        // Set staff signature if provided
+        if ($signaturePath && file_exists(public_path($signaturePath))) {
+            try {
+                // Try both possible placeholder formats
+                $templateProcessor->setImageValue('[Tanda Tangan]', public_path($signaturePath));
+            } catch (\Exception $e) {
+                Log::error('Error setting staff signature image: ' . $e->getMessage());
+                try {
+                    // Try alternative placeholder
+                    $templateProcessor->setValue('[Tanda Tangan]', 'Signed electronically');
+                } catch (\Exception $e2) {
+                    Log::error('Error setting text signature: ' . $e2->getMessage());
+                }
+            }
+        } else {
+            $templateProcessor->setValue('[Tanda Tangan]', '[Tanda Tangan]');
+        }
+        
+        // Set placeholders for approval signatures
+        $templateProcessor->setValue('manager_signature', '[Tanda Tangan Manager]');
+        $templateProcessor->setValue('manager_name', '[Nama Manager]');
+        $templateProcessor->setValue('hr_signature', '[Tanda Tangan HR]');
+        $templateProcessor->setValue('hr_name', '[Nama HR]');
+        $templateProcessor->setValue('director_signature', '[Tanda Tangan Direktur]');
+        $templateProcessor->setValue('director_name', '[Nama Direktur]');
+        
+        // Save the document
+        $templateProcessor->saveAs($outputPath);
+        
+        return 'leave-documents/' . $outputFilename;
+    } catch (\Exception $e) {
+        Log::error('Error generating leave document: ' . $e->getMessage());
+        throw $e;
+    }
+}
+
+    /**
+     * Save signature and submit leave request
+     */
+    public function submitLeaveWithSignature()
+    {
+        // Validate signature
+        $this->validate([
+            'signature' => 'required'
+        ]);
+
+        try {
+            $user = auth()->user();
+            
+            // Create signatures directory if not exists
+            $directory = public_path('signatures');
+            if (!File::exists($directory)) {
+                File::makeDirectory($directory, 0755, true);
+            }
+
+            // Generate signature filename
+            $filename = 'staff_' . Str::slug($user->name) . '_' . $user->id . '_' . time() . '.png';
+            
+            // Save signature image
+            $imageData = base64_decode(Str::of($this->signature)->after(','));
+            $signaturePath = 'signatures/' . $filename;
+            File::put(public_path($signaturePath), $imageData);
+
+            // Handle optional supporting document
+            $attachmentPath = null;
             if ($this->attachment) {
                 try {
                     $uploadPath = public_path('leave-attachments');
@@ -168,7 +312,7 @@ class Leave extends Component
                     $tempPath = $this->attachment->getRealPath();
                     File::move($tempPath, $uploadPath . DIRECTORY_SEPARATOR . $filename);
                     
-                    $leaveRequest->attachment_path = 'leave-attachments/' . $filename;
+                    $attachmentPath = 'leave-attachments/' . $filename;
                 } catch (\Exception $e) {
                     Log::error('File upload failed: ' . $e->getMessage());
                     session()->flash('error', 'File upload failed. Please try again.');
@@ -176,15 +320,57 @@ class Leave extends Component
                 }
             }
 
-            auth()->user()->leaveRequests()->save($leaveRequest);
+            // Create the leave request
+            $leaveRequest = new LeaveRequest([
+                'user_id' => $user->id,
+                'type' => $this->type,
+                'start_date' => $this->startDate,
+                'end_date' => $this->endDate,
+                'reason' => $this->reason,
+                'status' => LeaveRequest::STATUS_PENDING_MANAGER,
+                'attachment_path' => $attachmentPath
+            ]);
 
-            $this->reset(['type', 'startDate', 'endDate', 'reason', 'attachment']);
+            // Save the leave request first to get an ID
+            $user->leaveRequests()->save($leaveRequest);
+
+            // Generate document with signature
+            try {
+                $documentPath = $this->generateLeaveDocument($leaveRequest, $signaturePath);
+                
+                // Update the leave request with the document path
+                $leaveRequest->update([
+                    'document_path' => $documentPath
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Document generation failed: ' . $e->getMessage());
+                session()->flash('warning', 'Leave request submitted but document generation failed. Please contact support.');
+            }
+
+            $this->reset(['type', 'startDate', 'endDate', 'reason', 'attachment', 'signature']);
+            $this->tempLeaveRequest = null;
             $this->activeView = 'requests';
+            $this->dispatch('close-modal', 'signature-modal');
             session()->flash('message', 'Leave request submitted successfully.');
 
-        } catch (ValidationException $e) {
-            $this->addError('dates', $e->getMessage());
+        } catch (\Exception $e) {
+            Log::error('Error submitting leave request: ' . $e->getMessage());
+            session()->flash('error', 'An error occurred while submitting your leave request. Please try again.');
         }
+    }
+
+    /**
+     * Get formatted leave type in Indonesian
+     */
+    private function getFormattedLeaveType(string $type): string
+    {
+        return match($type) {
+            LeaveRequest::TYPE_SICK => 'Cuti Sakit',
+            LeaveRequest::TYPE_ANNUAL => 'Cuti Tahunan',
+            LeaveRequest::TYPE_IMPORTANT => 'Cuti Penting',
+            LeaveRequest::TYPE_OTHER => 'Cuti Lainnya',
+            default => 'Cuti'
+        };
     }
 
     public function cancelRequest($id)
@@ -199,15 +385,35 @@ class Leave extends Component
     public function previewAttachment($requestId)
     {
         $request = auth()->user()->leaveRequests()->findOrFail($requestId);
-        if ($request->attachment_path) {
-            $this->previewUrl = asset($request->attachment_path);
+        
+        // Determine what to preview - document or attachment
+        $previewPath = null;
+        
+        if ($request->document_path) {
+            $previewPath = $request->document_path;
+        } elseif ($request->attachment_path) {
+            $previewPath = $request->attachment_path;
+        }
+        
+        if ($previewPath) {
+            $this->previewUrl = asset($previewPath);
 
             // Get file extension
-            $extension = pathinfo($request->attachment_path, PATHINFO_EXTENSION);
+            $extension = pathinfo($previewPath, PATHINFO_EXTENSION);
             $this->previewType = strtolower($extension);
 
             $this->showPreview = true;
         }
+    }
+
+    public function downloadLeaveDocument($requestId)
+    {
+        $request = auth()->user()->leaveRequests()->findOrFail($requestId);
+        if ($request->document_path) {
+            return response()->download(public_path($request->document_path));
+        }
+        
+        session()->flash('error', 'Document not found.');
     }
 
     public function closePreview()
@@ -280,6 +486,7 @@ class Leave extends Component
                 LeaveRequest::STATUS_PENDING_DIRECTOR
             ])->count();
     }
+
     public function getApprovalStatus($request)
     {
         $status = match ($request->status) {
@@ -351,7 +558,6 @@ class Leave extends Component
 
     public function render()
     {
-        $this->dispatch('refresh-preline');
         return view('livewire.staff.leave', [
             'leaveRequests' => $this->leaveRequests,
             'leaveBalance' => $this->leaveBalance,

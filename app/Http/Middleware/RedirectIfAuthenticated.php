@@ -22,7 +22,7 @@ class RedirectIfAuthenticated
                 return match($user->role) {
                     'admin' => redirect()->route('admin.dashboard'),
                     'staff' => redirect()->route('staff.dashboard'),
-                    'manager' => redirect()->route('manager.leave'),  // jika ada
+                    'manager' => redirect()->route('manager.leave.index'),  // jika ada
                     'director' => redirect()->route('director.dashboard'),  // jika ada
                     default => redirect(RouteServiceProvider::HOME),
                 };

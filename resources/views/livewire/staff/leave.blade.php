@@ -63,31 +63,26 @@
                 </div>
             </div>
 
-            <!-- Leave Template -->
+            <!-- Leave Instructions -->
             <div class="bg-white overflow-hidden shadow-sm rounded-xl h-[150px]">
                 <div class="flex flex-col h-full p-6">
                     <div class="flex items-center">
                         <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
                             <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
                         <div class="ml-4">
-                            <h3 class="text-sm font-medium text-gray-500">Leave Template</h3>
-                            <p class="mt-1 text-sm text-gray-500">Download required form</p>
+                            <h3 class="text-sm font-medium text-gray-500">Leave Instructions</h3>
+                            <p class="mt-1 text-sm text-gray-500">Automated document generation</p>
                         </div>
                     </div>
 
                     <div class="mt-auto">
-                        <a href="{{ asset('templates/Format-Izin-Cuti.docx') }}" download
-                            class="flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            Download Template
-                        </a>
+                        <div class="text-sm text-gray-600">
+                            Submit your leave request and a formatted document will be automatically generated.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -357,7 +352,18 @@
                                                                     stroke-width="2"
                                                                     d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                                                             </svg>
-                                                            <span class="truncate">Attachment</span>
+                                                            <span class="truncate">Supporting Document</span>
+                                                        </div>
+                                                    @endif
+                                                    @if ($request->document_path)
+                                                        <div class="mt-1 flex items-center text-sm text-gray-500">
+                                                            <svg class="w-4 h-4 mr-1.5" fill="none"
+                                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                            </svg>
+                                                            <span class="truncate">Leave Document</span>
                                                         </div>
                                                     @endif
                                                 </td>
@@ -365,12 +371,12 @@
                                                 <!-- Actions -->
                                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <div class="flex items-center gap-2">
-                                                        @if ($request->attachment_path)
-                                                            <!-- Preview Button -->
+                                                        @if ($request->document_path)
+                                                            <!-- Preview Document Button -->
                                                             <button
                                                                 wire:click="previewAttachment({{ $request->id }})"
-                                                                class="text-gray-500 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100"
-                                                                title="Preview">
+                                                                class="text-blue-500 hover:text-blue-700 p-1.5 rounded-lg hover:bg-blue-50"
+                                                                title="Preview Document">
                                                                 <svg class="w-5 h-5" fill="none"
                                                                     stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round"
@@ -382,10 +388,10 @@
                                                                 </svg>
                                                             </button>
 
-                                                            <!-- Download Button -->
-                                                            <a href="{{ asset($request->attachment_path) }}" download
-                                                                class="text-gray-500 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100"
-                                                                title="Download">
+                                                            <!-- Download Document Button -->
+                                                            <a href="{{ asset($request->document_path) }}" download
+                                                                class="text-green-500 hover:text-green-700 p-1.5 rounded-lg hover:bg-green-50"
+                                                                title="Download Document">
                                                                 <svg class="w-5 h-5" fill="none"
                                                                     stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round"
@@ -394,6 +400,22 @@
                                                                 </svg>
                                                             </a>
                                                         @endif
+
+                                                        @if ($request->attachment_path)
+                                                            <!-- Preview Attachment Button -->
+                                                            <button
+                                                                wire:click="previewAttachment({{ $request->id }})"
+                                                                class="text-gray-500 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100"
+                                                                title="Preview Attachment">
+                                                                <svg class="w-5 h-5" fill="none"
+                                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                                                </svg>
+                                                            </button>
+                                                        @endif
+
                                                         @if ($request->canBeCancelled())
                                                             <button wire:click="cancelRequest({{ $request->id }})"
                                                                 wire:confirm="Are you sure you want to cancel this leave request?"
@@ -430,22 +452,24 @@
                                         </tbody>
                                     </table>
                                 </div>
-
-                                <!-- Preview Modal -->
-                                <x-modals.preview-modal :show="$showPreview" :preview-url="$previewUrl" :preview-type="$previewType" />
                             </div>
                         </div>
                     @else
                         <!-- Leave Form UI -->
                         <div class="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
-                            <form wire:submit="submitLeave" class="space-y-8">
+                            <form class="space-y-8">
                                 <!-- Top Section: Leave Type and Date Range -->
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <!-- Leave Type -->
                                     <div class="w-full">
                                         <label class="block text-sm font-medium text-gray-900 mb-2">Leave Type</label>
-                                        <x-input.select wire:model.live="type" :options="$leaveTypes"
-                                            placeholder="Select leave type" class="w-full" />
+                                        <select wire:model.live="type"
+                                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                            <option value="">Select leave type</option>
+                                            @foreach ($leaveTypes as $leaveType)
+                                                <option value="{{ $leaveType }}">{{ ucfirst($leaveType) }}</option>
+                                            @endforeach
+                                        </select>
                                         @error('type')
                                             <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
                                         @enderror
@@ -493,10 +517,11 @@
                                     </div>
                                 </div>
 
-                                <!-- Supporting Documents -->
+                                <!-- Supporting Documents (Optional) -->
                                 <div class="w-full">
-                                    <label class="block text-sm font-medium text-gray-900 mb-2">Supporting
-                                        Documents</label>
+                                    <label class="block text-sm font-medium text-gray-900 mb-2">
+                                        Supporting Documents (Optional)
+                                    </label>
                                     <div class="border-2 border-dashed border-gray-200 rounded-xl p-6 transition-all"
                                         x-data="{ dragover: false }" x-on:dragover.prevent="dragover = true"
                                         x-on:dragleave.prevent="dragover = false"
@@ -550,13 +575,32 @@
                                     @enderror
                                 </div>
 
+                                <!-- Information Notice -->
+                                <div class="bg-blue-50 p-4 rounded-lg">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24"
+                                                stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-blue-700">
+                                                Your leave document will be automatically generated from your input. You'll
+                                                need to sign the document before submission.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Reason -->
                                 <div class="w-full">
                                     <label class="block text-sm font-medium text-gray-900 mb-2">Reason for Leave</label>
                                     <textarea wire:model.live="reason" rows="4"
                                         class="block w-full rounded-lg border-gray-200 resize-none focus:ring-blue-500 focus:border-blue-500 text-sm"
                                         placeholder="Please provide a detailed reason for your leave request..."></textarea>
-                                    <div class="absolute bottom-3 right-3 text-xs text-gray-400">
+                                    <div class="mt-1 text-xs text-gray-400 text-right">
                                         {{ strlen($reason) }}/500
                                     </div>
                                     @error('reason')
@@ -566,7 +610,7 @@
 
                                 <!-- Form Actions -->
                                 <div class="flex justify-end pt-4 border-t border-gray-100">
-                                    <button type="submit"
+                                    <button type="button" wire:click="openSignatureModal"
                                         class="inline-flex items-center px-6 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
                                         Submit Request
                                         <svg class="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor"
@@ -581,6 +625,51 @@
                     @endif
                 </div>
             </div>
+
+            <!-- Signature Modal -->
+            <x-modals.modal name="signature-modal" maxWidth="md">
+                <div class="p-6">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">
+                        Your Signature
+                    </h2>
+
+                    <p class="text-sm text-gray-600 mb-4">
+                        Please sign below to confirm your leave request. Your signature will be added to the leave document.
+                    </p>
+
+                    <!-- Your signature pad component -->
+                    <div x-data="signaturePad(@entangle('signature'))">
+                        <div class="mb-4">
+                            <canvas x-ref="signature_canvas" class="border rounded shadow w-full" height="200">
+                            </canvas>
+                        </div>
+
+                        <div class="flex justify-between items-center mb-4">
+                            <button type="button" x-on:click="signaturePadInstance.clear(); $wire.set('signature', '')"
+                                class="text-sm text-gray-500 hover:text-gray-700">
+                                Clear Signature
+                            </button>
+
+                            @error('signature')
+                                <p class="text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" x-on:click="$dispatch('close-modal', 'signature-modal')"
+                                class="bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200">
+                                Cancel
+                            </button>
+                            <button type="button" wire:click="submitLeaveWithSignature"
+                                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                                Submit Leave Request
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </x-modals.modal>
+
+            
 
             <!-- Success Message Toast -->
             @if (session()->has('message'))
@@ -599,5 +688,42 @@
                     </div>
                 </div>
             @endif
+
+            <!-- Warning Message Toast -->
+            @if (session()->has('warning'))
+                <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
+                    class="fixed bottom-4 right-4 flex items-center bg-yellow-50 rounded-lg p-4 shadow-lg border border-yellow-100">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-yellow-800">
+                            {{ session('warning') }}
+                        </p>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Error Message Toast -->
+            @if (session()->has('error'))
+                <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
+                    class="fixed bottom-4 right-4 flex items-center bg-red-50 rounded-lg p-4 shadow-lg border border-red-100">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-red-800">
+                            {{ session('error') }}
+                        </p>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
+    </div>g

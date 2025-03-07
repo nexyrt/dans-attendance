@@ -48,13 +48,18 @@ class CheckOutModal extends Component
         'openCheckOutModal' => 'openModal'
     ];
 
-    protected $rules = [
-        'earlyLeaveReason' => 'required_if:showEarlyLeaveForm,true|string|max:255',
-        'notes' => 'required|string|max:1000'
-    ];
+    // Fixed validation rules that make early leave reason only required when early leave form is shown
+    protected function rules()
+    {
+        return [
+            'earlyLeaveReason' => $this->showEarlyLeaveForm ? 'required|string|max:255' : 'nullable|string|max:255',
+            'notes' => 'required|string|max:1000'
+        ];
+    }
 
     protected $messages = [
-        'notes.required' => 'You must provide activity notes before checking out.'
+        'notes.required' => 'You must provide activity notes before checking out.',
+        'earlyLeaveReason.required' => 'You must provide a reason for leaving early.'
     ];
 
     public function mount()
@@ -120,10 +125,10 @@ class CheckOutModal extends Component
         if (empty($content)) {
             return false;
         }
-        
+
         // Remove HTML tags and decode entities
         $plainText = trim(html_entity_decode(strip_tags($content)));
-        
+
         // Check if there's actual text content with at least 15 characters
         return strlen($plainText) >= 15;
     }
@@ -134,7 +139,7 @@ class CheckOutModal extends Component
     public function updatedNotes($value)
     {
         $this->notesValid = $this->notesHasSubstantiveContent($value);
-        
+
         if (!$this->notesValid) {
             $this->addError('notes', 'Your notes must contain at least 15 characters of actual text content.');
         } else {
@@ -186,7 +191,7 @@ class CheckOutModal extends Component
             $this->addError('notes', 'Notes must contain at least 15 characters of actual text.');
             throw new Exception('Notes validation failed');
         }
-        
+
         $updateData = [
             'check_out' => $currentTime,
             'working_hours' => round($workingHours, 1),
