@@ -32,6 +32,7 @@ class CheckOutModal extends Component
     // Form Inputs
     public $earlyLeaveReason;
     public $notes;
+    public $notesValid = false;
 
     // Schedule Properties
     public $schedule;
@@ -50,6 +51,10 @@ class CheckOutModal extends Component
     protected $rules = [
         'earlyLeaveReason' => 'required_if:showEarlyLeaveForm,true|string|max:255',
         'notes' => 'required|string|max:1000'
+    ];
+
+    protected $messages = [
+        'notes.required' => 'You must provide activity notes before checking out.'
     ];
 
     public function mount()
@@ -77,6 +82,12 @@ class CheckOutModal extends Component
         // Validate all form fields including notes
         $this->validate();
 
+        // Check if notes has substantive content
+        if (!$this->notesHasSubstantiveContent($this->notes)) {
+            $this->addError('notes', 'Your notes must contain at least 15 characters of actual text content.');
+            return;
+        }
+
         try {
             if (!$this->validateCheckOutRequirements()) {
                 return;
@@ -95,6 +106,39 @@ class CheckOutModal extends Component
 
         } catch (Exception $e) {
             $this->handleCheckOutError($e);
+        }
+    }
+
+    /**
+     * Check if notes content is actually empty or just contains HTML tags
+     * 
+     * @param string|null $content
+     * @return boolean
+     */
+    protected function notesHasSubstantiveContent($content)
+    {
+        if (empty($content)) {
+            return false;
+        }
+        
+        // Remove HTML tags and decode entities
+        $plainText = trim(html_entity_decode(strip_tags($content)));
+        
+        // Check if there's actual text content with at least 15 characters
+        return strlen($plainText) >= 15;
+    }
+
+    /**
+     * Update the notes valid state when notes are updated
+     */
+    public function updatedNotes($value)
+    {
+        $this->notesValid = $this->notesHasSubstantiveContent($value);
+        
+        if (!$this->notesValid) {
+            $this->addError('notes', 'Your notes must contain at least 15 characters of actual text content.');
+        } else {
+            $this->resetValidation('notes');
         }
     }
 
@@ -137,6 +181,12 @@ class CheckOutModal extends Component
      */
     protected function prepareCheckOutData($currentTime, $workingHours)
     {
+        // Double-check content validity server-side before saving
+        if (!$this->notesHasSubstantiveContent($this->notes)) {
+            $this->addError('notes', 'Notes must contain at least 15 characters of actual text.');
+            throw new Exception('Notes validation failed');
+        }
+        
         $updateData = [
             'check_out' => $currentTime,
             'working_hours' => round($workingHours, 1),
@@ -431,6 +481,7 @@ class CheckOutModal extends Component
         $this->isSuccess = false;
         $this->earlyLeaveReason = '';
         $this->notes = '';
+        $this->notesValid = false;
         $this->showEarlyLeaveForm = false;
         $this->resetAttendanceState();
     }

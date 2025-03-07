@@ -231,63 +231,82 @@
                             </div>
                         </div>
 
+                        {{-- Activity Notes Section --}}
                         <div class="p-6">
                             <h3 class="text-sm font-medium text-gray-900 mb-3">
                                 Activity Notes <span class="text-red-500">*</span>
                             </h3>
+
+                            <div wire:ignore x-data="{
+                                quillEditor: null,
+                                characterCount: 0,
                             
-                            <!-- Alpine.js + Quill integration -->
-                            <div x-data="{
-                                    quill: null,
-                                    content: @entangle('notes').live,
-                                    init() {
-                                        // Ensure Quill is available
-                                        if (typeof window.Quill === 'undefined') {
-                                            console.error('Quill is not available. Make sure it is properly imported in app.js');
-                                            return;
-                                        }
-                                        
-                                        // Initialize Quill
-                                        this.quill = new window.Quill(this.$refs.quillEditor, {
-                                            theme: 'snow',
-                                        });
-                                        
-                                        // Set initial content if available
-                                        if (this.content) {
-                                            this.quill.root.innerHTML = this.content;
-                                        }
-                                        
-                                        // Update Alpine data when editor changes
-                                        this.quill.on('text-change', () => {
-                                            this.content = this.quill.root.innerHTML;
-                                        });
+                                init() {
+                                    // Initialize Quill editor (requires importing Quill in app.js)
+                                    if (typeof window.Quill === 'undefined') {
+                                        console.error('Quill is not available. Make sure it is properly imported in app.js');
+                                        return;
                                     }
-                                }" 
-                                wire:ignore
-                            >
-                                <!-- Quill container -->
-                                <div x-ref="quillEditor" style="min-height: 120px; border: 1px solid #ccc;"></div>
-                            </div>
                             
-                            @error('notes')
-                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-                            @enderror
+                                    this.quillEditor = new window.Quill(this.$refs.quillEditor, {
+                                        theme: 'snow',
+                                        placeholder: 'Summarize your activities for today (minimum 15 characters required)...',
+                                        modules: {
+                                            toolbar: [
+                                                ['bold', 'italic', 'underline'],
+                                                [{ 'list': 'ordered' }, { 'list': 'bullet' }]
+                                            ]
+                                        }
+                                    });
+                            
+                                    // Set initial content if available
+                                    if (@js($notes)) {
+                                        this.quillEditor.root.innerHTML = @js($notes);
+                                        this.updateCharacterCount();
+                                    }
+                            
+                                    // Update Livewire property when content changes
+                                    this.quillEditor.on('text-change', () => {
+                                        const content = this.quillEditor.root.innerHTML;
+                                        @this.set('notes', content);
+                                        this.updateCharacterCount();
+                                    });
+                                },
+                            
+                                updateCharacterCount() {
+                                    // Get plain text content (strip HTML)
+                                    const tempDiv = document.createElement('div');
+                                    tempDiv.innerHTML = this.quillEditor.root.innerHTML;
+                                    const plainText = tempDiv.textContent.trim();
+                            
+                                    // Update character count
+                                    this.characterCount = plainText.length;
+                            
+                                    // Validate character count for visual feedback
+                                    if (this.characterCount < 15) {
+                                        @this.set('notesValid', false);
+                                    } else {
+                                        @this.set('notesValid', true);
+                                    }
+                                }
+                            }">
+
+                                {{-- Quill Editor Container --}}
+                                <div x-ref="quillEditor" style="min-height: 120px;"></div>
+
+                                {{-- Character Count Indicator --}}
+                                <div class="mt-2 text-xs flex justify-between">
+                                    <span
+                                        x-html="characterCount < 15 ? 
+                                                '<span class=\'text-red-500\'>Minimum 15 characters required</span>' : 
+                                                '<span class=\'text-green-500\'>Characters: ' + characterCount + '</span>'">
+                                    </span>
+                                    <span x-show="characterCount < 15" class="text-red-500">
+                                        You need <span x-text="15 - characterCount"></span> more characters
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-
-                        <p>{{$this->notes}}</p>
-
-                        {{-- Activity Notes Section --}}
-                        {{-- <div class="p-6">
-                            <h3 class="text-sm font-medium text-gray-900 mb-3">
-                                Activity Notes <span class="text-red-500">*</span>
-                            </h3>
-                            <textarea wire:model="notes"
-                                class="w-full rounded-lg border-gray-200 resize-none text-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                                rows="3" placeholder="Summarize your activities for today..."></textarea>
-                            @error('notes')
-                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-                            @enderror
-                        </div> --}}
 
                         {{-- Early Leave Form --}}
                         @if ($showEarlyLeaveForm)
