@@ -457,7 +457,7 @@
                     @else
                         <!-- Leave Form UI -->
                         <div class="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
-                            <form class="space-y-8">
+                            <form class="space-y-8" wire:submit.prevent="submitLeaveRequest">
                                 <!-- Top Section: Leave Type and Date Range -->
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <!-- Leave Type -->
@@ -575,25 +575,6 @@
                                     @enderror
                                 </div>
 
-                                <!-- Information Notice -->
-                                <div class="bg-blue-50 p-4 rounded-lg">
-                                    <div class="flex">
-                                        <div class="flex-shrink-0">
-                                            <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24"
-                                                stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                        </div>
-                                        <div class="ml-3">
-                                            <p class="text-sm text-blue-700">
-                                                Your leave document will be automatically generated from your input. You'll
-                                                need to sign the document before submission.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <!-- Reason -->
                                 <div class="w-full">
                                     <label class="block text-sm font-medium text-gray-900 mb-2">Reason for Leave</label>
@@ -608,9 +589,77 @@
                                     @enderror
                                 </div>
 
+                                <!-- Signature Pad Integration -->
+                                <div class="w-full border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                    <h3 class="text-sm font-medium text-gray-900 mb-4">Your Signature</h3>
+                                    <p class="text-sm text-gray-600 mb-4">
+                                        Please sign below to confirm your leave request. Your signature will be added to the
+                                        leave document.
+                                    </p>
+
+                                    <!-- Embedded Signature Pad -->
+                                    <div class="bg-white rounded-lg p-4 shadow-sm">
+                                        <div x-data="signatureCapture(@entangle('signature'))" class="w-full">
+                                            <div class="border rounded-lg overflow-hidden bg-white">
+                                                <canvas x-ref="signature_canvas" class="w-full" height="200" wire:ignore></canvas>
+                                            </div>
+
+                                            <div class="flex justify-between items-center mt-2">
+                                                <button type="button" @click="clearSignature"
+                                                    class="text-sm text-gray-500 hover:text-gray-700 focus:outline-none">
+                                                    Clear Signature
+                                                </button>
+
+                                                <span x-show="!signature" class="text-xs text-gray-500">
+                                                    Please sign above
+                                                </span>
+
+                                                <span x-show="signature" class="text-xs text-green-600">
+                                                    Signature captured
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        @error('signature')
+                                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div class="mt-3 text-xs text-gray-500">
+                                        <div class="flex items-start gap-2">
+                                            <svg class="w-4 h-4 text-blue-500 mt-0.5" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <span>Your signature will be saved and used for current and future leave
+                                                requests unless updated.</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Information Notice -->
+                                <div class="bg-blue-50 p-4 rounded-lg">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24"
+                                                stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-blue-700">
+                                                Your leave document will be automatically generated from your input and will
+                                                include your signature.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Form Actions -->
                                 <div class="flex justify-end pt-4 border-t border-gray-100">
-                                    <button type="button" wire:click="openSignatureModal"
+                                    <button type="submit"
                                         class="inline-flex items-center px-6 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
                                         Submit Request
                                         <svg class="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor"
@@ -625,51 +674,6 @@
                     @endif
                 </div>
             </div>
-
-            <!-- Signature Modal -->
-            <x-modals.modal name="signature-modal" maxWidth="md">
-                <div class="p-6">
-                    <h2 class="text-lg font-medium text-gray-900 mb-4">
-                        Your Signature
-                    </h2>
-
-                    <p class="text-sm text-gray-600 mb-4">
-                        Please sign below to confirm your leave request. Your signature will be added to the leave document.
-                    </p>
-
-                    <!-- Your signature pad component -->
-                    <div x-data="signaturePad(@entangle('signature'))">
-                        <div class="mb-4">
-                            <canvas x-ref="signature_canvas" class="border rounded shadow w-full" height="200">
-                            </canvas>
-                        </div>
-
-                        <div class="flex justify-between items-center mb-4">
-                            <button type="button" x-on:click="signaturePadInstance.clear(); $wire.set('signature', '')"
-                                class="text-sm text-gray-500 hover:text-gray-700">
-                                Clear Signature
-                            </button>
-
-                            @error('signature')
-                                <p class="text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div class="flex justify-end space-x-3">
-                            <button type="button" x-on:click="$dispatch('close-modal', 'signature-modal')"
-                                class="bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200">
-                                Cancel
-                            </button>
-                            <button type="button" wire:click="submitLeaveWithSignature"
-                                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                                Submit Leave Request
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </x-modals.modal>
-
-            
 
             <!-- Success Message Toast -->
             @if (session()->has('message'))
@@ -726,4 +730,72 @@
             @endif
         </div>
     </div>
-    </div>g
+    </div>
+    
+    {{-- Add this script to the bottom of your leave.blade.php file --}}
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('signatureCapture', (wireModel) => ({
+                signaturePad: null,
+                signature: wireModel,
+
+                init() {
+                    const canvas = this.$refs.signature_canvas;
+
+                    // Adjust canvas size to match container width with proper DPI
+                    const context = canvas.getContext('2d');
+                    const devicePixelRatio = window.devicePixelRatio || 1;
+                    const rect = canvas.getBoundingClientRect();
+
+                    canvas.width = rect.width * devicePixelRatio;
+                    canvas.height = canvas.height * devicePixelRatio;
+                    context.scale(devicePixelRatio, devicePixelRatio);
+
+                    // Initialize SignaturePad
+                    this.signaturePad = new SignaturePad(canvas, {
+                        minWidth: 1,
+                        maxWidth: 3,
+                        penColor: "rgb(0, 0, 0)"
+                    });
+
+                    // If there's already a signature, load it
+                    if (this.signature) {
+                        this.signaturePad.fromDataURL(this.signature);
+                    }
+
+                    // Update wire model on signature end
+                    this.signaturePad.addEventListener("endStroke", () => {
+                        this.signature = this.signaturePad.toDataURL('image/png');
+                    });
+
+                    // Handle window resize
+                    window.addEventListener('resize', this.resizeCanvas.bind(this));
+                },
+
+                clearSignature() {
+                    this.signaturePad.clear();
+                    this.signature = '';
+                },
+
+                resizeCanvas() {
+                    const canvas = this.$refs.signature_canvas;
+                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                    const rect = canvas.getBoundingClientRect();
+
+                    canvas.width = rect.width * ratio;
+                    canvas.height = canvas.height * ratio;
+                    const context = canvas.getContext('2d');
+                    context.scale(ratio, ratio);
+
+                    // Save signature data
+                    const data = this.signature ? this.signature : null;
+
+                    // Clear and redraw
+                    this.signaturePad.clear();
+                    if (data) {
+                        this.signaturePad.fromDataURL(data);
+                    }
+                }
+            }));
+        });
+    </script>
