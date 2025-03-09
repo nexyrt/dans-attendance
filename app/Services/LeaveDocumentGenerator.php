@@ -7,6 +7,7 @@ use PhpOffice\PhpWord\TemplateProcessor;
 use PhpOffice\PhpWord\IOFactory;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
 
 class LeaveDocumentGenerator
 {
@@ -33,6 +34,12 @@ class LeaveDocumentGenerator
         }
 
         try {
+            // Verify template exists
+            if (!file_exists($templatePath)) {
+                Log::error('Leave document template not found: ' . $templatePath);
+                throw new \Exception('Leave document template not found.');
+            }
+
             // Create template processor
             $templateProcessor = new TemplateProcessor($templatePath);
             
@@ -56,30 +63,10 @@ class LeaveDocumentGenerator
             // Set department information
             $templateProcessor->setValue('department_name', $department->name ?? 'General');
             
-            // Set staff signature if provided
-            if ($staffSignaturePath && file_exists(public_path($staffSignaturePath))) {
-                // Log for debugging
-                Log::info('Staff signature path: ' . $staffSignaturePath);
-                Log::info('Staff signature exists: ' . (file_exists(public_path($staffSignaturePath)) ? 'Yes' : 'No'));
-                
-                try {
-                    // Try different placeholder formats
-                    $templateProcessor->setImageValue('[Tanda Tangan]', public_path($staffSignaturePath));
-                } catch (\Exception $e) {
-                    Log::error('Error setting signature image: ' . $e->getMessage());
-                    
-                    try {
-                        // Try alternative placeholder format
-                        $templateProcessor->setValue('[Tanda Tangan]', '✓ Signed electronically');
-                    } catch (\Exception $e2) {
-                        Log::error('Error setting signature text: ' . $e2->getMessage());
-                    }
-                }
-            } else {
-                $templateProcessor->setValue('[Tanda Tangan]', '[Tanda Tangan]');
-            }
+            // Process staff signature
+            $this->processSignature($templateProcessor, 'Tanda Tangan', $staffSignaturePath, $user->name);
             
-            // Set placeholder for other signatures
+            // Set placeholders for approval signatures
             $templateProcessor->setValue('manager_signature', '[Tanda Tangan Manager]');
             $templateProcessor->setValue('manager_name', '[Nama Manager]');
             $templateProcessor->setValue('hr_signature', '[Tanda Tangan HR]');
@@ -89,41 +76,35 @@ class LeaveDocumentGenerator
             
             // If approvals have been done, update the signatures
             if ($leaveRequest->manager_id && $leaveRequest->manager_approved_at) {
-                if ($leaveRequest->manager_signature && file_exists(public_path($leaveRequest->manager_signature))) {
-                    try {
-                        $templateProcessor->setImageValue('manager_signature', public_path($leaveRequest->manager_signature));
-                    } catch (\Exception $e) {
-                        $templateProcessor->setValue('manager_signature', 'Disetujui pada ' . $leaveRequest->manager_approved_at->format('d/m/Y'));
-                    }
-                } else {
-                    $templateProcessor->setValue('manager_signature', 'Disetujui pada ' . $leaveRequest->manager_approved_at->format('d/m/Y'));
-                }
+                $this->processSignature(
+                    $templateProcessor, 
+                    'manager_signature', 
+                    $leaveRequest->manager_signature,
+                    $leaveRequest->manager->name ?? '[Nama Manager]',
+                    $leaveRequest->manager_approved_at
+                );
                 $templateProcessor->setValue('manager_name', $leaveRequest->manager->name ?? '[Nama Manager]');
             }
             
             if ($leaveRequest->hr_id && $leaveRequest->hr_approved_at) {
-                if ($leaveRequest->hr_signature && file_exists(public_path($leaveRequest->hr_signature))) {
-                    try {
-                        $templateProcessor->setImageValue('hr_signature', public_path($leaveRequest->hr_signature));
-                    } catch (\Exception $e) {
-                        $templateProcessor->setValue('hr_signature', 'Disetujui pada ' . $leaveRequest->hr_approved_at->format('d/m/Y'));
-                    }
-                } else {
-                    $templateProcessor->setValue('hr_signature', 'Disetujui pada ' . $leaveRequest->hr_approved_at->format('d/m/Y'));
-                }
+                $this->processSignature(
+                    $templateProcessor, 
+                    'hr_signature', 
+                    $leaveRequest->hr_signature,
+                    $leaveRequest->hr->name ?? '[Nama HR]',
+                    $leaveRequest->hr_approved_at
+                );
                 $templateProcessor->setValue('hr_name', $leaveRequest->hr->name ?? '[Nama HR]');
             }
             
             if ($leaveRequest->director_id && $leaveRequest->director_approved_at) {
-                if ($leaveRequest->director_signature && file_exists(public_path($leaveRequest->director_signature))) {
-                    try {
-                        $templateProcessor->setImageValue('director_signature', public_path($leaveRequest->director_signature));
-                    } catch (\Exception $e) {
-                        $templateProcessor->setValue('director_signature', 'Disetujui pada ' . $leaveRequest->director_approved_at->format('d/m/Y'));
-                    }
-                } else {
-                    $templateProcessor->setValue('director_signature', 'Disetujui pada ' . $leaveRequest->director_approved_at->format('d/m/Y'));
-                }
+                $this->processSignature(
+                    $templateProcessor, 
+                    'director_signature', 
+                    $leaveRequest->director_signature,
+                    $leaveRequest->director->name ?? '[Nama Direktur]',
+                    $leaveRequest->director_approved_at
+                );
                 $templateProcessor->setValue('director_name', $leaveRequest->director->name ?? '[Nama Direktur]');
             }
             
@@ -135,7 +116,107 @@ class LeaveDocumentGenerator
             
         } catch (\Exception $e) {
             Log::error('Error generating leave document: ' . $e->getMessage());
+            Log::error('Error trace: ' . $e->getTraceAsString());
             throw $e;
+        }
+    }
+
+    /**
+     * Process a signature in the document, either as an image or as text
+     * 
+     * @param TemplateProcessor $templateProcessor
+     * @param string $placeholder The placeholder name in the template
+     * @param string|null $signaturePath Path to the signature image
+     * @param string $name Name of the signer (for fallback)
+     * @param \DateTime|null $approvedAt Date of approval (for fallback)
+     * @return void
+     */
+    private function processSignature(
+        TemplateProcessor $templateProcessor, 
+        string $placeholder, 
+        ?string $signaturePath = null,
+        string $name = '',
+        ?\DateTime $approvedAt = null
+    ): void {
+        // First try with the image
+        if ($signaturePath && file_exists(public_path($signaturePath))) {
+            try {
+                Log::info("Trying to set {$placeholder} image from: " . public_path($signaturePath));
+                
+                // Try different variations of the placeholder
+                try {
+                    $templateProcessor->setImageValue($placeholder, public_path($signaturePath));
+                } catch (\Exception $e) {
+                    Log::warning("First attempt to set {$placeholder} image failed: " . $e->getMessage());
+                    
+                    // Try with wrapped curly braces
+                    try {
+                        $templateProcessor->setImageValue('${' . $placeholder . '}', public_path($signaturePath));
+                    } catch (\Exception $e2) {
+                        Log::warning("Second attempt to set {$placeholder} image failed: " . $e2->getMessage());
+                        
+                        // Try with square brackets
+                        try {
+                            $templateProcessor->setImageValue('[' . $placeholder . ']', public_path($signaturePath));
+                        } catch (\Exception $e3) {
+                            Log::warning("Third attempt to set {$placeholder} image failed: " . $e3->getMessage());
+                            throw $e3;
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // If all image approaches fail, fall back to text
+                Log::error("All attempts to set {$placeholder} image failed: " . $e->getMessage());
+                $this->setSignatureAsText($templateProcessor, $placeholder, $name, $approvedAt);
+            }
+        } else {
+            // No image or image doesn't exist, use text
+            if ($signaturePath) {
+                Log::warning("Signature image not found: " . public_path($signaturePath));
+            }
+            $this->setSignatureAsText($templateProcessor, $placeholder, $name, $approvedAt);
+        }
+    }
+
+    /**
+     * Set a signature as text when image insertion fails
+     * 
+     * @param TemplateProcessor $templateProcessor
+     * @param string $placeholder
+     * @param string $name
+     * @param \DateTime|null $approvedAt
+     * @return void
+     */
+    private function setSignatureAsText(
+        TemplateProcessor $templateProcessor, 
+        string $placeholder, 
+        string $name,
+        ?\DateTime $approvedAt = null
+    ): void {
+        $text = '';
+        
+        if ($approvedAt) {
+            $date = $approvedAt->format('d/m/Y');
+            $text = "✓ {$name}\nDisetujui pada {$date}";
+        } else {
+            $text = "✓ {$name}";
+        }
+        
+        try {
+            $templateProcessor->setValue($placeholder, $text);
+        } catch (\Exception $e) {
+            Log::warning("Failed to set {$placeholder} as text: " . $e->getMessage());
+            
+            // Try alternative formats
+            try {
+                $templateProcessor->setValue('${' . $placeholder . '}', $text);
+            } catch (\Exception $e2) {
+                try {
+                    $templateProcessor->setValue('[' . $placeholder . ']', $text);
+                } catch (\Exception $e3) {
+                    Log::error("All attempts to set signature text failed: " . $e3->getMessage());
+                }
+            }
         }
     }
 
