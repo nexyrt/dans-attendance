@@ -2,7 +2,7 @@
 <div class="min-h-screen py-8 space-y-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        <!-- Stats Overview -->
+        <!-- Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-5">
             <!-- Pending Requests Card -->
             <div class="bg-white/95 backdrop-blur-sm overflow-hidden shadow-sm rounded-xl">
@@ -19,13 +19,9 @@
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">
-                                    Pending Requests
-                                </dt>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Pending Requests</dt>
                                 <dd class="flex items-baseline">
-                                    <div class="text-2xl font-semibold text-gray-900">
-                                        {{ $this->pendingCount }}
-                                    </div>
+                                    <div class="text-2xl font-semibold text-gray-900">{{ $counts['pending'] }}</div>
                                 </dd>
                             </dl>
                         </div>
@@ -56,13 +52,9 @@
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">
-                                    Approved Requests
-                                </dt>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Approved Requests</dt>
                                 <dd class="flex items-baseline">
-                                    <div class="text-2xl font-semibold text-gray-900">
-                                        {{ $this->approvedCount }}
-                                    </div>
+                                    <div class="text-2xl font-semibold text-gray-900">{{ $counts['approved'] }}</div>
                                 </dd>
                             </dl>
                         </div>
@@ -93,13 +85,9 @@
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">
-                                    Rejected Requests
-                                </dt>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Rejected Requests</dt>
                                 <dd class="flex items-baseline">
-                                    <div class="text-2xl font-semibold text-gray-900">
-                                        {{ $this->rejectedCount }}
-                                    </div>
+                                    <div class="text-2xl font-semibold text-gray-900">{{ $counts['rejected'] }}</div>
                                 </dd>
                             </dl>
                         </div>
@@ -130,13 +118,9 @@
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">
-                                    Team Members
-                                </dt>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Team Members</dt>
                                 <dd class="flex items-baseline">
-                                    <div class="text-2xl font-semibold text-gray-900">
-                                        {{ $teamBalances->count() }}
-                                    </div>
+                                    <div class="text-2xl font-semibold text-gray-900">{{ $teamBalances->count() }}</div>
                                 </dd>
                             </dl>
                         </div>
@@ -144,8 +128,7 @@
                 </div>
                 <div class="bg-blue-50 px-5 py-3">
                     <div class="text-sm">
-                        <button wire:click="$set('showTeamBalances', true)"
-                            class="font-medium text-blue-700 hover:text-blue-900">
+                        <button type="button" class="font-medium text-blue-700 hover:text-blue-900">
                             View team balances
                         </button>
                     </div>
@@ -158,73 +141,53 @@
             <!-- Tabs -->
             <div class="border-b border-gray-200">
                 <nav class="flex space-x-8 px-6 overflow-x-auto" aria-label="Tabs">
-                    <button wire:click="$set('activeTab', 'pending')"
-                        class="inline-flex items-center py-4 px-1 gap-2 border-b-2 whitespace-nowrap font-medium text-sm transition-colors duration-200
-                        {{ $activeTab === 'pending' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
-                        <div @class([
-                            'w-8 h-8 rounded-lg flex items-center justify-center',
-                            'bg-yellow-50' => $activeTab === 'pending',
-                            'bg-gray-50' => $activeTab !== 'pending',
-                        ])>
-                            <svg class="w-5 h-5 {{ $activeTab === 'pending' ? 'text-yellow-600' : 'text-gray-500' }}"
-                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        Pending
-                        @if ($this->pendingCount > 0)
-                            <span
-                                class="ml-1 px-2.5 py-0.5 bg-yellow-50 text-yellow-700 text-xs font-medium rounded-full">
-                                {{ $this->pendingCount }}
-                            </span>
-                        @endif
-                    </button>
+                    @foreach (['pending', 'approved', 'rejected'] as $tab)
+                        <button wire:click="$set('activeTab', '{{ $tab }}')"
+                            class="inline-flex items-center py-4 px-1 gap-2 border-b-2 whitespace-nowrap font-medium text-sm transition-colors duration-200
+                                {{ $activeTab === $tab ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
 
-                    <button wire:click="$set('activeTab', 'approved')"
-                        class="inline-flex items-center py-4 px-1 gap-2 border-b-2 whitespace-nowrap font-medium text-sm transition-colors duration-200
-                        {{ $activeTab === 'approved' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
-                        <div @class([
-                            'w-8 h-8 rounded-lg flex items-center justify-center',
-                            'bg-green-50' => $activeTab === 'approved',
-                            'bg-gray-50' => $activeTab !== 'approved',
-                        ])>
-                            <svg class="w-5 h-5 {{ $activeTab === 'approved' ? 'text-green-600' : 'text-gray-500' }}"
-                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        Approved
-                        @if ($this->approvedCount > 0)
-                            <span
-                                class="ml-1 px-2.5 py-0.5 bg-green-50 text-green-700 text-xs font-medium rounded-full">
-                                {{ $this->approvedCount }}
-                            </span>
-                        @endif
-                    </button>
+                            <div @class([
+                                'w-8 h-8 rounded-lg flex items-center justify-center',
+                                'bg-yellow-50' => $tab === 'pending' && $activeTab === $tab,
+                                'bg-green-50' => $tab === 'approved' && $activeTab === $tab,
+                                'bg-red-50' => $tab === 'rejected' && $activeTab === $tab,
+                                'bg-gray-50' => $activeTab !== $tab,
+                            ])>
+                                @if ($tab === 'pending')
+                                    <svg class="w-5 h-5 {{ $activeTab === $tab ? 'text-yellow-600' : 'text-gray-500' }}"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                @elseif($tab === 'approved')
+                                    <svg class="w-5 h-5 {{ $activeTab === $tab ? 'text-green-600' : 'text-gray-500' }}"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                @else
+                                    <svg class="w-5 h-5 {{ $activeTab === $tab ? 'text-red-600' : 'text-gray-500' }}"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                @endif
+                            </div>
 
-                    <button wire:click="$set('activeTab', 'rejected')"
-                        class="inline-flex items-center py-4 px-1 gap-2 border-b-2 whitespace-nowrap font-medium text-sm transition-colors duration-200
-                        {{ $activeTab === 'rejected' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
-                        <div @class([
-                            'w-8 h-8 rounded-lg flex items-center justify-center',
-                            'bg-red-50' => $activeTab === 'rejected',
-                            'bg-gray-50' => $activeTab !== 'rejected',
-                        ])>
-                            <svg class="w-5 h-5 {{ $activeTab === 'rejected' ? 'text-red-600' : 'text-gray-500' }}"
-                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        Rejected
-                        @if ($this->rejectedCount > 0)
-                            <span class="ml-1 px-2.5 py-0.5 bg-red-50 text-red-700 text-xs font-medium rounded-full">
-                                {{ $this->rejectedCount }}
-                            </span>
-                        @endif
-                    </button>
+                            {{ ucfirst($tab) }}
+
+                            @if ($counts[$tab] > 0)
+                                <span @class([
+                                    'ml-1 px-2.5 py-0.5 text-xs font-medium rounded-full',
+                                    'bg-yellow-50 text-yellow-700' => $tab === 'pending',
+                                    'bg-green-50 text-green-700' => $tab === 'approved',
+                                    'bg-red-50 text-red-700' => $tab === 'rejected',
+                                ])>
+                                    {{ $counts[$tab] }}
+                                </span>
+                            @endif
+                        </button>
+                    @endforeach
                 </nav>
             </div>
 
@@ -287,38 +250,22 @@
                                             'bg-purple-50 text-purple-600' => $request->type === 'important',
                                             'bg-gray-50 text-gray-600' => $request->type === 'other',
                                         ])>
-                                            @switch($request->type)
-                                                @case('sick')
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                @break
-
-                                                @case('annual')
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                @break
-
-                                                @case('important')
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                                    </svg>
-                                                @break
-
-                                                @default
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                            d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                            @endswitch
+                                            @php
+                                                $icon = match ($request->type) {
+                                                    'sick'
+                                                        => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />',
+                                                    'annual'
+                                                        => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />',
+                                                    'important'
+                                                        => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />',
+                                                    default
+                                                        => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />',
+                                                };
+                                            @endphp
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                {!! $icon !!}
+                                            </svg>
                                         </div>
                                         <div class="ml-3">
                                             <p class="text-sm font-medium text-gray-900">
@@ -336,17 +283,17 @@
                                 <!-- Duration -->
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">
-                                        {{ \Cake\Chronos\Chronos::parse($request->start_date)->format('M j, Y') }}
+                                        {{ $request->start_date->format('M j, Y') }}
                                     </div>
                                     <div class="text-sm text-gray-500">
-                                        {{ \Cake\Chronos\Chronos::parse($request->end_date)->format('M j, Y') }}
+                                        {{ $request->end_date->format('M j, Y') }}
                                         <span class="text-xs">({{ $request->getDurationInDays() }} days)</span>
                                     </div>
                                 </td>
 
                                 <!-- Status -->
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @if ($request->attachment_path)
+                                    @if ($request->document_path || $request->attachment_path)
                                         <button wire:click="previewAttachment({{ $request->id }})"
                                             class="mb-2 inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg 
                                             text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors">
@@ -355,16 +302,22 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                                             </svg>
-                                            View Attachment
+                                            View Document
                                         </button>
                                     @endif
                                     <div class="text-sm">
                                         <div class="font-medium text-gray-700">
-                                            Balance: {{ $request->user->currentLeaveBalance?->remaining_balance ?? 0 }}
-                                            days
+                                            @php
+                                                $balance =
+                                                    $request->user->leaveBalances->first()?->remaining_balance ?? 0;
+                                            @endphp
+                                            Balance: {{ $balance }} days
                                         </div>
                                         <div class="text-gray-500">
-                                            Used: {{ $request->user->currentLeaveBalance?->used_balance ?? 0 }} days
+                                            @php
+                                                $used = $request->user->leaveBalances->first()?->used_balance ?? 0;
+                                            @endphp
+                                            Used: {{ $used }} days
                                         </div>
                                     </div>
                                 </td>
@@ -383,7 +336,7 @@
                                                 Approve
                                             </button>
 
-                                            <button wire:click="showModalReject({{ $request->id }})" type="button"
+                                            <button wire:click="showRejectModal({{ $request->id }})" type="button"
                                                 class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-lg shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
                                                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor"
                                                     viewBox="0 0 24 24">
@@ -396,227 +349,281 @@
                                     </div>
                                 </td>
                             </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="px-6 py-12 text-center">
-                                        <div class="flex flex-col items-center">
-                                            <div
-                                                class="w-16 h-16 bg-gray-50 rounded-lg flex items-center justify-center mb-4">
-                                                @switch($activeTab)
-                                                    @case('pending')
-                                                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="1.5"
-                                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                    @break
-
-                                                    @case('approved')
-                                                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="1.5"
-                                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                    @break
-
-                                                    @case('rejected')
-                                                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="1.5"
-                                                                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                    @break
-                                                @endswitch
-                                            </div>
-                                            <h3 class="text-sm font-medium text-gray-900 mb-1">No {{ $activeTab }}
-                                                requests</h3>
-                                            <p class="text-sm text-gray-500">
-                                                @if ($activeTab === 'pending')
-                                                    There are no pending leave requests to review at this time.
-                                                @elseif($activeTab === 'approved')
-                                                    No approved leave requests found.
-                                                @else
-                                                    No rejected leave requests found.
-                                                @endif
-                                            </p>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="px-6 py-12 text-center">
+                                    <div class="flex flex-col items-center">
+                                        <div
+                                            class="w-16 h-16 bg-gray-50 rounded-lg flex items-center justify-center mb-4">
+                                            @php
+                                                $emptyIcon = match ($activeTab) {
+                                                    'pending'
+                                                        => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />',
+                                                    'approved'
+                                                        => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />',
+                                                    'rejected'
+                                                        => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />',
+                                                    default
+                                                        => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />',
+                                                };
+                                            @endphp
+                                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                {!! $emptyIcon !!}
+                                            </svg>
                                         </div>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                                        <h3 class="text-sm font-medium text-gray-900 mb-1">No {{ $activeTab }}
+                                            requests</h3>
+                                        <p class="text-sm text-gray-500">
+                                            @if ($activeTab === 'pending')
+                                                There are no pending leave requests to review at this time.
+                                            @elseif($activeTab === 'approved')
+                                                No approved leave requests found.
+                                            @else
+                                                No rejected leave requests found.
+                                            @endif
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <div>
+            <!-- Preview Modal -->
+            <x-modals.preview-modal :show="$showPreview" :preview-url="$previewUrl" :preview-type="$previewType" />
+
+            <!-- Signature Modal -->
+            <x-modals.modal name="signature-modal" maxWidth="md">
+                <div class="p-6">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">Digital Signature</h2>
+
+                    <p class="text-sm text-gray-600 mb-4">
+                        Please sign below to approve this leave request. Your signature will be added to the document.
+                    </p>
+
+                    <!-- Signature pad component with fixed aspect ratio -->
+                    <div x-data="signaturePad(@entangle('signature'))" class="w-full">
+                        <div class="mb-4 relative" style="height: 0; padding-bottom: 56.25%;">
+                            <!-- Container with fixed aspect ratio 16:9 -->
+                            <div class="absolute inset-0 border border-gray-300 rounded-lg shadow-sm bg-white">
+                                <canvas x-ref="signature_canvas" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center mb-4">
+                            <button type="button" @click="clearSignature()"
+                                class="text-sm text-gray-500 hover:text-gray-700">
+                                Clear Signature
+                            </button>
+
+                            @error('signature')
+                                <p class="text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="mt-4 flex justify-end space-x-3">
+                            <button type="button" @click="$dispatch('close-modal', 'signature-modal')"
+                                class="bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200">
+                                Cancel
+                            </button>
+                            <button type="button" wire:click="approveWithSignature"
+                                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                                Submit Approval
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Modals -->
-            <div>
-                <!-- Preview Modal -->
-                <x-modals.preview-modal :show="$showPreview" :preview-url="$previewUrl" :preview-type="$previewType" />
+                <script>
+                    document.addEventListener('alpine:init', () => {
+                        Alpine.data('signaturePad', (value) => ({
+                            signaturePadInstance: null,
+                            value: value,
 
-                <!-- Signature Modal -->
-                <x-modals.modal name="signature-modal" maxWidth="md">
-                    <div class="p-6">
-                        <h2 class="text-lg font-medium text-gray-900 mb-4">
-                            Digital Signature
-                        </h2>
-            
-                        <!-- Your signature pad component -->
-                        <div x-data="signaturePad(@entangle('signature'))">
-                            <div class="mb-4">
-                                <canvas 
-                                    x-ref="signature_canvas" 
-                                    class="border rounded shadow w-full" 
-                                    height="200">
-                                </canvas>
-                            </div>
-                            
-                            <div class="mt-4 flex justify-end space-x-3">
-                                <button
-                                    type="button"
-                                    x-on:click="$dispatch('close-modal', 'signature-modal')"
-                                    class="bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200">
-                                    Cancel
-                                </button>
-                                <button
-                                    type="button"
-                                    wire:click="saveSignatureAndApprove"
-                                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                                    Submit Approval
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                            init() {
+                                // Initialize the canvas properly
+                                this.initCanvas();
 
-                    <script>
-                        document.addEventListener('alpine:init', () => {
-                            Alpine.data('signaturePad', (value) => ({
-                                signaturePadInstance: null,
-                                value: value,
-                                init(){
-                                    this.signaturePadInstance = new SignaturePad(this.$refs.signature_canvas);
-                                    this.signaturePadInstance.addEventListener("endStroke", ()=>{
-                                       this.value = this.signaturePadInstance.toDataURL('image/png');
-                                    });
-                                },
-                            }))
-                        })
-                    </script>
-                </x-modals.modal>
+                                // Set up event listeners for signature capture
+                                this.signaturePadInstance.addEventListener("endStroke", () => {
+                                    this.value = this.signaturePadInstance.toDataURL('image/png');
+                                });
 
-                <!-- Reject Modal -->
-                @if ($showRejectModal)
-                    <div class="fixed inset-0 bg-black/25 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                        x-data @keydown.escape.window="$wire.closeRejectModal()">
+                                // Handle window resize
+                                window.addEventListener('resize', () => {
+                                    this.resizeCanvas();
+                                });
 
-                        <!-- Modal Panel -->
-                        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden" x-show="true"
-                            x-transition:enter="transform transition ease-out duration-300"
-                            x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                            x-transition:leave="transform transition ease-in duration-200"
-                            x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                            x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+                                // Handle modal open event to properly size canvas
+                                window.addEventListener('open-modal', (event) => {
+                                    if (event.detail === 'signature-modal') {
+                                        // Wait for the modal to be fully visible
+                                        setTimeout(() => {
+                                            this.resizeCanvas();
+                                        }, 100);
+                                    }
+                                });
+                            },
 
-                            <div class="p-6">
-                                <div class="flex items-center justify-between mb-5">
-                                    <h3 class="text-lg font-medium text-gray-900">
-                                        Reject Leave Request
-                                    </h3>
-                                    <button type="button" wire:click="closeRejectModal"
-                                        class="text-gray-400 hover:text-gray-500">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </div>
+                            initCanvas() {
+                                const canvas = this.$refs.signature_canvas;
+                                this.signaturePadInstance = new SignaturePad(canvas, {
+                                    minWidth: 1,
+                                    maxWidth: 3,
+                                    penColor: "rgb(0, 0, 0)",
+                                    backgroundColor: "rgb(255, 255, 255)"
+                                });
 
-                                @if ($selectedRequest)
-                                    <!-- Request Summary -->
-                                    <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-                                        <div class="text-sm text-gray-600 space-y-2">
-                                            <p><span class="font-medium">Employee:</span>
-                                                {{ $selectedRequest->user->name }}</p>
-                                            <p><span class="font-medium">Leave Type:</span>
-                                                {{ ucfirst($selectedRequest->type) }}</p>
-                                            <p><span class="font-medium">Duration:</span>
-                                                {{ $selectedRequest->start_date->format('M j, Y') }} -
-                                                {{ $selectedRequest->end_date->format('M j, Y') }}
-                                                ({{ $selectedRequest->getDurationInDays() }} days)
-                                            </p>
-                                        </div>
-                                    </div>
-                                @endif
+                                this.resizeCanvas();
+                            },
 
-                                <div class="space-y-4">
-                                    <div>
-                                        <label for="rejectReason" class="block text-sm font-medium text-gray-700 mb-1">
-                                            Reason for Rejection
-                                        </label>
-                                        <textarea id="rejectReason" wire:model="rejectReason" rows="4"
-                                            placeholder="Please provide a reason for rejecting this leave request..."
-                                            class="block w-full rounded-lg shadow-sm border-gray-300 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"></textarea>
-                                        @error('rejectReason')
-                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                        @enderror
-                                    </div>
-                                </div>
-                            </div>
+                            resizeCanvas() {
+                                const canvas = this.$refs.signature_canvas;
+                                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                                const rect = canvas.parentElement.getBoundingClientRect();
 
-                            <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
+                                // Set physical dimensions for proper rendering
+                                canvas.width = rect.width * ratio;
+                                canvas.height = rect.height * ratio;
+
+                                // Scale the context for proper display
+                                const ctx = canvas.getContext("2d");
+                                ctx.scale(ratio, ratio);
+
+                                // Preserve signature data when resizing
+                                const data = this.value;
+                                if (data) {
+                                    // Clear and restore data
+                                    this.signaturePadInstance.clear();
+                                    this.signaturePadInstance.fromDataURL(data);
+                                } else {
+                                    this.signaturePadInstance.clear();
+                                }
+                            },
+
+                            clearSignature() {
+                                this.signaturePadInstance.clear();
+                                this.value = '';
+                            }
+                        }));
+                    });
+                </script>
+            </x-modals.modal>
+
+            <!-- Reject Modal -->
+            @if ($showRejectModal)
+                <div class="fixed inset-0 bg-black/25 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                    x-data @keydown.escape.window="$wire.closeRejectModal()">
+
+                    <!-- Modal Panel -->
+                    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden" x-show="true"
+                        x-transition:enter="transform transition ease-out duration-300"
+                        x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                        x-transition:leave="transform transition ease-in duration-200"
+                        x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                        x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+
+                        <div class="p-6">
+                            <div class="flex items-center justify-between mb-5">
+                                <h3 class="text-lg font-medium text-gray-900">Reject Leave Request</h3>
                                 <button type="button" wire:click="closeRejectModal"
-                                    class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
-                                    Cancel
-                                </button>
-                                <button type="button" wire:click="rejectRequest"
-                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                                    Reject Request
+                                    class="text-gray-400 hover:text-gray-500">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
                                 </button>
                             </div>
-                        </div>
-                    </div>
-                @endif
-            </div>
 
-            <!-- Success Message Toast -->
-            @if (session()->has('message'))
-                <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"
-                    class="fixed bottom-4 right-4 z-50 flex items-center px-4 py-3 rounded-lg border"
-                    :class="{
-                        'bg-green-50 border-green-100': '{{ session('type', 'success') }}'
-                        === 'success',
-                        'bg-red-50 border-red-100': '{{ session('type', 'success') }}'
-                        === 'error'
-                    }">
-                    <div class="flex-shrink-0">
-                        @if (session('type', 'success') === 'success')
-                            <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        @else
-                            <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        @endif
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm font-medium"
-                            :class="{
-                                'text-green-800': '{{ session('type', 'success') }}'
-                                === 'success',
-                                'text-red-800': '{{ session('type', 'success') }}'
-                                === 'error'
-                            }">
-                            {{ session('message') }}
-                        </p>
+                            @if ($selectedRequest)
+                                <!-- Request Summary -->
+                                <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                                    <div class="text-sm text-gray-600 space-y-2">
+                                        <p><span class="font-medium">Employee:</span>
+                                            {{ $selectedRequest->user->name }}</p>
+                                        <p><span class="font-medium">Leave Type:</span>
+                                            {{ ucfirst($selectedRequest->type) }}</p>
+                                        <p><span class="font-medium">Duration:</span>
+                                            {{ $selectedRequest->start_date->format('M j, Y') }} -
+                                            {{ $selectedRequest->end_date->format('M j, Y') }}
+                                            ({{ $selectedRequest->getDurationInDays() }} days)
+                                        </p>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="rejectReason"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Reason for
+                                        Rejection</label>
+                                    <textarea id="rejectReason" wire:model="rejectReason" rows="4"
+                                        placeholder="Please provide a reason for rejecting this leave request..."
+                                        class="block w-full rounded-lg shadow-sm border-gray-300 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"></textarea>
+                                    @error('rejectReason')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
+                            <button type="button" wire:click="closeRejectModal"
+                                class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="button" wire:click="rejectRequest"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                                Reject Request
+                            </button>
+                        </div>
                     </div>
                 </div>
             @endif
         </div>
+
+        <!-- Toast Notifications -->
+        @if (session()->has('message'))
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"
+                class="fixed bottom-4 right-4 z-50 flex items-center px-4 py-3 rounded-lg border"
+                :class="{
+                    'bg-green-50 border-green-100': '{{ session('type', 'success') }}'
+                    === 'success',
+                    'bg-red-50 border-red-100': '{{ session('type', 'success') }}'
+                    === 'error'
+                }">
+                <div class="flex-shrink-0">
+                    @if (session('type', 'success') === 'success')
+                        <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    @else
+                        <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    @endif
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium"
+                        :class="{
+                            'text-green-800': '{{ session('type', 'success') }}'
+                            === 'success',
+                            'text-red-800': '{{ session('type', 'success') }}'
+                            === 'error'
+                        }">
+                        {{ session('message') }}
+                    </p>
+                </div>
+            </div>
+        @endif
     </div>
+</div>

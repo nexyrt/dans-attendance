@@ -25,6 +25,7 @@
         "preline": "^2.7.0",
         "quill": "^2.0.3",
         "quill-image-resize-module": "^3.0.0",
-        "quill-table": "^1.0.0"
+        "quill-table": "^1.0.0",
+        "signature_pad": "^5.0.4"
     }
 }

@@ -63,49 +63,49 @@ class LeaveDocumentGenerator
             // Set department information
             $templateProcessor->setValue('department_name', $department->name ?? 'General');
             
-            // Process staff signature
+            // Process staff signature - Using the correct ${placeholder} format
             $this->processSignature($templateProcessor, 'Tanda Tangan', $staffSignaturePath, $user->name);
             
-            // Set placeholders for approval signatures
-            $templateProcessor->setValue('manager_signature', '[Tanda Tangan Manager]');
-            $templateProcessor->setValue('manager_name', '[Nama Manager]');
-            $templateProcessor->setValue('hr_signature', '[Tanda Tangan HR]');
-            $templateProcessor->setValue('hr_name', '[Nama HR]');
-            $templateProcessor->setValue('director_signature', '[Tanda Tangan Direktur]');
-            $templateProcessor->setValue('director_name', '[Nama Direktur]');
+            // Set placeholders for approval signatures with correct ${placeholder} format
+            $templateProcessor->setValue('${manager_signature}', '[Tanda Tangan Manager]');
+            $templateProcessor->setValue('${manager_name}', '[Nama Manager]');
+            $templateProcessor->setValue('${hr_signature}', '[Tanda Tangan HR]');
+            $templateProcessor->setValue('${hr_name}', '[Nama HR]');
+            $templateProcessor->setValue('${director_signature}', '[Tanda Tangan Direktur]');
+            $templateProcessor->setValue('${director_name}', '[Nama Direktur]');
             
             // If approvals have been done, update the signatures
             if ($leaveRequest->manager_id && $leaveRequest->manager_approved_at) {
                 $this->processSignature(
                     $templateProcessor, 
-                    'manager_signature', 
+                    '${manager_signature}', 
                     $leaveRequest->manager_signature,
                     $leaveRequest->manager->name ?? '[Nama Manager]',
                     $leaveRequest->manager_approved_at
                 );
-                $templateProcessor->setValue('manager_name', $leaveRequest->manager->name ?? '[Nama Manager]');
+                $templateProcessor->setValue('${manager_name}', $leaveRequest->manager->name ?? '[Nama Manager]');
             }
             
             if ($leaveRequest->hr_id && $leaveRequest->hr_approved_at) {
                 $this->processSignature(
                     $templateProcessor, 
-                    'hr_signature', 
+                    '${hr_signature}', 
                     $leaveRequest->hr_signature,
                     $leaveRequest->hr->name ?? '[Nama HR]',
                     $leaveRequest->hr_approved_at
                 );
-                $templateProcessor->setValue('hr_name', $leaveRequest->hr->name ?? '[Nama HR]');
+                $templateProcessor->setValue('${hr_name}', $leaveRequest->hr->name ?? '[Nama HR]');
             }
             
             if ($leaveRequest->director_id && $leaveRequest->director_approved_at) {
                 $this->processSignature(
                     $templateProcessor, 
-                    'director_signature', 
+                    '${director_signature}', 
                     $leaveRequest->director_signature,
                     $leaveRequest->director->name ?? '[Nama Direktur]',
                     $leaveRequest->director_approved_at
                 );
-                $templateProcessor->setValue('director_name', $leaveRequest->director->name ?? '[Nama Direktur]');
+                $templateProcessor->setValue('${director_name}', $leaveRequest->director->name ?? '[Nama Direktur]');
             }
             
             // Save the document
@@ -143,30 +143,24 @@ class LeaveDocumentGenerator
             try {
                 Log::info("Trying to set {$placeholder} image from: " . public_path($signaturePath));
                 
-                // Try different variations of the placeholder
-                try {
+                // Check if placeholder starts with ${ and ends with }
+                if (strpos($placeholder, '${') === 0 && strrpos($placeholder, '}') === strlen($placeholder) - 1) {
+                    // Use the placeholder as is
                     $templateProcessor->setImageValue($placeholder, public_path($signaturePath));
-                } catch (\Exception $e) {
-                    Log::warning("First attempt to set {$placeholder} image failed: " . $e->getMessage());
-                    
-                    // Try with wrapped curly braces
+                } else {
+                    // Try with proper ${...} wrapper
+                    $wrappedPlaceholder = '${' . $placeholder . '}';
                     try {
-                        $templateProcessor->setImageValue('${' . $placeholder . '}', public_path($signaturePath));
-                    } catch (\Exception $e2) {
-                        Log::warning("Second attempt to set {$placeholder} image failed: " . $e2->getMessage());
-                        
-                        // Try with square brackets
-                        try {
-                            $templateProcessor->setImageValue('[' . $placeholder . ']', public_path($signaturePath));
-                        } catch (\Exception $e3) {
-                            Log::warning("Third attempt to set {$placeholder} image failed: " . $e3->getMessage());
-                            throw $e3;
-                        }
+                        $templateProcessor->setImageValue($wrappedPlaceholder, public_path($signaturePath));
+                    } catch (\Exception $e) {
+                        // If wrapped placeholder fails, try with unwrapped
+                        Log::warning("Failed with wrapped placeholder. Trying unwrapped. Error: " . $e->getMessage());
+                        $templateProcessor->setImageValue($placeholder, public_path($signaturePath));
                     }
                 }
             } catch (\Exception $e) {
                 // If all image approaches fail, fall back to text
-                Log::error("All attempts to set {$placeholder} image failed: " . $e->getMessage());
+                Log::error("Failed to set {$placeholder} image: " . $e->getMessage());
                 $this->setSignatureAsText($templateProcessor, $placeholder, $name, $approvedAt);
             }
         } else {
@@ -203,20 +197,23 @@ class LeaveDocumentGenerator
         }
         
         try {
-            $templateProcessor->setValue($placeholder, $text);
-        } catch (\Exception $e) {
-            Log::warning("Failed to set {$placeholder} as text: " . $e->getMessage());
-            
-            // Try alternative formats
-            try {
-                $templateProcessor->setValue('${' . $placeholder . '}', $text);
-            } catch (\Exception $e2) {
+            // Check if placeholder starts with ${ and ends with }
+            if (strpos($placeholder, '${') === 0 && strrpos($placeholder, '}') === strlen($placeholder) - 1) {
+                // Use the placeholder as is
+                $templateProcessor->setValue($placeholder, $text);
+            } else {
+                // Try with proper ${...} wrapper
+                $wrappedPlaceholder = '${' . $placeholder . '}';
                 try {
-                    $templateProcessor->setValue('[' . $placeholder . ']', $text);
-                } catch (\Exception $e3) {
-                    Log::error("All attempts to set signature text failed: " . $e3->getMessage());
+                    $templateProcessor->setValue($wrappedPlaceholder, $text);
+                } catch (\Exception $e) {
+                    // If wrapped placeholder fails, try with unwrapped
+                    Log::warning("Failed with wrapped placeholder. Trying unwrapped. Error: " . $e->getMessage());
+                    $templateProcessor->setValue($placeholder, $text);
                 }
             }
+        } catch (\Exception $e) {
+            Log::error("All attempts to set signature text failed: " . $e->getMessage());
         }
     }
 
