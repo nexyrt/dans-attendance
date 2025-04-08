@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Auth;
+use PhpOffice\PhpWord\TemplateProcessor;
 
 class Leave extends Component
 {
@@ -157,23 +158,33 @@ class Leave extends Component
     }
 
     /**
-     * Submit the leave request with signature
+     * Submit the leave request
      */
     public function submitLeaveRequest()
     {
-        $this->validate();
+        // Validate the form
+        $this->validate([
+            'type' => 'required|in:sick,annual,important,other',
+            'startDate' => 'required|date',
+            'endDate' => 'required|date|after_or_equal:startDate',
+            'reason' => 'required|string|min:10|max:500',
+            'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
+            'signature' => 'required'
+        ]);
 
         try {
             $user = auth()->user();
+            
+            // 1. Save the signature
             $signaturePath = $this->saveSignature($user);
             
-            // Handle optional supporting document
+            // 2. Save the attachment if provided
             $attachmentPath = null;
             if ($this->attachment) {
                 $attachmentPath = $this->saveAttachment($this->attachment);
             }
 
-            // Create the leave request
+            // 3. Create a new leave request in database
             $leaveRequest = new LeaveRequest([
                 'user_id' => $user->id,
                 'type' => $this->type,
@@ -184,22 +195,18 @@ class Leave extends Component
                 'attachment_path' => $attachmentPath
             ]);
 
-            // Save the leave request first to get an ID
+            // Save the leave request to get an ID
             $user->leaveRequests()->save($leaveRequest);
 
-            // Generate document with signature
-            try {
-                $documentPath = $this->documentGenerator->generate($leaveRequest, $signaturePath);
-                
-                // Update the leave request with the document path
-                $leaveRequest->update([
-                    'document_path' => $documentPath
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Document generation failed: ' . $e->getMessage());
-                session()->flash('warning', 'Leave request submitted but document generation failed. Please contact support.');
-            }
+            // 4. Generate the leave document with signature
+            $documentPath = $this->generateLeaveDocument($leaveRequest, $signaturePath);
+            
+            // 5. Update the leave request with the document path
+            $leaveRequest->update([
+                'document_path' => $documentPath
+            ]);
 
+            // 6. Reset the form and show success message
             $this->reset(['type', 'startDate', 'endDate', 'reason', 'attachment', 'signature']);
             $this->activeView = 'requests';
             session()->flash('message', 'Leave request submitted successfully.');
@@ -211,22 +218,21 @@ class Leave extends Component
     }
 
     /**
-     * Save signature with consistent naming pattern
+     * Save signature to filesystem
      */
     protected function saveSignature($user)
     {
-        // Ensure signatures directory exists
+        // Create signatures directory if needed
         $directory = public_path('signatures');
         if (!File::exists($directory)) {
             File::makeDirectory($directory, 0755, true);
         }
 
-        // Generate filename with format username_departmentname_userid.png
-        $departmentSlug = $user->department ? Str::slug($user->department->name) : 'nodept';
-        $filename = Str::slug($user->name) . '_' . $departmentSlug . '_' . $user->id . '.png';
+        // Generate a filename for the signature
+        $filename = Str::slug($user->name) . '_' . $user->id . '.png';
         $signaturePath = 'signatures/' . $filename;
         
-        // Save the signature image
+        // Convert base64 to image and save
         $imageData = base64_decode(Str::of($this->signature)->after(','));
         File::put(public_path($signaturePath), $imageData);
         
@@ -238,19 +244,76 @@ class Leave extends Component
      */
     protected function saveAttachment($file)
     {
+        $directory = public_path('leave-attachments');
+        if (!File::exists($directory)) {
+            File::makeDirectory($directory, 0755, true);
+        }
+
+        $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9.]/', '_', $file->getClientOriginalName());
+        $tempPath = $file->getRealPath();
+        File::move($tempPath, $directory . DIRECTORY_SEPARATOR . $filename);
+        
+        return 'leave-attachments/' . $filename;
+    }
+
+    /**
+     * Generate leave document from template
+     */
+    protected function generateLeaveDocument($leaveRequest, $signaturePath)
+    {
         try {
-            $uploadPath = public_path('leave-attachments');
-            if (!File::exists($uploadPath)) {
-                File::makeDirectory($uploadPath, 0755, true);
+            $templatePath = public_path('templates/Format-Izin-Cuti.docx');
+            $user = $leaveRequest->user;
+            $department = $user->department;
+
+            // Create output filename
+            $outputFilename = 'leave_request_' . $leaveRequest->id . '_' . time() . '.docx';
+            $outputPath = public_path('leave-documents/' . $outputFilename);
+            
+            // Ensure the directory exists
+            if (!file_exists(public_path('leave-documents'))) {
+                File::makeDirectory(public_path('leave-documents'), 0755, true);
             }
 
-            $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9.]/', '_', $file->getClientOriginalName());
-            $tempPath = $file->getRealPath();
-            File::move($tempPath, $uploadPath . DIRECTORY_SEPARATOR . $filename);
+            // Create template processor
+            $templateProcessor = new TemplateProcessor($templatePath);
             
-            return 'leave-attachments/' . $filename;
+            // Set basic information - note we use the plain placeholder name without ${} as the first parameter
+            $templateProcessor->setValue('tanggal hari ini', now()->format('d F Y'));
+            $templateProcessor->setValue('Nama Pemohon', $user->name);
+            $templateProcessor->setValue('Jabatan Pemohon', $user->position ?? 'Staff');
+            $templateProcessor->setValue('Jabatan_Departemen', ($user->position ?? 'Staff') . '_' . ($department->name ?? 'General'));
+            
+            // Get formatted leave type (Cuti Sakit, Cuti Tahunan, etc.)
+            $leaveType = match($leaveRequest->type) {
+                'sick' => 'Cuti Sakit',
+                'annual' => 'Cuti Tahunan',
+                'important' => 'Cuti Penting',
+                'other' => 'Cuti Lainnya',
+                default => 'Cuti'
+            };
+            $templateProcessor->setValue('leave_type', $leaveType);
+            
+            // Set leave information
+            $templateProcessor->setValue('Durasi Cuti', $leaveRequest->getDurationInDays());
+            $templateProcessor->setValue('Tanggal Mulai Cuti', $leaveRequest->start_date->format('d F Y'));
+            $templateProcessor->setValue('Tanggal Selesai Cuti', $leaveRequest->end_date->format('d F Y'));
+            $templateProcessor->setValue('reason', $leaveRequest->reason);
+            $templateProcessor->setValue('department_name', $department->name ?? 'General');
+            
+            // Set staff signature
+            if (file_exists(public_path($signaturePath))) {
+                $templateProcessor->setImageValue('Tanda Tangan', public_path($signaturePath));
+            }
+            
+            // Save the document
+            $templateProcessor->saveAs($outputPath);
+            
+            return 'leave-documents/' . $outputFilename;
+            
         } catch (\Exception $e) {
-            Log::error('File upload failed: ' . $e->getMessage());
+            Log::error('Error generating leave document: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
             throw $e;
         }
     }
