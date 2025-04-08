@@ -601,7 +601,8 @@
                                     <div class="bg-white rounded-lg p-4 shadow-sm">
                                         <div x-data="signatureCapture(@entangle('signature'))" class="w-full">
                                             <div class="border rounded-lg overflow-hidden bg-white">
-                                                <canvas x-ref="signature_canvas" class="w-full" height="200" wire:ignore></canvas>
+                                                <canvas x-ref="signature_canvas" class="w-full" height="200"
+                                                    wire:ignore></canvas>
                                             </div>
 
                                             <div class="flex justify-between items-center mt-2">
@@ -731,7 +732,7 @@
         </div>
     </div>
     </div>
-    
+
     {{-- Add this script to the bottom of your leave.blade.php file --}}
     <script>
         document.addEventListener('alpine:init', () => {

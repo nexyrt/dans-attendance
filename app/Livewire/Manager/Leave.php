@@ -2,59 +2,43 @@
 
 namespace App\Livewire\Manager;
 
-use App\Models\LeaveRequest;
 use Livewire\Component;
-use Livewire\WithPagination;
+use Str;
 
 class Leave extends Component
 {
-    use WithPagination;
-    
-    public $search = '';
-    public $typeFilter = '';
+    public $signature;
 
-    public function approve($id)
+    public function submit()
     {
-        $leaveRequest = LeaveRequest::findOrFail($id);
-        $leaveRequest->update([
-            'status' => 'pending_hr',
-            'manager_id' => auth()->id(),
-            'manager_approved_at' => now(),
-        ]);
+        // Check signature exists
+        if (!$this->signature) {
+            session()->flash('error', 'No signature provided');
+            return;
+        }
 
-        session()->flash('message', 'Leave request approved successfully.');
-    }
+        // Get user info
+        $user = auth()->user();
 
-    public function reject($id, $reason = '')
-    {
-        $leaveRequest = LeaveRequest::findOrFail($id);
-        $leaveRequest->update([
-            'status' => 'rejected_manager',
-            'manager_id' => auth()->id(),
-            'rejection_reason' => $reason,
-        ]);
+        // Create directory if needed
+        $directory = public_path('signatures');
+        if (!file_exists($directory)) {
+            mkdir($directory, 0755, true);
+        }
 
-        session()->flash('message', 'Leave request rejected.');
+        // Create filename and save
+        $filename = Str::slug("{$user->role}, {$user->name}, {$user->id}") . '.png';
+        $image_data = base64_decode(Str::of($this->signature)->after(','));
+        file_put_contents("{$directory}/{$filename}", $image_data);
+
+        // Do something with the path if needed
+        $relative_path = 'signatures/' . $filename;
+
+        session()->flash('success', 'Signature saved successfully');
     }
 
     public function render()
     {
-        $pendingRequests = LeaveRequest::where('status', 'pending_manager')
-            ->when($this->search, function ($query) {
-                $query->whereHas('user', function ($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%');
-                })
-                    ->orWhere('reason', 'like', '%' . $this->search . '%');
-            })
-            ->when($this->typeFilter, function ($query) {
-                $query->where('type', $this->typeFilter);
-            })
-            ->with(['user', 'user.department'])
-            ->latest()
-            ->paginate(10);
-
-        return view('livewire.manager.leave', [
-            'pendingRequests' => $pendingRequests
-        ])->layout('layouts.manager', ['title' => 'Leave Management']);
+        return view('livewire.manager.leave')->layout('layouts.manager', ['title' => 'Leave Management']);
     }
 }
