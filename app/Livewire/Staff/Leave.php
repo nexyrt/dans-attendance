@@ -2,512 +2,188 @@
 
 namespace App\Livewire\Staff;
 
+use App\Models\LeaveRequest;
+use App\Models\LeaveBalance;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use App\Models\LeaveRequest;
-use App\Services\LeaveDocumentGenerator;
-use Livewire\Attributes\On;
-use Cake\Chronos\Chronos;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Auth;
-use PhpOffice\PhpWord\TemplateProcessor;
+use Carbon\Carbon;
 
 class Leave extends Component
 {
     use WithFileUploads;
 
-    // Form properties
-    public $type;
-    public $startDate;
-    public $endDate;
-    public $reason = '';
+    // Form inputs
+    public $type = 'annual';
+    public $start_date;
+    public $end_date;
+    public $reason;
     public $attachment;
-    
-    // Signature property
-    public $signature = '';
-    public $tempLeaveRequest = null;
+    public $signature;
 
-    // View states
-    public $activeView = 'requests';
-    public $activeTab = 'pending';
-    public $previewingAttachment = false;
-    public $currentAttachment = null;
-    public $previewUrl = null;
-    public $previewType = null;
-    public $showPreview = false;
-
-    // Service
-    protected $documentGenerator;
-
-    public function __construct()
-    {
-        $this->documentGenerator = app(LeaveDocumentGenerator::class);
-    }
-
-    protected $rules = [
-        'type' => 'required|in:sick,annual,important,other',
-        'startDate' => 'required|date',
-        'endDate' => 'required|date|after_or_equal:startDate',
-        'reason' => 'required|string|min:10|max:500',
-        'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
-        'signature' => 'required'
-    ];
-
-    protected $messages = [
-        'type.required' => 'Please select a leave type.',
-        'type.in' => 'Invalid leave type selected.',
-        'startDate.required' => 'Start date is required.',
-        'startDate.date' => 'Invalid start date format.',
-        'endDate.required' => 'End date is required.',
-        'endDate.date' => 'Invalid end date format.',
-        'endDate.after_or_equal' => 'End date must be after or equal to start date.',
-        'reason.required' => 'Please provide a reason for your leave.',
-        'reason.min' => 'Reason must be at least 10 characters.',
-        'reason.max' => 'Reason cannot exceed 500 characters.',
-        'attachment.mimes' => 'Attachment must be a PDF, Word document, or image file.',
-        'attachment.max' => 'Attachment size cannot exceed 10MB.',
-        'signature.required' => 'Your signature is required to submit the leave request.'
-    ];
+    // UI states
+    public $activeTab = 'apply';
+    public $leaveRequests = [];
+    public $leaveBalance;
+    public $calculatedDays = 0;
 
     public function mount()
     {
-        $this->startDate = now()->format('Y-m-d');
-        $this->endDate = now()->format('Y-m-d');
+        $this->start_date = Carbon::now()->format('Y-m-d');
+        $this->end_date = Carbon::now()->format('Y-m-d');
+        $this->loadLeaveRequests();
+        $this->loadLeaveBalance();
     }
 
-    #[On('date-range-selected')]
-    public function handleDateRangeSelected($data)
+    public function loadLeaveRequests()
     {
-        $this->startDate = $data['startDate'];
-        $this->endDate = $data['endDate'];
-
-        try {
-            $this->validateLeaveBalance();
-            $this->validateDateOverlap();
-        } catch (ValidationException $e) {
-            $this->addError('dates', $e->getMessage());
-        }
-    }
-
-    protected function validateLeaveBalance()
-    {
-        $duration = $this->calculateDuration();
-        $balance = $this->leaveBalance->remaining_balance;
-
-        if ($duration > $balance) {
-            throw ValidationException::withMessages([
-                'dates' => "Insufficient leave balance. You have {$balance} days remaining but requested {$duration} days."
-            ]);
-        }
-    }
-
-    protected function validateDateOverlap()
-    {
-        $overlappingLeave = auth()->user()->leaveRequests()
-            ->where(function ($query) {
-                $query->where(function ($q) {
-                    $q->where('start_date', '<=', $this->startDate)
-                        ->where('end_date', '>=', $this->startDate);
-                })->orWhere(function ($q) {
-                    $q->where('start_date', '<=', $this->endDate)
-                        ->where('end_date', '>=', $this->endDate);
-                })->orWhere(function ($q) {
-                    $q->where('start_date', '>=', $this->startDate)
-                        ->where('end_date', '<=', $this->endDate);
-                });
-            })
-            ->whereNotIn('status', [
-                LeaveRequest::STATUS_REJECTED_MANAGER,
-                LeaveRequest::STATUS_REJECTED_HR,
-                LeaveRequest::STATUS_REJECTED_DIRECTOR,
-                LeaveRequest::STATUS_CANCEL
-            ])
-            ->first();
-
-        if ($overlappingLeave) {
-            $start = Chronos::parse($overlappingLeave->start_date)->format('M j, Y');
-            $end = Chronos::parse($overlappingLeave->end_date)->format('M j, Y');
-            throw ValidationException::withMessages([
-                'dates' => "Date range overlaps with existing {$overlappingLeave->status} leave request ({$start} - {$end})."
-            ]);
-        }
-    }
-
-    protected function calculateDuration()
-    {
-        if (!$this->startDate || !$this->endDate) {
-            return 0;
-        }
-
-        $start = Chronos::parse($this->startDate);
-        $end = Chronos::parse($this->endDate);
-        $duration = 0;
-
-        $date = $start;
-        while ($date->lessThanOrEquals($end)) {
-            if (!$date->isWeekend()) {
-                $duration++;
-            }
-            $date = $date->addDays(1);
-        }
-
-        return $duration;
-    }
-
-    /**
-     * Submit the leave request
-     */
-    public function submitLeaveRequest()
-    {
-        // Validate the form
-        $this->validate([
-            'type' => 'required|in:sick,annual,important,other',
-            'startDate' => 'required|date',
-            'endDate' => 'required|date|after_or_equal:startDate',
-            'reason' => 'required|string|min:10|max:500',
-            'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
-            'signature' => 'required'
-        ]);
-
-        try {
-            $user = auth()->user();
-            
-            // 1. Save the signature
-            $signaturePath = $this->saveSignature($user);
-            
-            // 2. Save the attachment if provided
-            $attachmentPath = null;
-            if ($this->attachment) {
-                $attachmentPath = $this->saveAttachment($this->attachment);
-            }
-
-            // 3. Create a new leave request in database
-            $leaveRequest = new LeaveRequest([
-                'user_id' => $user->id,
-                'type' => $this->type,
-                'start_date' => $this->startDate,
-                'end_date' => $this->endDate,
-                'reason' => $this->reason,
-                'status' => LeaveRequest::STATUS_PENDING_MANAGER,
-                'attachment_path' => $attachmentPath
-            ]);
-
-            // Save the leave request to get an ID
-            $user->leaveRequests()->save($leaveRequest);
-
-            // 4. Generate the leave document with signature
-            $documentPath = $this->generateLeaveDocument($leaveRequest, $signaturePath);
-            
-            // 5. Update the leave request with the document path
-            $leaveRequest->update([
-                'document_path' => $documentPath
-            ]);
-
-            // 6. Reset the form and show success message
-            $this->reset(['type', 'startDate', 'endDate', 'reason', 'attachment', 'signature']);
-            $this->activeView = 'requests';
-            session()->flash('message', 'Leave request submitted successfully.');
-
-        } catch (\Exception $e) {
-            Log::error('Error submitting leave request: ' . $e->getMessage());
-            session()->flash('error', 'An error occurred while submitting your leave request. Please try again.');
-        }
-    }
-
-    /**
-     * Save signature to filesystem
-     */
-    protected function saveSignature($user)
-    {
-        // Create signatures directory if needed
-        $directory = public_path('signatures');
-        if (!File::exists($directory)) {
-            File::makeDirectory($directory, 0755, true);
-        }
-
-        // Generate a filename for the signature
-        $filename = Str::slug($user->name) . '_' . $user->id . '.png';
-        $signaturePath = 'signatures/' . $filename;
-        
-        // Convert base64 to image and save
-        $imageData = base64_decode(Str::of($this->signature)->after(','));
-        File::put(public_path($signaturePath), $imageData);
-        
-        return $signaturePath;
-    }
-
-    /**
-     * Save attachment file
-     */
-    protected function saveAttachment($file)
-    {
-        $directory = public_path('leave-attachments');
-        if (!File::exists($directory)) {
-            File::makeDirectory($directory, 0755, true);
-        }
-
-        $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9.]/', '_', $file->getClientOriginalName());
-        $tempPath = $file->getRealPath();
-        File::move($tempPath, $directory . DIRECTORY_SEPARATOR . $filename);
-        
-        return 'leave-attachments/' . $filename;
-    }
-
-    /**
-     * Generate leave document from template
-     */
-    protected function generateLeaveDocument($leaveRequest, $signaturePath)
-    {
-        try {
-            $templatePath = public_path('templates/Format-Izin-Cuti.docx');
-            $user = $leaveRequest->user;
-            $department = $user->department;
-
-            // Create output filename
-            $outputFilename = 'leave_request_' . $leaveRequest->id . '_' . time() . '.docx';
-            $outputPath = public_path('leave-documents/' . $outputFilename);
-            
-            // Ensure the directory exists
-            if (!file_exists(public_path('leave-documents'))) {
-                File::makeDirectory(public_path('leave-documents'), 0755, true);
-            }
-
-            // Create template processor
-            $templateProcessor = new TemplateProcessor($templatePath);
-            
-            // Set basic information - note we use the plain placeholder name without ${} as the first parameter
-            $templateProcessor->setValue('tanggal hari ini', now()->format('d F Y'));
-            $templateProcessor->setValue('Nama Pemohon', $user->name);
-            $templateProcessor->setValue('Jabatan Pemohon', $user->position ?? 'Staff');
-            $templateProcessor->setValue('Jabatan_Departemen', ($user->position ?? 'Staff') . '_' . ($department->name ?? 'General'));
-            
-            // Get formatted leave type (Cuti Sakit, Cuti Tahunan, etc.)
-            $leaveType = match($leaveRequest->type) {
-                'sick' => 'Cuti Sakit',
-                'annual' => 'Cuti Tahunan',
-                'important' => 'Cuti Penting',
-                'other' => 'Cuti Lainnya',
-                default => 'Cuti'
-            };
-            $templateProcessor->setValue('leave_type', $leaveType);
-            
-            // Set leave information
-            $templateProcessor->setValue('Durasi Cuti', $leaveRequest->getDurationInDays());
-            $templateProcessor->setValue('Tanggal Mulai Cuti', $leaveRequest->start_date->format('d F Y'));
-            $templateProcessor->setValue('Tanggal Selesai Cuti', $leaveRequest->end_date->format('d F Y'));
-            $templateProcessor->setValue('reason', $leaveRequest->reason);
-            $templateProcessor->setValue('department_name', $department->name ?? 'General');
-            
-            // Set staff signature
-            if (file_exists(public_path($signaturePath))) {
-                $templateProcessor->setImageValue('Tanda Tangan', public_path($signaturePath));
-            }
-            
-            // Save the document
-            $templateProcessor->saveAs($outputPath);
-            
-            return 'leave-documents/' . $outputFilename;
-            
-        } catch (\Exception $e) {
-            Log::error('Error generating leave document: ' . $e->getMessage());
-            Log::error($e->getTraceAsString());
-            throw $e;
-        }
-    }
-
-    public function cancelRequest($id)
-    {
-        $leaveRequest = auth()->user()->leaveRequests()->findOrFail($id);
-        if ($leaveRequest->canBeCancelled()) {
-            $leaveRequest->cancel();
-            session()->flash('message', 'Leave request cancelled successfully.');
-        }
-    }
-
-    public function previewAttachment($requestId)
-    {
-        $request = auth()->user()->leaveRequests()->findOrFail($requestId);
-        
-        // Determine what to preview - document or attachment
-        $previewPath = null;
-        
-        if ($request->document_path) {
-            $previewPath = $request->document_path;
-        } elseif ($request->attachment_path) {
-            $previewPath = $request->attachment_path;
-        }
-        
-        if ($previewPath) {
-            $this->previewUrl = asset($previewPath);
-
-            // Get file extension
-            $extension = pathinfo($previewPath, PATHINFO_EXTENSION);
-            $this->previewType = strtolower($extension);
-
-            $this->showPreview = true;
-        }
-    }
-
-    public function downloadLeaveDocument($requestId)
-    {
-        $request = auth()->user()->leaveRequests()->findOrFail($requestId);
-        if ($request->document_path) {
-            return response()->download(public_path($request->document_path));
-        }
-        
-        session()->flash('error', 'Document not found.');
-    }
-
-    public function closePreview()
-    {
-        $this->showPreview = false;
-        $this->previewUrl = null;
-        $this->previewType = null;
-    }
-
-    public function getLeaveRequestsProperty()
-    {
-        return auth()->user()->leaveRequests()
-            ->when($this->activeTab === 'pending', function ($query) {
-                $query->whereIn('status', [
-                    LeaveRequest::STATUS_PENDING_MANAGER,
-                    LeaveRequest::STATUS_PENDING_HR,
-                    LeaveRequest::STATUS_PENDING_DIRECTOR
-                ]);
-            })
-            ->when($this->activeTab === 'approved', fn($query) =>
-                $query->where('status', LeaveRequest::STATUS_APPROVED))
-            ->when($this->activeTab === 'rejected', function ($query) {
-                $query->whereIn('status', [
-                    LeaveRequest::STATUS_REJECTED_MANAGER,
-                    LeaveRequest::STATUS_REJECTED_HR,
-                    LeaveRequest::STATUS_REJECTED_DIRECTOR
-                ]);
-            })
-            ->when($this->activeTab === 'cancelled', fn($query) =>
-                $query->where('status', LeaveRequest::STATUS_CANCEL))
-            ->with(['manager', 'hr', 'director'])
-            ->latest()
+        $this->leaveRequests = LeaveRequest::where('user_id', Auth::id())
+            ->orderBy('created_at', 'desc')
             ->get();
     }
 
-    public function getLeaveBalanceProperty()
+    public function loadLeaveBalance()
     {
-        return auth()->user()->currentLeaveBalance();
-    }
-
-    public function getStatusBadgeClass($status)
-    {
-        return match ($status) {
-            LeaveRequest::STATUS_PENDING_MANAGER,
-            LeaveRequest::STATUS_PENDING_HR,
-            LeaveRequest::STATUS_PENDING_DIRECTOR => 'bg-yellow-100 text-yellow-800',
-
-            LeaveRequest::STATUS_APPROVED => 'bg-green-100 text-green-800',
-
-            LeaveRequest::STATUS_REJECTED_MANAGER,
-            LeaveRequest::STATUS_REJECTED_HR,
-            LeaveRequest::STATUS_REJECTED_DIRECTOR => 'bg-red-100 text-red-800',
-
-            LeaveRequest::STATUS_CANCEL => 'bg-gray-100 text-gray-800',
-            default => 'bg-gray-100 text-gray-800'
-        };
-    }
-
-    public function getDurationProperty()
-    {
-        return $this->calculateDuration();
-    }
-
-    public function getPendingCountProperty()
-    {
-        return auth()->user()->leaveRequests()
-            ->whereIn('status', [
-                LeaveRequest::STATUS_PENDING_MANAGER,
-                LeaveRequest::STATUS_PENDING_HR,
-                LeaveRequest::STATUS_PENDING_DIRECTOR
-            ])->count();
-    }
-
-    public function getApprovalStatus($request)
-    {
-        $status = match ($request->status) {
-            LeaveRequest::STATUS_PENDING_MANAGER => 'Pending Manager Approval',
-            LeaveRequest::STATUS_PENDING_HR => 'Pending HR Approval',
-            LeaveRequest::STATUS_PENDING_DIRECTOR => 'Pending Director Approval',
-            LeaveRequest::STATUS_APPROVED => 'Approved',
-            LeaveRequest::STATUS_REJECTED_MANAGER => 'Rejected by Manager',
-            LeaveRequest::STATUS_REJECTED_HR => 'Rejected by HR',
-            LeaveRequest::STATUS_REJECTED_DIRECTOR => 'Rejected by Director',
-            LeaveRequest::STATUS_CANCEL => 'Cancelled',
-            default => 'Unknown Status'
-        };
-
-        $details = [];
-
-        if ($request->manager_approved_at) {
-            $details[] = "Manager: " . ($request->manager ? $request->manager->name : 'Unknown') .
-                " on " . $request->manager_approved_at->format('M j, Y');
-        }
-
-        if ($request->hr_approved_at) {
-            $details[] = "HR: " . ($request->hr ? $request->hr->name : 'Unknown') .
-                " on " . $request->hr_approved_at->format('M j, Y');
-        }
-
-        if ($request->director_approved_at) {
-            $details[] = "Director: " . ($request->director ? $request->director->name : 'Unknown') .
-                " on " . $request->director_approved_at->format('M j, Y');
-        }
-
-        return [
-            'status' => $status,
-            'details' => $details
-        ];
-    }
-
-    public function getApprovedCountProperty()
-    {
-        return auth()->user()->leaveRequests()
-            ->where('status', LeaveRequest::STATUS_APPROVED)
-            ->count();
-    }
-
-    public function getRejectedCountProperty()
-    {
-        return auth()->user()->leaveRequests()
-            ->whereIn('status', [
-                LeaveRequest::STATUS_REJECTED_MANAGER,
-                LeaveRequest::STATUS_REJECTED_HR,
-                LeaveRequest::STATUS_REJECTED_DIRECTOR
-            ])->count();
-    }
-
-    public function getCancelledCountProperty()
-    {
-        return auth()->user()->leaveRequests()
-            ->where('status', LeaveRequest::STATUS_CANCEL)
-            ->count();
-    }
-
-    protected function getLastLeave()
-    {
-        return auth()->user()->leaveRequests()
-            ->where('status', LeaveRequest::STATUS_APPROVED)
-            ->latest('end_date')
+        $currentYear = date('Y');
+        $this->leaveBalance = LeaveBalance::where('user_id', Auth::id())
+            ->where('year', $currentYear)
             ->first();
+    }
+
+    public function calculateDays()
+    {
+        if ($this->start_date && $this->end_date) {
+            $start = Carbon::parse($this->start_date);
+            $end = Carbon::parse($this->end_date);
+            $this->calculatedDays = $end->diffInDays($start) + 1; // Include both start and end days
+        } else {
+            $this->calculatedDays = 0;
+        }
+    }
+
+    public function updatedStartDate()
+    {
+        $this->calculateDays();
+    }
+
+    public function updatedEndDate()
+    {
+        $this->calculateDays();
+    }
+
+    public function updatedActiveTab($value)
+    {
+        if ($value === 'history') {
+            $this->loadLeaveRequests();
+        } else if ($value === 'balance') {
+            $this->loadLeaveBalance();
+        }
+    }
+
+    public function submit()
+    {
+        $this->validate([
+            'type' => 'required|in:sick,annual,important,other',
+            'start_date' => 'required|date|after_or_equal:today',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'reason' => 'required|min:10',
+            'signature' => 'required',
+            'attachment' => 'nullable|file|max:10240', // 10MB max
+        ], [
+            'signature.required' => 'Please sign your leave request',
+            'start_date.after_or_equal' => 'Leave must start from today or a future date',
+            'end_date.after_or_equal' => 'End date must be after or equal to start date',
+        ]);
+        
+        // Check if leave balance is sufficient for annual leave
+        if ($this->type === 'annual' && $this->leaveBalance) {
+            if ($this->calculatedDays > $this->leaveBalance->remaining_balance) {
+                session()->flash('error', 'Insufficient leave balance');
+                return;
+            }
+        }
+
+        try {
+            // Get user info
+            $user = auth()->user();
+            
+            // Save signature in document_path
+            $image_data = base64_decode(Str::of($this->signature)->after(','));
+            
+            // Create a unique filename
+            $filename = Str::slug("{$user->role}, {$user->name}, {$user->id}") . '.png';
+            
+            // Define the path where the image will be stored
+            $directory = public_path('signatures');
+            if (!file_exists($directory)) {
+                mkdir($directory, 0755, true);
+            }
+            
+            // Save the image
+            file_put_contents("{$directory}/{$filename}", $image_data);
+            $signature_path = 'signatures/' . $filename;
+            
+            // Save attachment if provided
+            $attachmentPath = null;
+            if ($this->attachment) {
+                $attachmentPath = $this->attachment->store('leave-attachments', 'public');
+            }
+            
+            // Create leave request
+            $leaveRequest = new LeaveRequest();
+            $leaveRequest->user_id = Auth::id();
+            $leaveRequest->type = $this->type;
+            $leaveRequest->start_date = $this->start_date;
+            $leaveRequest->end_date = $this->end_date;
+            $leaveRequest->reason = $this->reason;
+            $leaveRequest->status = 'pending_manager';
+            $leaveRequest->attachment_path = $attachmentPath;
+            $leaveRequest->document_path = $signature_path; // Store signature in document_path
+            $leaveRequest->save();
+            
+            // Reset form
+            $this->reset(['type', 'reason', 'attachment', 'signature']);
+            $this->start_date = Carbon::now()->format('Y-m-d');
+            $this->end_date = Carbon::now()->format('Y-m-d');
+            $this->calculatedDays = 0;
+            
+            // Update leave requests list
+            $this->loadLeaveRequests();
+            
+            // Show success message
+            session()->flash('success', 'Leave request submitted successfully');
+            
+            // Switch to history tab
+            $this->activeTab = 'history';
+            
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to submit leave request: ' . $e->getMessage());
+        }
+    }
+
+    public function cancelLeaveRequest($id)
+    {
+        try {
+            $leaveRequest = LeaveRequest::findOrFail($id);
+            
+            // Only allow cancellation if status is still pending
+            if (in_array($leaveRequest->status, ['pending_manager', 'pending_hr', 'pending_director'])) {
+                $leaveRequest->status = 'cancel';
+                $leaveRequest->save();
+                
+                session()->flash('success', 'Leave request cancelled successfully');
+                $this->loadLeaveRequests();
+            } else {
+                session()->flash('error', 'Cannot cancel this leave request');
+            }
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to cancel leave request');
+        }
     }
 
     public function render()
     {
-        return view('livewire.staff.leave', [
-            'leaveRequests' => $this->leaveRequests,
-            'leaveBalance' => $this->leaveBalance,
-            'leaveTypes' => LeaveRequest::TYPES,
-            'duration' => $this->duration
-        ])->layout('layouts.staff', ['title' => 'Leave Management']);
+        return view('livewire.staff.leave')->layout('layouts.staff', ['title' => 'Leave Management']);
     }
 }
