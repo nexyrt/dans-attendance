@@ -4,6 +4,7 @@ namespace App\Livewire\Staff;
 
 use App\Models\LeaveRequest;
 use App\Models\LeaveBalance;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -180,6 +181,31 @@ class Leave extends Component
         } catch (\Exception $e) {
             session()->flash('error', 'Failed to cancel leave request');
         }
+    }
+
+    public function generatePdf($leaveId)
+    {
+        $leave = LeaveRequest::with(['user', 'user.department', 'manager'])
+            ->findOrFail($leaveId);
+        
+        // Check if user has permission to generate this PDF
+        if ($leave->user_id !== Auth::id()) {
+            session()->flash('error', 'You do not have permission to access this document');
+            return;
+        }
+        
+        $pdf = PDF::loadView('livewire.staff.leave-pdf', [
+            'leave' => $leave
+        ]);
+        
+        // Generate a filename
+        $filename = 'leave_request_' . $leaveId . '_' . Str::slug($leave->user->name) . '.pdf';
+        
+        // Return the PDF as download
+        return response()->streamDownload(
+            fn () => print($pdf->output()),
+            $filename
+        );
     }
 
     public function render()
