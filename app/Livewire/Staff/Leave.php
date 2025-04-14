@@ -29,12 +29,42 @@ class Leave extends Component
     public $leaveBalance;
     public $calculatedDays = 0;
 
+    protected $listeners = [
+        'date-range-selected' => 'updateDateRange'
+    ];
+
     public function mount()
     {
         $this->start_date = Carbon::now()->format('Y-m-d');
         $this->end_date = Carbon::now()->format('Y-m-d');
         $this->loadLeaveRequests();
         $this->loadLeaveBalance();
+        $this->calculateDays();
+    }
+
+    public function generatePdf($leaveId)
+    {
+        $leave = LeaveRequest::with(['user', 'user.department', 'manager'])
+            ->findOrFail($leaveId);
+
+        // Check if user has permission to generate this PDF
+        if ($leave->user_id !== Auth::id()) {
+            session()->flash('error', 'You do not have permission to access this document');
+            return;
+        }
+
+        $pdf = Pdf::loadView('livewire.staff.leave-pdf', [
+            'leave' => $leave
+        ]);
+
+        // Generate a filename
+        $filename = 'leave_request_' . $leaveId . '_' . Str::slug($leave->user->name) . '.pdf';
+
+        // Return the PDF as download
+        return response()->streamDownload(
+            fn() => print ($pdf->output()),
+            $filename
+        );
     }
 
     public function loadLeaveRequests()
@@ -52,25 +82,28 @@ class Leave extends Component
             ->first();
     }
 
+    /**
+     * Update date range from the date picker component
+     */
+    public function updateDateRange($data)
+    {
+        \Log::info('Date range updated', $data);
+        $this->start_date = $data['startDate'];
+        $this->end_date = $data['endDate'];
+        $this->calculateDays();
+        \Log::info('Calculated days: ' . $this->calculatedDays);
+    }
+
     public function calculateDays()
     {
         if ($this->start_date && $this->end_date) {
             $start = Carbon::parse($this->start_date);
             $end = Carbon::parse($this->end_date);
             $this->calculatedDays = $end->diffInDays($start) + 1; // Include both start and end days
+            $this->dispatch('days-calculated', $this->calculatedDays);
         } else {
             $this->calculatedDays = 0;
         }
-    }
-
-    public function updatedStartDate()
-    {
-        $this->calculateDays();
-    }
-
-    public function updatedEndDate()
-    {
-        $this->calculateDays();
     }
 
     public function updatedActiveTab($value)
@@ -96,7 +129,7 @@ class Leave extends Component
             'start_date.after_or_equal' => 'Leave must start from today or a future date',
             'end_date.after_or_equal' => 'End date must be after or equal to start date',
         ]);
-        
+
         // Check if leave balance is sufficient for annual leave
         if ($this->type === 'annual' && $this->leaveBalance) {
             if ($this->calculatedDays > $this->leaveBalance->remaining_balance) {
@@ -108,29 +141,29 @@ class Leave extends Component
         try {
             // Get user info
             $user = auth()->user();
-            
+
             // Save signature in document_path
             $image_data = base64_decode(Str::of($this->signature)->after(','));
-            
+
             // Create a unique filename
             $filename = Str::slug("{$user->role}, {$user->name}, {$user->id}") . '.png';
-            
+
             // Define the path where the image will be stored
             $directory = public_path('signatures');
             if (!file_exists($directory)) {
                 mkdir($directory, 0755, true);
             }
-            
+
             // Save the image
             file_put_contents("{$directory}/{$filename}", $image_data);
             $signature_path = 'signatures/' . $filename;
-            
+
             // Save attachment if provided
             $attachmentPath = null;
             if ($this->attachment) {
                 $attachmentPath = $this->attachment->store('leave-attachments', 'public');
             }
-            
+
             // Create leave request
             $leaveRequest = new LeaveRequest();
             $leaveRequest->user_id = Auth::id();
@@ -142,22 +175,22 @@ class Leave extends Component
             $leaveRequest->attachment_path = $attachmentPath;
             $leaveRequest->document_path = $signature_path; // Store signature in document_path
             $leaveRequest->save();
-            
+
             // Reset form
             $this->reset(['type', 'reason', 'attachment', 'signature']);
             $this->start_date = Carbon::now()->format('Y-m-d');
             $this->end_date = Carbon::now()->format('Y-m-d');
             $this->calculatedDays = 0;
-            
+
             // Update leave requests list
             $this->loadLeaveRequests();
-            
+
             // Show success message
             session()->flash('success', 'Leave request submitted successfully');
-            
+
             // Switch to history tab
             $this->activeTab = 'history';
-            
+
         } catch (\Exception $e) {
             session()->flash('error', 'Failed to submit leave request: ' . $e->getMessage());
         }
@@ -167,12 +200,12 @@ class Leave extends Component
     {
         try {
             $leaveRequest = LeaveRequest::findOrFail($id);
-            
+
             // Only allow cancellation if status is still pending
             if (in_array($leaveRequest->status, ['pending_manager', 'pending_hr', 'pending_director'])) {
                 $leaveRequest->status = 'cancel';
                 $leaveRequest->save();
-                
+
                 session()->flash('success', 'Leave request cancelled successfully');
                 $this->loadLeaveRequests();
             } else {
@@ -181,31 +214,6 @@ class Leave extends Component
         } catch (\Exception $e) {
             session()->flash('error', 'Failed to cancel leave request');
         }
-    }
-
-    public function generatePdf($leaveId)
-    {
-        $leave = LeaveRequest::with(['user', 'user.department', 'manager'])
-            ->findOrFail($leaveId);
-        
-        // Check if user has permission to generate this PDF
-        if ($leave->user_id !== Auth::id()) {
-            session()->flash('error', 'You do not have permission to access this document');
-            return;
-        }
-        
-        $pdf = PDF::loadView('livewire.staff.leave-pdf', [
-            'leave' => $leave
-        ]);
-        
-        // Generate a filename
-        $filename = 'leave_request_' . $leaveId . '_' . Str::slug($leave->user->name) . '.pdf';
-        
-        // Return the PDF as download
-        return response()->streamDownload(
-            fn () => print($pdf->output()),
-            $filename
-        );
     }
 
     public function render()
