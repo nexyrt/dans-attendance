@@ -16,7 +16,7 @@ class Leave extends Component
     use WithFileUploads;
 
     // Form inputs
-    public $type = 'annual';
+    public $type;
     public $start_date;
     public $end_date;
     public $reason;

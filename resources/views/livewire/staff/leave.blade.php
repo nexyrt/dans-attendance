@@ -1,5 +1,5 @@
 <!-- resources/views/livewire/staff/leave.blade.php -->
-<div class="max-w-7xl mx-auto" x-data="{
+<div class="max-w-7xl mx-auto py-6" x-data="{
     activeTab: 'apply',
     showSuccess: {{ session()->has('success') ? 'true' : 'false' }},
     showError: {{ session()->has('error') ? 'true' : 'false' }},
@@ -134,96 +134,13 @@
             <form wire:submit="submit">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
                     <!-- Leave Type -->
-                    <div x-data="{ open: false, selectedType: @entangle('type') }" class="relative">
-                        <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Leave Type</label>
-                        <div class="relative">
-                            <button type="button" @click="open = !open"
-                                class="w-full bg-white border border-gray-300 rounded-md py-2.5 pl-3 pr-10 text-left shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                                <span class="block truncate capitalize">{{ ucfirst($type) }} Leave</span>
-                                <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd"
-                                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                </span>
-                            </button>
-
-                            <div x-show="open" @click.away="open = false"
-                                x-transition:enter="transition ease-out duration-100"
-                                x-transition:enter-start="transform opacity-0 scale-95"
-                                x-transition:enter-end="transform opacity-100 scale-100"
-                                x-transition:leave="transition ease-in duration-75"
-                                x-transition:leave-start="transform opacity-100 scale-100"
-                                x-transition:leave-end="transform opacity-0 scale-95"
-                                class="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto max-h-60 focus:outline-none sm:text-sm">
-                                <div @click="selectedType = 'annual'; open = false"
-                                    :class="{ 'bg-blue-100 text-blue-900': selectedType === 'annual' }"
-                                    class="cursor-pointer select-none relative py-2.5 pl-10 pr-4 hover:bg-gray-100">
-                                    <span :class="{ 'font-medium': selectedType === 'annual' }"
-                                        class="block truncate">Annual Leave</span>
-                                    <span x-show="selectedType === 'annual'"
-                                        class="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
-                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                            fill="currentColor">
-                                            <path fill-rule="evenodd"
-                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    </span>
-                                </div>
-                                <div @click="selectedType = 'sick'; open = false"
-                                    :class="{ 'bg-blue-100 text-blue-900': selectedType === 'sick' }"
-                                    class="cursor-pointer select-none relative py-2.5 pl-10 pr-4 hover:bg-gray-100">
-                                    <span :class="{ 'font-medium': selectedType === 'sick' }"
-                                        class="block truncate">Sick Leave</span>
-                                    <span x-show="selectedType === 'sick'"
-                                        class="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
-                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                            fill="currentColor">
-                                            <path fill-rule="evenodd"
-                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    </span>
-                                </div>
-                                <div @click="selectedType = 'important'; open = false"
-                                    :class="{ 'bg-blue-100 text-blue-900': selectedType === 'important' }"
-                                    class="cursor-pointer select-none relative py-2.5 pl-10 pr-4 hover:bg-gray-100">
-                                    <span :class="{ 'font-medium': selectedType === 'important' }"
-                                        class="block truncate">Important Leave</span>
-                                    <span x-show="selectedType === 'important'"
-                                        class="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
-                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                            fill="currentColor">
-                                            <path fill-rule="evenodd"
-                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    </span>
-                                </div>
-                                <div @click="selectedType = 'other'; open = false"
-                                    :class="{ 'bg-blue-100 text-blue-900': selectedType === 'other' }"
-                                    class="cursor-pointer select-none relative py-2.5 pl-10 pr-4 hover:bg-gray-100">
-                                    <span :class="{ 'font-medium': selectedType === 'other' }"
-                                        class="block truncate">Other</span>
-                                    <span x-show="selectedType === 'other'"
-                                        class="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
-                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                            fill="currentColor">
-                                            <path fill-rule="evenodd"
-                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        @error('type')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                    <x-input.select name="type" :options="[
+                        ['value' => 'annual', 'label' => 'Annual'],
+                        ['value' => 'sick', 'label' => 'Sick'],
+                        ['value' => 'important', 'label' => 'Important'],
+                        ['value' => 'other', 'label' => 'Other'],
+                    ]" :selected="'annual'"
+                        placeholder="Select leave type" />
 
                     <!-- Replace the Start Date and End Date fields in your leave form with this -->
                     <div class="md:col-span-2">

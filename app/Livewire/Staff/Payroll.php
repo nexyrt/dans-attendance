@@ -8,7 +8,7 @@ use Livewire\Attributes\On;
 
 class Payroll extends Component
 {
-    
+    public $department;
 
     public function render()
     {
