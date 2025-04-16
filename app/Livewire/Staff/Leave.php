@@ -24,10 +24,10 @@ class Leave extends Component
     public $signature;
 
     // UI states
-    public $activeTab = 'apply';
     public $leaveRequests = [];
     public $leaveBalance;
     public $calculatedDays = 0;
+    public $dateOverlapError = null;
 
     protected $listeners = [
         'date-range-selected' => 'updateDateRange'
@@ -37,6 +37,14 @@ class Leave extends Component
     {
         $this->start_date = Carbon::now()->format('Y-m-d');
         $this->end_date = Carbon::now()->format('Y-m-d');
+        $this->loadData();
+    }
+    
+    /**
+     * Load all necessary data at once
+     */
+    private function loadData()
+    {
         $this->loadLeaveRequests();
         $this->loadLeaveBalance();
         $this->calculateDays();
@@ -44,8 +52,11 @@ class Leave extends Component
 
     public function generatePdf($leaveId)
     {
-        $leave = LeaveRequest::with(['user', 'user.department', 'manager'])
-            ->findOrFail($leaveId);
+        $leave = LeaveRequest::with([
+            'user', 
+            'user.department'
+        ])
+        ->findOrFail($leaveId);
 
         // Check if user has permission to generate this PDF
         if ($leave->user_id !== Auth::id()) {
@@ -57,12 +68,22 @@ class Leave extends Component
             'leave' => $leave
         ]);
 
-        // Generate a filename
+        // Set paper size to A4
+        $pdf->setPaper('a4', 'portrait');
+        
+        // Configure PDF settings for better quality with proper margins
+        $pdf->setOption('dpi', 300);
+        $pdf->setOption('isHtml5ParserEnabled', true);
+        $pdf->setOption('isRemoteEnabled', true);
+        
+        // Don't set margins here as we're using CSS @page margins
+        
+        // Generate a filename with user information
         $filename = 'leave_request_' . $leaveId . '_' . Str::slug($leave->user->name) . '.pdf';
 
         // Return the PDF as download
         return response()->streamDownload(
-            fn() => print ($pdf->output()),
+            fn() => print($pdf->output()),
             $filename
         );
     }
@@ -87,32 +108,75 @@ class Leave extends Component
      */
     public function updateDateRange($data)
     {
-        \Log::info('Date range updated', $data);
         $this->start_date = $data['startDate'];
         $this->end_date = $data['endDate'];
         $this->calculateDays();
-        \Log::info('Calculated days: ' . $this->calculatedDays);
+        
+        // Check for overlapping dates and provide feedback immediately
+        $this->dateOverlapError = null; // Reset previous error
+        $overlapping = $this->checkDateOverlap();
+        
+        if ($overlapping) {
+            $statusMap = [
+                'pending_manager' => 'pending manager approval',
+                'pending_hr' => 'pending HR approval',
+                'pending_director' => 'pending director approval',
+                'approved' => 'approved',
+            ];
+            
+            $status = $statusMap[$overlapping['status']] ?? $overlapping['status'];
+            $this->dateOverlapError = "Selected dates overlap with an existing leave request ({$overlapping['start']} to {$overlapping['end']}) that is {$status}";
+        }
     }
 
     public function calculateDays()
     {
-        if ($this->start_date && $this->end_date) {
-            $start = Carbon::parse($this->start_date);
-            $end = Carbon::parse($this->end_date);
-            $this->calculatedDays = $end->diffInDays($start) + 1; // Include both start and end days
-            $this->dispatch('days-calculated', $this->calculatedDays);
-        } else {
-            $this->calculatedDays = 0;
+        $start = Carbon::parse($this->start_date);
+        $end = Carbon::parse($this->end_date);
+        
+        // Initialize counter for working days
+        $workingDays = 0;
+        
+        // Count only weekdays
+        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+            if (!in_array($date->dayOfWeek, [0, 6])) { // Skip Saturday (6) and Sunday (0)
+                $workingDays++;
+            }
         }
+        
+        $this->calculatedDays = $workingDays;
     }
 
-    public function updatedActiveTab($value)
+    /**
+     * Check if the selected dates overlap with existing leave requests
+     * 
+     * @return bool|array Returns false if no overlap, or an array with overlapping request details
+     */
+    protected function checkDateOverlap()
     {
-        if ($value === 'history') {
-            $this->loadLeaveRequests();
-        } else if ($value === 'balance') {
-            $this->loadLeaveBalance();
+        $userId = Auth::id();
+        $start = Carbon::parse($this->start_date);
+        $end = Carbon::parse($this->end_date);
+        
+        // Get any approved or pending leave requests that might overlap
+        $overlappingRequests = LeaveRequest::where('user_id', $userId)
+            ->whereIn('status', ['approved', 'pending_manager', 'pending_hr', 'pending_director'])
+            ->where(function($query) use ($start, $end) {
+                // Check for any overlap: (StartA <= EndB) and (EndA >= StartB)
+                $query->where('start_date', '<=', $end->format('Y-m-d'))
+                      ->where('end_date', '>=', $start->format('Y-m-d'));
+            })
+            ->first();
+        
+        if ($overlappingRequests) {
+            return [
+                'start' => Carbon::parse($overlappingRequests->start_date)->format('M d, Y'),
+                'end' => Carbon::parse($overlappingRequests->end_date)->format('M d, Y'),
+                'status' => $overlappingRequests->status,
+            ];
         }
+        
+        return false;
     }
 
     public function submit()
@@ -130,6 +194,22 @@ class Leave extends Component
             'end_date.after_or_equal' => 'End date must be after or equal to start date',
         ]);
 
+        // Check for overlapping dates
+        $overlapping = $this->checkDateOverlap();
+        if ($overlapping) {
+            $statusMap = [
+                'pending_manager' => 'pending manager approval',
+                'pending_hr' => 'pending HR approval',
+                'pending_director' => 'pending director approval',
+                'approved' => 'approved',
+            ];
+            
+            $status = $statusMap[$overlapping['status']] ?? $overlapping['status'];
+            
+            session()->flash('error', "Your selected dates overlap with an existing leave request ({$overlapping['start']} to {$overlapping['end']}) that is {$status}.");
+            return;
+        }
+
         // Check if leave balance is sufficient for annual leave
         if ($this->type === 'annual' && $this->leaveBalance) {
             if ($this->calculatedDays > $this->leaveBalance->remaining_balance) {
@@ -142,54 +222,44 @@ class Leave extends Component
             // Get user info
             $user = auth()->user();
 
-            // Save signature in document_path
+            // Save signature in document_path - ensure transparency is preserved
             $image_data = base64_decode(Str::of($this->signature)->after(','));
-
-            // Create a unique filename
             $filename = Str::slug("{$user->role}, {$user->name}, {$user->id}") . '.png';
-
+            
             // Define the path where the image will be stored
             $directory = public_path('signatures');
             if (!file_exists($directory)) {
                 mkdir($directory, 0755, true);
             }
-
-            // Save the image
-            file_put_contents("{$directory}/{$filename}", $image_data);
+            
+            // Save the image with transparency preserved
+            // Convert to GD image to ensure proper handling of transparency
+            $img = imagecreatefromstring($image_data);
+            imagesavealpha($img, true); // This preserves transparency
+            imagepng($img, "{$directory}/{$filename}", 0); // Max quality to preserve transparency
+            imagedestroy($img);
+            
             $signature_path = 'signatures/' . $filename;
 
             // Save attachment if provided
-            $attachmentPath = null;
-            if ($this->attachment) {
-                $attachmentPath = $this->attachment->store('leave-attachments', 'public');
-            }
+            $attachmentPath = $this->attachment 
+                ? $this->attachment->store('leave-attachments', 'public') 
+                : null;
 
             // Create leave request
-            $leaveRequest = new LeaveRequest();
-            $leaveRequest->user_id = Auth::id();
-            $leaveRequest->type = $this->type;
-            $leaveRequest->start_date = $this->start_date;
-            $leaveRequest->end_date = $this->end_date;
-            $leaveRequest->reason = $this->reason;
-            $leaveRequest->status = 'pending_manager';
-            $leaveRequest->attachment_path = $attachmentPath;
-            $leaveRequest->document_path = $signature_path; // Store signature in document_path
-            $leaveRequest->save();
+            LeaveRequest::create([
+                'user_id' => Auth::id(),
+                'type' => $this->type,
+                'start_date' => $this->start_date,
+                'end_date' => $this->end_date,
+                'reason' => $this->reason,
+                'status' => 'pending_manager',
+                'attachment_path' => $attachmentPath,
+                'document_path' => $signature_path,
+            ]);
 
-            // Reset form
-            $this->reset(['type', 'reason', 'attachment', 'signature']);
-            $this->start_date = Carbon::now()->format('Y-m-d');
-            $this->end_date = Carbon::now()->format('Y-m-d');
-            $this->calculatedDays = 0;
-
-            // Update leave requests list
-            $this->loadLeaveRequests();
-
-            // Show success message
-            session()->flash('success', 'Leave request submitted successfully');
-
-            // Switch to history tab
-            $this->activeTab = 'history';
+            session()->flash('message', 'Leave request submitted successfully');
+            $this->dispatch('leave-submitted');
 
         } catch (\Exception $e) {
             session()->flash('error', 'Failed to submit leave request: ' . $e->getMessage());
@@ -206,7 +276,7 @@ class Leave extends Component
                 $leaveRequest->status = 'cancel';
                 $leaveRequest->save();
 
-                session()->flash('success', 'Leave request cancelled successfully');
+                session()->flash('message', 'Leave request cancelled successfully');
                 $this->loadLeaveRequests();
             } else {
                 session()->flash('error', 'Cannot cancel this leave request');

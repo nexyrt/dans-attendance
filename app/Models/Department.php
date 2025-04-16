@@ -12,11 +12,18 @@ class Department extends Model
     use HasFactory;
     protected $fillable = [
         'name',
+        'manager_id', // Add manager_id to fillable
     ];
 
     public function users()
     {
         return $this->hasMany(User::class);
+    }
+
+    // Add the manager relationship
+    public function manager()
+    {
+        return $this->belongsTo(User::class, 'manager_id');
     }
 
     // Relationship with Schedule Exceptions

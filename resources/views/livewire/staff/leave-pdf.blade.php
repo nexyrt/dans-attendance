@@ -1,264 +1,384 @@
-<!-- resources/views/livewire/staff/leave-pdf.blade.php -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leave Request #{{ $leave->id }}</title>
+    <title>Leave Request - {{ $leave->id }}</title>
     <style>
+        @page {
+            size: A4;
+            margin: 2cm; /* Standard 2cm margin for documents */
+        }
         body {
             font-family: Arial, sans-serif;
-            line-height: 1.6;
+            font-size: 12pt; /* Changed to 12pt as requested */
+            line-height: 1.5;
             color: #333;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            background-color: white;
+            position: relative;
+            min-height: 100%;
         }
         .container {
-            max-width: 800px;
-            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+            padding-bottom: 30px; /* Space for footer */
         }
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #4b5563;
-            padding-bottom: 20px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 12px;
+        }
+        .header h1 {
+            font-size: 18pt; /* Reduced from 24pt */
+            margin: 0 0 8px;
+            text-transform: uppercase;
+            font-weight: bold;
+            color: #222;
+        }
+        .header p {
+            margin: 0;
+            font-size: 12pt; /* Reduced from 14pt */
+            color: #555;
         }
         .logo {
-            max-height: 70px;
-            margin-bottom: 10px;
+            max-height: 80px;
+            margin-bottom: 8px;
         }
-        h1 {
-            font-size: 24px;
-            margin: 0 0 10px;
-            color: #1f2937;
-        }
-        .reference {
-            font-size: 14px;
-            color: #6b7280;
-            margin-top: 5px;
-        }
-        .employee-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 30px;
-        }
-        .info-group {
+        .info-grid {
+            width: 100%;
             margin-bottom: 20px;
+        }
+        .info-row {
+            margin-bottom: 10px;
+            width: 100%;
+            display: table;
+        }
+        .info-cell {
+            display: table-cell;
+            vertical-align: top;
+            padding: 5px 10px 5px 0;
         }
         .info-label {
             font-weight: bold;
-            font-size: 14px;
-            color: #4b5563;
-            margin-bottom: 5px;
+            width: 35%;
         }
         .info-value {
-            font-size: 16px;
+            width: 65%;
         }
-        .leave-details {
-            margin-bottom: 30px;
+        .section {
+            margin-bottom: 25px;
+            page-break-inside: avoid;
         }
-        .leave-dates {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
+        .section-heading {
+            font-size: 14pt; /* Reduced from 18pt */
+            font-weight: bold;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            color: #222;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 11pt; /* Reduced from 14pt */
+            text-transform: uppercase;
+        }
+        .status-pending {
+            background-color: #FFF3CD;
+            color: #856404;
+        }
+        .status-approved {
+            background-color: #D1E7DD;
+            color: #0F5132;
+        }
+        .status-rejected {
+            background-color: #F8D7DA;
+            color: #842029;
+        }
+        .status-cancelled {
+            background-color: #E2E3E5;
+            color: #41464B;
         }
         .reason-box {
-            border: 1px solid #e5e7eb;
+            border: 1px solid #ddd;
             padding: 15px;
-            border-radius: 5px;
-            background-color: #f9fafb;
-            margin-bottom: 30px;
+            background: #f9f9f9;
+            margin-bottom: 20px;
+            min-height: 100px;
+            font-size: 12pt; /* Changed to 12pt */
+            border-radius: 4px;
+            line-height: 1.5;
         }
-        .status-badge {
-            display: inline-block;
-            padding: 5px 10px;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 20px;
-            margin-top: 5px;
+        .signature-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 10px;
         }
-        .pending-manager {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-        .pending-hr {
-            background-color: #dbeafe;
-            color: #1e40af;
-        }
-        .pending-director {
-            background-color: #ede9fe;
-            color: #5b21b6;
-        }
-        .approved {
-            background-color: #d1fae5;
-            color: #065f46;
-        }
-        .rejected {
-            background-color: #fee2e2;
-            color: #b91c1c;
-        }
-        .cancelled {
-            background-color: #f3f4f6;
-            color: #4b5563;
-        }
-        .signature-section {
-            margin-top: 40px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .signature-box {
-            text-align: center;
-            width: 45%;
+        .signature-table td {
+            width: 50%;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fafafa;
+            vertical-align: top;
         }
         .signature-line {
-            border-top: 1px solid #9ca3af;
-            margin-top: 50px;
+            border-top: 1px solid #000;
+            margin-top: 70px;
+            width: 100%;
             margin-bottom: 10px;
         }
-        .footer {
-            margin-top: 50px;
-            font-size: 12px;
-            color: #6b7280;
-            text-align: center;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 20px;
+        .signature-name {
+            font-weight: bold;
+            font-size: 13pt;
+            color: #333;
+        }
+        .signature-title {
+            font-style: italic;
+            color: #666;
+            font-size: 12pt;
+            margin-bottom: 5px;
         }
         .signature-image {
-            max-height: 80px;
+            height: 300px; /* Increased from 80px */
+            max-width: 400px; /* Increased from 200px */
             margin-bottom: 10px;
+            border-bottom: 1px dotted #ccc;
+            background: transparent; /* Ensure transparency */
+            -webkit-print-color-adjust: exact; /* Maintain transparency in printing */
+            color-adjust: exact; /* For Firefox */
         }
-        table {
+        .signature-date {
+            font-size: 11pt;
+            color: #555;
+        }
+        .footer {
+            position: absolute;
+            bottom: 0;
             width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
+            font-size: 10pt; /* Reduced from 12pt */
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            margin-top: 20px;
         }
-        table, th, td {
-            border: 1px solid #e5e7eb;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #f9fafb;
-            font-weight: bold;
-            color: #4b5563;
+        .page-number:after {
+            content: counter(page);
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>LEAVE APPLICATION FORM</h1>
-            <div class="reference">Reference: LR-{{ str_pad($leave->id, 5, '0', STR_PAD_LEFT) }}</div>
-            <div class="reference">Generated: {{ now()->format('F d, Y h:i A') }}</div>
+            @if(file_exists(public_path('images/company-logo.png')))
+                <img src="{{ public_path('images/company-logo.png') }}" alt="Company Logo" class="logo">
+            @endif
+            <h1>Leave Request Form</h1>
+            <p>Reference #{{ str_pad($leave->id, 5, '0', STR_PAD_LEFT) }} | Generated: {{ now()->format('F j, Y') }}</p>
         </div>
-
-        <div class="employee-info">
-            <div class="info-group">
-                <div class="info-label">Employee Name</div>
-                <div class="info-value">{{ $leave->user->name }}</div>
-                
-                <div class="info-label">Employee ID</div>
-                <div class="info-value">{{ $leave->user->id }}</div>
-            </div>
-            
-            <div class="info-group">
-                <div class="info-label">Department</div>
-                <div class="info-value">{{ $leave->user->department ? $leave->user->department->name : 'N/A' }}</div>
-                
-                <div class="info-label">Position</div>
-                <div class="info-value">{{ ucfirst($leave->user->role) }}</div>
-            </div>
-        </div>
-
-        <div class="leave-details">
-            <h2>Leave Details</h2>
-            
-            <table>
+        
+        <!-- Employee and Leave Information -->
+        <div class="section">
+            <table class="info-grid" cellspacing="0" cellpadding="8">
                 <tr>
-                    <th>Leave Type</th>
-                    <td>{{ ucfirst($leave->type) }} Leave</td>
+                    <td class="info-label">Employee Name:</td>
+                    <td class="info-value">{{ $leave->user->name }}</td>
                 </tr>
                 <tr>
-                    <th>Start Date</th>
-                    <td>{{ \Carbon\Carbon::parse($leave->start_date)->format('F d, Y (l)') }}</td>
+                    <td class="info-label">Department:</td>
+                    <td class="info-value">{{ $leave->user->department->name ?? 'N/A' }}</td>
                 </tr>
                 <tr>
-                    <th>End Date</th>
-                    <td>{{ \Carbon\Carbon::parse($leave->end_date)->format('F d, Y (l)') }}</td>
+                    <td class="info-label">Employee ID:</td>
+                    <td class="info-value">{{ $leave->user->employee_id ?? $leave->user->id }}</td>
                 </tr>
                 <tr>
-                    <th>Total Days</th>
-                    <td>{{ \Carbon\Carbon::parse($leave->start_date)->diffInDays(\Carbon\Carbon::parse($leave->end_date)) + 1 }} day(s)</td>
+                    <td class="info-label">Position:</td>
+                    <td class="info-value">{{ $leave->user->position ?? ucfirst($leave->user->role) }}</td>
                 </tr>
                 <tr>
-                    <th>Current Status</th>
-                    <td>
+                    <td class="info-label">Leave Type:</td>
+                    <td class="info-value">{{ ucfirst($leave->type) }} Leave</td>
+                </tr>
+                <tr>
+                    <td class="info-label">Duration:</td>
+                    <td class="info-value">
+                        <strong>{{ \Carbon\Carbon::parse($leave->start_date)->format('M d, Y') }}</strong>
+                        @if($leave->start_date !== $leave->end_date)
+                            to <strong>{{ \Carbon\Carbon::parse($leave->end_date)->format('M d, Y') }}</strong>
+                        @endif
+                        
                         @php
-                            $statusText = [
-                                'pending_manager' => 'Pending Manager Approval',
-                                'pending_hr' => 'Pending HR Approval',
-                                'pending_director' => 'Pending Director Approval',
-                                'approved' => 'Approved',
-                                'rejected_manager' => 'Rejected by Manager',
-                                'rejected_hr' => 'Rejected by HR',
-                                'rejected_director' => 'Rejected by Director',
-                                'cancel' => 'Cancelled',
-                            ];
+                            // Calculate working days
+                            $start = \Carbon\Carbon::parse($leave->start_date);
+                            $end = \Carbon\Carbon::parse($leave->end_date);
+                            $workingDays = 0;
                             
-                            $statusClass = match($leave->status) {
-                                'pending_manager' => 'pending-manager',
-                                'pending_hr' => 'pending-hr',
-                                'pending_director' => 'pending-director',
-                                'approved' => 'approved',
-                                'rejected_manager', 'rejected_hr', 'rejected_director' => 'rejected',
-                                default => 'cancelled'
-                            };
+                            for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+                                if (!in_array($date->dayOfWeek, [0, 6])) {
+                                    $workingDays++;
+                                }
+                            }
                         @endphp
-                        <span class="status-badge {{ $statusClass }}">
-                            {{ $statusText[$leave->status] ?? 'Unknown' }}
-                        </span>
+                        <div style="font-size: 11pt; color: #555; margin-top: 5px;"> <!-- Reduced from 14pt -->
+                            ({{ $workingDays }} working {{ \Illuminate\Support\Str::plural('day', $workingDays) }}, excluding weekends)
+                        </div>
                     </td>
                 </tr>
                 <tr>
-                    <th>Date Submitted</th>
-                    <td>{{ $leave->created_at->format('F d, Y h:i A') }}</td>
+                    <td class="info-label">Status:</td>
+                    <td class="info-value">
+                        @php
+                            $statusClass = '';
+                            $statusText = ucfirst(str_replace('_', ' ', $leave->status));
+                            
+                            if (strpos($leave->status, 'pending') !== false) {
+                                $statusClass = 'status-pending';
+                                $displayStatus = str_replace('pending_', 'Pending ', $leave->status);
+                                $displayStatus = str_replace('_', ' ', $displayStatus);
+                                $statusText = ucwords($displayStatus);
+                            } elseif (strpos($leave->status, 'approved') !== false) {
+                                $statusClass = 'status-approved';
+                                $statusText = 'Approved';
+                            } elseif (strpos($leave->status, 'rejected') !== false) {
+                                $statusClass = 'status-rejected';
+                                $rejecter = str_replace('rejected_', '', $leave->status);
+                                $statusText = 'Rejected by ' . ucfirst($rejecter);
+                            } elseif ($leave->status == 'cancel') {
+                                $statusClass = 'status-cancelled';
+                                $statusText = 'Cancelled';
+                            }
+                        @endphp
+                        <span class="status {{ $statusClass }}">{{ $statusText }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="info-label">Request Date:</td>
+                    <td class="info-value">{{ $leave->created_at->format('M d, Y') }}</td>
                 </tr>
             </table>
-            
-            <h3>Reason for Leave</h3>
+        </div>
+        
+        <!-- Reason Section -->
+        <div class="section">
+            <div class="section-heading">Reason for Leave</div>
             <div class="reason-box">
                 {{ $leave->reason }}
             </div>
         </div>
         
-        <div class="signature-section">
-            <div class="signature-box">
-                @if($leave->document_path && file_exists(public_path($leave->document_path)))
-                    <img src="{{ public_path($leave->document_path) }}" alt="Employee Signature" class="signature-image">
-                @else
-                    <div class="signature-line"></div>
-                @endif
-                <div>{{ $leave->user->name }}</div>
-                <div style="font-size: 14px; color: #6b7280;">Employee Signature</div>
-            </div>
+        <!-- Signatures Section with 2-column layout -->
+        <div class="section">
+            <div class="section-heading">Approval Signatures</div>
             
-            <div class="signature-box">
-                @if($leave->manager_signature && file_exists(public_path($leave->manager_signature)))
-                    <img src="{{ public_path($leave->manager_signature) }}" alt="Manager Signature" class="signature-image">
-                @else
-                    <div class="signature-line"></div>
-                @endif
-                <div>{{ $leave->manager ? $leave->manager->name : 'Manager Name' }}</div>
-                <div style="font-size: 14px; color: #6b7280;">Manager Approval</div>
-            </div>
+            <table class="signature-table">
+                <!-- First row: Employee and Manager -->
+                <tr>
+                    <!-- Employee Signature -->
+                    <td>
+                        @if($leave->document_path && file_exists(public_path($leave->document_path)))
+                            <img src="{{ public_path($leave->document_path) }}" alt="Employee Signature" class="signature-image" style="background: transparent;">
+                        @else
+                            <div class="signature-line"></div>
+                        @endif
+                        <div class="signature-name">{{ $leave->user->name }}</div>
+                        <div class="signature-title">Employee</div>
+                        <div class="signature-date">Date: {{ $leave->created_at->format('M d, Y') }}</div>
+                    </td>
+                    
+                    <!-- Manager Signature -->
+                    <td>
+                        @php
+                            $isHRStaff = $leave->user->department && strtolower($leave->user->department->name) === 'human resources';
+                            
+                            // Safely get manager name
+                            $managerName = 'Department Manager';
+                            if ($leave->manager_id && $manager = \App\Models\User::find($leave->manager_id)) {
+                                $managerName = $manager->name;
+                            } elseif ($leave->user->department && isset($leave->user->department->manager_id)) {
+                                $manager = \App\Models\User::find($leave->user->department->manager_id);
+                                if ($manager) {
+                                    $managerName = $manager->name;
+                                }
+                            }
+                        @endphp
+                        
+                        @if($isHRStaff)
+                            <div class="signature-line"></div>
+                            <div class="signature-name">Not Required</div>
+                            <div class="signature-title">Manager (HR Staff)</div>
+                            <div class="signature-date">N/A</div>
+                        @else
+                            @if($leave->manager_signature && file_exists(public_path($leave->manager_signature)))
+                                <img src="{{ public_path($leave->manager_signature) }}" alt="Manager Signature" class="signature-image" style="background: transparent;">
+                            @else
+                                <div class="signature-line"></div>
+                            @endif
+                            <div class="signature-name">{{ $managerName }}</div>
+                            <div class="signature-title">Manager</div>
+                            <div class="signature-date">
+                                Date: {{ $leave->manager_approved_at ? Carbon\Carbon::parse($leave->manager_approved_at)->format('M d, Y') : '________________' }}
+                            </div>
+                        @endif
+                    </td>
+                </tr>
+                
+                <!-- Second row: HR and Director -->
+                <tr>
+                    <!-- HR Signature -->
+                    <td>
+                        @if($leave->hr_signature && file_exists(public_path($leave->hr_signature)))
+                            <img src="{{ public_path($leave->hr_signature) }}" alt="HR Signature" class="signature-image" style="background: transparent;">
+                        @else
+                            <div class="signature-line"></div>
+                        @endif
+                        <div class="signature-name">
+                            {{ $leave->hr_id ? \App\Models\User::find($leave->hr_id)->name : 'HR Manager' }}
+                        </div>
+                        <div class="signature-title">Human Resources</div>
+                        <div class="signature-date">
+                            Date: {{ $leave->hr_approved_at ? Carbon\Carbon::parse($leave->hr_approved_at)->format('M d, Y') : '________________' }}
+                        </div>
+                    </td>
+                    
+                    <!-- Director Signature -->
+                    <td>
+                        @if($leave->director_signature && file_exists(public_path($leave->director_signature)))
+                            <img src="{{ public_path($leave->director_signature) }}" alt="Director Signature" class="signature-image" style="background: transparent;">
+                        @else
+                            <div class="signature-line"></div>
+                        @endif
+                        <div class="signature-name">
+                            {{ $leave->director_id ? \App\Models\User::find($leave->director_id)->name : 'Director' }}
+                        </div>
+                        <div class="signature-title">Director</div>
+                        <div class="signature-date">
+                            Date: {{ $leave->director_approved_at ? Carbon\Carbon::parse($leave->director_approved_at)->format('M d, Y') : '________________' }}
+                        </div>
+                    </td>
+                </tr>
+            </table>
         </div>
         
-        <div class="footer">
-            <p>This is an official document of the leave request system. If you have any questions, please contact the HR department.</p>
-            <p>Generated on {{ now()->format('F d, Y h:i A') }}</p>
+        @if($leave->attachment_path)
+        <div class="section">
+            <div class="section-heading">Supporting Documents</div>
+            <p style="font-size:11pt; font-style:italic; color:#555;"> <!-- Reduced from 14pt -->
+                This leave request includes an attachment. Please refer to the original document for the attached file.
+            </p>
         </div>
+        @endif
+    </div>
+    
+    <div class="footer">
+        <p>This is an official leave request document. For any queries, please contact the HR Department.</p>
+        <p class="page-number">Page </p>
     </div>
 </body>
 </html>
