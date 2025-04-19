@@ -528,7 +528,7 @@
     </div>
 
     <!-- Signature Modal -->
-    <x-modals.modal name="signature-modal" maxWidth="md">
+    <x-modals.modal name="signature-modal" maxWidth="sm">
         <div x-data="signaturePad()">
             <div class="border-b border-gray-200 bg-gray-50 px-6 py-4 flex justify-between items-center">
                 <h3 class="text-lg font-medium text-gray-900">Sign Your Leave Request</h3>
@@ -544,8 +544,8 @@
                     <p class="text-sm text-gray-600">Please sign in the box below to confirm your leave request.</p>
                 </div>
 
-                <div class="border border-gray-300 rounded-lg shadow-sm overflow-hidden bg-white">
-                    <canvas x-ref="signature_canvas" class="w-full h-60"></canvas>
+                <div class="border border-gray-300 rounded-lg shadow-sm overflow-hidden bg-white w-fit mx-auto">
+                    <canvas x-ref="signature_canvas"></canvas>
                 </div>
 
                 <div class="mt-4 flex justify-between">
@@ -579,11 +579,9 @@
                             if (event.detail === 'signature-modal') {
                                 setTimeout(() => {
                                     this.initSignaturePad();
-                                    this.resizeCanvas();
                                 }, 100);
                             }
                         });
-                        window.addEventListener('resize', () => this.resizeCanvas());
                     });
                 },
 
@@ -599,26 +597,6 @@
                     
                     if (@this.get('signature')) {
                         this.signaturePadInstance.fromDataURL(@this.get('signature'));
-                    }
-                    
-                    this.resizeCanvas();
-                },
-
-                resizeCanvas() {
-                    if (!this.signaturePadInstance) return;
-                    const canvas = this.signaturePadInstance.canvas;
-                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                    const width = canvas.offsetWidth;
-                    const height = canvas.offsetHeight;
-                    const data = this.signaturePadInstance.toDataURL();
-                    
-                    canvas.width = width * ratio;
-                    canvas.height = height * ratio;
-                    canvas.getContext("2d").scale(ratio, ratio);
-                    this.signaturePadInstance.clear();
-                    
-                    if (data !== this.signaturePadInstance.toDataURL()) {
-                        this.signaturePadInstance.fromDataURL(data);
                     }
                 },
 

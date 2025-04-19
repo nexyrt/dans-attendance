@@ -3,135 +3,104 @@
 namespace App\Livewire\Manager;
 
 use App\Models\LeaveRequest;
-use App\Models\Department;
+use App\Models\LeaveBalance;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
-use Carbon\Carbon;
 use Livewire\Component;
+use Livewire\WithPagination;
+use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class Leave extends Component
 {
-    // Leave data
-    public $leaveRequests = [];
-    public $selectedLeave = null;
-    public $signature = null;
+    use WithPagination;
+    
+    // Filter variables
+    public $status = '';
+    public $departmentId = '';
+    public $searchTerm = '';
+    public $dateRange = '';
+    
+    // Signature variables
+    public $signature;
+    public $currentLeaveId;
+    
+    // UI state
+    public $isModalOpen = false;
     public $rejectionReason = '';
-    public $rejectId = null;
-    
-    // UI states
-    public $filter = 'pending';
-    public $searchQuery = '';
-    public $sortField = 'created_at';
-    public $sortDirection = 'desc';
-    
-    protected $listeners = ['refreshLeaveRequests' => '$refresh'];
-    
-    protected $rules = [
-        'signature' => 'required',
-        'rejectionReason' => 'required_if:rejectId,!=,null|min:10'
-    ];
-    
-    protected $messages = [
-        'signature.required' => 'Your signature is required to approve this leave request',
-        'rejectionReason.required_if' => 'You must provide a reason for rejecting this request',
-        'rejectionReason.min' => 'The rejection reason must be at least 10 characters'
-    ];
+    public $actionType = '';
 
     public function mount()
     {
-        $this->loadLeaveRequests();
+        // Set manager's department as default filter
+        $this->departmentId = Auth::user()->department_id;
     }
     
-    public function loadLeaveRequests()
+    /**
+     * Opens approval modal for the selected leave request
+     */
+    public function openApprovalModal($leaveId)
     {
-        $user = Auth::user();
-        $query = LeaveRequest::query()
-            ->with(['user', 'user.department'])
-            ->whereHas('user.department', function($query) use ($user) {
-                // Filter by departments where the current user is the manager
-                $query->where('manager_id', $user->id);
-            });
-        
-        // Apply active filter
-        switch($this->filter) {
-            case 'pending':
-                $query->where('status', 'pending_manager');
-                break;
-            case 'approved':
-                $query->where('status', 'approved')
-                    ->orWhere('status', 'pending_hr')
-                    ->orWhere('status', 'pending_director');
-                break;
-            case 'rejected':
-                $query->where('status', 'rejected_manager');
-                break;
-            case 'all':
-                // No additional filtering
-                break;
-        }
-        
-        // Apply search if provided
-        if ($this->searchQuery) {
-            $query->whereHas('user', function($subquery) {
-                $subquery->where('name', 'like', "%{$this->searchQuery}%");
-            })->orWhere('id', 'like', "%{$this->searchQuery}%");
-        }
-        
-        // Apply sorting
-        $query->orderBy($this->sortField, $this->sortDirection);
-        
-        $this->leaveRequests = $query->get();
+        $this->currentLeaveId = $leaveId;
+        $this->actionType = 'approve';
+        $this->signature = null;
+        $this->isModalOpen = true;
     }
     
-    public function sortBy($field)
+    /**
+     * Opens rejection modal for the selected leave request
+     */
+    public function openRejectionModal($leaveId)
     {
-        if ($this->sortField === $field) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortField = $field;
-            $this->sortDirection = 'asc';
-        }
-        
-        $this->loadLeaveRequests();
-    }
-    
-    public function updateFilter($filter) 
-    {
-        $this->filter = $filter;
-        $this->loadLeaveRequests();
-    }
-    
-    public function viewLeave($id)
-    {
-        $this->selectedLeave = LeaveRequest::with(['user', 'user.department'])->findOrFail($id);
-        $this->dispatch('open-modal', 'view-leave-modal');
-    }
-    
-    public function prepareForRejection($id)
-    {
-        $this->rejectId = $id;
+        $this->currentLeaveId = $leaveId;
+        $this->actionType = 'reject';
         $this->rejectionReason = '';
-        $this->dispatch('open-modal', 'reject-leave-modal');
+        $this->isModalOpen = true;
     }
     
+    /**
+     * Close modal and reset all form fields
+     */
+    public function closeModal()
+    {
+        $this->isModalOpen = false;
+        $this->currentLeaveId = null;
+        $this->signature = null;
+        $this->rejectionReason = '';
+        $this->actionType = '';
+    }
+
+    /**
+     * Approve the leave request with manager's signature
+     */
     public function approveLeave()
     {
-        if (!$this->selectedLeave) {
-            return;
-        }
-        
+        // Validate signature
         $this->validate([
             'signature' => 'required',
+        ], [
+            'signature.required' => 'Your signature is required to approve this leave request',
         ]);
-        
+
         try {
-            // Save signature
-            $user = auth()->user();
-            $image_data = base64_decode(Str::of($this->signature)->after(','));
-            $filename = 'manager_' . Str::slug("{$user->role}, {$user->name}, {$user->id}") . '.png';
+            $leaveRequest = LeaveRequest::findOrFail($this->currentLeaveId);
             
-            // Create directory if it doesn't exist
+            // Check if this user is authorized to approve (must be manager of the employee's department)
+            $employee = User::findOrFail($leaveRequest->user_id);
+            $manager = Auth::user();
+            
+            if ($employee->department_id != $manager->department_id) {
+                session()->flash('error', 'You are not authorized to approve leaves for employees outside your department');
+                $this->closeModal();
+                return;
+            }
+            
+            // Save manager's signature
+            $image_data = base64_decode(Str::of($this->signature)->after(','));
+            $filename = Str::slug("manager, {$manager->name}, {$manager->id}") . '.png';
+            
+            // Define the path where the image will be stored
             $directory = public_path('signatures');
             if (!file_exists($directory)) {
                 mkdir($directory, 0755, true);
@@ -146,73 +115,168 @@ class Leave extends Component
             $signature_path = 'signatures/' . $filename;
             
             // Update leave request
-            $leave = LeaveRequest::findOrFail($this->selectedLeave->id);
-            $leave->status = 'pending_hr';
-            $leave->manager_id = Auth::id();
-            $leave->manager_approved_at = Carbon::now();
-            $leave->manager_signature = $signature_path;
-            $leave->save();
+            $leaveRequest->status = 'pending_hr';
+            $leaveRequest->manager_id = $manager->id;
+            $leaveRequest->manager_approved_at = now();
+            $leaveRequest->manager_signature = $signature_path;
+            $leaveRequest->save();
             
-            $this->dispatch('close-modal', 'view-leave-modal');
-            $this->dispatch('leave-approved');
-            session()->flash('message', 'Leave request has been approved successfully');
-            
-            $this->loadLeaveRequests();
-            $this->selectedLeave = null;
-            $this->signature = null;
+            session()->flash('message', 'Leave request approved successfully. It has been forwarded to HR for review.');
+            $this->closeModal();
             
         } catch (\Exception $e) {
             session()->flash('error', 'Failed to approve leave request: ' . $e->getMessage());
+            $this->closeModal();
         }
     }
     
+    /**
+     * Reject the leave request with reason
+     */
     public function rejectLeave()
     {
+        // Validate rejection reason
         $this->validate([
-            'rejectionReason' => 'required|min:10',
+            'rejectionReason' => 'required|min:5',
+        ], [
+            'rejectionReason.required' => 'Please provide a reason for rejection',
+            'rejectionReason.min' => 'Rejection reason must be at least 5 characters',
         ]);
-        
+
         try {
-            $leave = LeaveRequest::findOrFail($this->rejectId);
-            $leave->status = 'rejected_manager';
-            $leave->rejection_reason = $this->rejectionReason;
-            $leave->manager_id = Auth::id();
-            $leave->manager_approved_at = Carbon::now();
-            $leave->save();
+            $leaveRequest = LeaveRequest::findOrFail($this->currentLeaveId);
             
-            $this->dispatch('close-modal', 'reject-leave-modal');
+            // Check if this user is authorized to reject (must be manager of the employee's department)
+            $employee = User::findOrFail($leaveRequest->user_id);
+            $manager = Auth::user();
+            
+            if ($employee->department_id != $manager->department_id) {
+                session()->flash('error', 'You are not authorized to reject leaves for employees outside your department');
+                $this->closeModal();
+                return;
+            }
+            
+            // Update leave request
+            $leaveRequest->status = 'rejected_manager';
+            $leaveRequest->manager_id = $manager->id;
+            $leaveRequest->rejection_reason = $this->rejectionReason;
+            $leaveRequest->save();
+            
             session()->flash('message', 'Leave request has been rejected');
-            
-            $this->loadLeaveRequests();
-            $this->rejectId = null;
-            $this->rejectionReason = '';
+            $this->closeModal();
             
         } catch (\Exception $e) {
             session()->flash('error', 'Failed to reject leave request: ' . $e->getMessage());
+            $this->closeModal();
         }
     }
     
-    public function cancelViewLeave()
+    /**
+     * Generate PDF for the leave request
+     */
+    public function generatePdf($leaveId)
     {
-        $this->selectedLeave = null;
-        $this->signature = null;
-        $this->dispatch('close-modal', 'view-leave-modal');
+        $leave = LeaveRequest::with([
+            'user', 
+            'user.department',
+            'manager',
+            'hr',
+            'director'
+        ])
+        ->findOrFail($leaveId);
+
+        // Check if user has permission to generate this PDF (must be manager of the department)
+        $manager = Auth::user();
+        if ($leave->user->department_id !== $manager->department_id) {
+            session()->flash('error', 'You do not have permission to access this document');
+            return;
+        }
+
+        $pdf = Pdf::loadView('livewire.staff.leave-pdf', [
+            'leave' => $leave
+        ]);
+
+        // Set paper size to A4
+        $pdf->setPaper('a4', 'portrait');
+        
+        // Configure PDF settings for better quality with proper margins
+        $pdf->setOption('dpi', 300);
+        $pdf->setOption('isHtml5ParserEnabled', true);
+        $pdf->setOption('isRemoteEnabled', true);
+        
+        // Generate a filename with user information
+        $filename = 'leave_request_' . $leaveId . '_' . Str::slug($leave->user->name) . '.pdf';
+
+        // Return the PDF as download
+        return response()->streamDownload(
+            fn() => print($pdf->output()),
+            $filename
+        );
+    }
+
+    /**
+     * Reset all filters
+     */
+    public function resetFilters()
+    {
+        $this->status = '';
+        $this->searchTerm = '';
+        $this->dateRange = '';
+        $this->resetPage();
     }
     
-    public function cancelRejection()
+    /**
+     * Get the leave requests for manager's department
+     */
+    public function getLeaveRequestsProperty()
     {
-        $this->rejectId = null;
-        $this->rejectionReason = '';
-        $this->dispatch('close-modal', 'reject-leave-modal');
-    }
-    
-    public function search()
-    {
-        $this->loadLeaveRequests();
+        $manager = Auth::user();
+        
+        // Base query - only show requests from manager's department
+        $query = LeaveRequest::with(['user', 'user.department'])
+            ->whereHas('user', function($q) use ($manager) {
+                $q->where('department_id', $manager->department_id);
+            })
+            ->orderBy('created_at', 'desc');
+        
+        // Apply status filter
+        if ($this->status) {
+            $query->where('status', $this->status);
+        }
+        
+        // Apply search filter
+        if ($this->searchTerm) {
+            $query->whereHas('user', function($q) {
+                $q->where('name', 'like', '%' . $this->searchTerm . '%')
+                  ->orWhere('email', 'like', '%' . $this->searchTerm . '%');
+            });
+        }
+        
+        // Apply date range filter
+        if ($this->dateRange) {
+            $dates = explode(' to ', $this->dateRange);
+            if (count($dates) == 2) {
+                $startDate = Carbon::parse($dates[0])->startOfDay();
+                $endDate = Carbon::parse($dates[1])->endOfDay();
+                
+                $query->where(function($q) use ($startDate, $endDate) {
+                    $q->whereBetween('start_date', [$startDate, $endDate])
+                      ->orWhereBetween('end_date', [$startDate, $endDate])
+                      ->orWhere(function($q) use ($startDate, $endDate) {
+                          $q->where('start_date', '<=', $startDate)
+                            ->where('end_date', '>=', $endDate);
+                      });
+                });
+            }
+        }
+        
+        return $query->paginate(10);
     }
 
     public function render()
     {
-        return view('livewire.manager.leave')->layout('layouts.manager', ['title' => 'Leave Management']);
+        return view('livewire.manager.leave', [
+            'leaveRequests' => $this->leaveRequests,
+        ])->layout('layouts.manager', ['title' => 'Leave Approval']);
     }
 }
