@@ -1,5 +1,5 @@
-<!-- resources/views/livewire/manager/leave-approval.blade.php -->
-<div class="max-w-7xl mx-auto py-6 px-4">
+<!-- resources/views/livewire/manager/leave.blade.php -->
+<div class="max-w-7xl mx-auto py-6 px-4" x-data="leaveManagement()">
     <!-- Include the Flash Message Component -->
     <x-shared.flash-message />
 
@@ -61,7 +61,7 @@
     </div>
 
     <!-- Filters Section -->
-    <div class="bg-white shadow-md rounded-lg overflow-hidden mb-6">
+    <div class="bg-white shadow-md rounded-lg mb-6">
         <div class="md:px-6 md:py-4 border-b border-gray-200 bg-gray-50 px-4 py-3">
             <h2 class="text-lg font-medium text-gray-900">Filters</h2>
         </div>
@@ -101,12 +101,11 @@
                     </select>
                 </div>
 
-                <!-- Date Range Picker (simplified) -->
+                <!-- Date Range Picker -->
                 <div>
-                    <label for="dateRange" class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
-                    <input type="text" id="dateRange" wire:model.live="dateRange"
-                        class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                        placeholder="YYYY-MM-DD to YYYY-MM-DD">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+                    <livewire:date-range-picker :start-date="$start_date" :end-date="$end_date"
+                        wire:key="manager-leave-date-picker" />
                 </div>
 
                 <!-- Reset Button -->
@@ -326,9 +325,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex items-center space-x-2">
                                         @if ($request->status === 'pending_manager')
-                                            <button wire:click="openApprovalModal({{ $request->id }})"
-                                                class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 rounde<!-- Continuation of resources/views/livewire/manager/leave-approval.blade.php -->
-                                            <button wire:click="openApprovalModal({{ $request->id }})"
+                                            <button @click="openApprovalModal({{ $request->id }})"
                                                 class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 rounded px-2 py-1 transition-colors duration-200 flex items-center">
                                                 <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg"
                                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -337,7 +334,7 @@
                                                 </svg>
                                                 Approve
                                             </button>
-                                            <button wire:click="openRejectionModal({{ $request->id }})"
+                                            <button @click="openRejectionModal({{ $request->id }})"
                                                 class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 rounded px-2 py-1 transition-colors duration-200 flex items-center">
                                                 <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg"
                                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -348,7 +345,7 @@
                                             </button>
                                         @endif
                                         <!-- View Details Button -->
-                                        <button wire:click="generatePdf({{ $request->id }})"
+                                        <button @click="downloadPdf({{ $request->id }})"
                                             class="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 rounded px-2 py-1 transition-colors duration-200 flex items-center">
                                             <svg class="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg"
                                                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -383,13 +380,11 @@
     </div>
 
     <!-- Approval Modal -->
-    <x-modals.modal name="approval-modal" max-width="md" wire:model="isModalOpen">
-        <div x-data="signaturePad()">
+    <div x-show="approvalModalOpen" x-cloak class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div @click.away="closeApprovalModal" x-data="signaturePad()" class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div class="border-b border-gray-200 bg-gray-50 px-6 py-4 flex justify-between items-center">
-                <h3 class="text-lg font-medium text-gray-900">
-                    {{ $actionType === 'approve' ? 'Approve Leave Request' : 'Reject Leave Request' }}
-                </h3>
-                <button wire:click="closeModal" class="text-gray-500 hover:text-gray-700">
+                <h3 class="text-lg font-medium text-gray-900">Approve Leave Request</h3>
+                <button @click="closeApprovalModal" class="text-gray-500 hover:text-gray-700">
                     <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -399,74 +394,257 @@
             </div>
 
             <div class="p-6">
-                @if ($actionType === 'approve')
-                    <!-- Approval Form -->
-                    <div class="mb-4">
-                        <p class="text-sm text-gray-600">Please sign below to approve this leave request.</p>
-                        <p class="text-sm text-gray-600 mt-1">After your approval, this request will be sent to HR for
-                            further review.</p>
-                    </div>
+                <!-- Approval Form -->
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600">Please sign below to approve this leave request.</p>
+                    <p class="text-sm text-gray-600 mt-1">After your approval, this request will be sent to HR for
+                        further review.</p>
+                </div>
 
-                    <div class="border border-gray-300 rounded-lg shadow-sm overflow-hidden bg-white w-full mx-auto">
-                        <canvas x-ref="signature_canvas" class="w-full h-64"></canvas>
-                    </div>
+                <div class="border border-gray-300 rounded-lg shadow-sm overflow-hidden bg-white w-full mx-auto">
+                    <canvas x-ref="signature_canvas" class="w-full h-64"></canvas>
+                </div>
 
-                    <div class="mt-4 flex justify-between">
-                        <button @click="clearSignature()"
-                            class="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50">
-                            <svg class="inline-block mr-1 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd"
-                                    d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                            Clear Signature
-                        </button>
-                        <div>
-                            <button wire:click="closeModal"
-                                class="inline-flex justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mr-3">
-                                Cancel
-                            </button>
-                            <button @click="upload()"
-                                class="inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                                Approve Request
-                            </button>
-                        </div>
-                    </div>
-                @else
-                    <!-- Rejection Form -->
-                    <div class="mb-4">
-                        <label for="rejectionReason" class="block text-sm font-medium text-gray-700">
-                            Reason for Rejection
-                        </label>
-                        <p class="text-sm text-gray-500 mb-2">Please provide a detailed explanation for rejecting this
-                            leave request.</p>
-                        <textarea id="rejectionReason" wire:model="rejectionReason" rows="4"
-                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                            placeholder="Enter reason for rejection"></textarea>
-                        @error('rejectionReason')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                <div x-show="approvalError" class="mt-2 text-sm text-red-600" x-text="approvalError"></div>
 
-                    <div class="mt-6 flex justify-end">
-                        <button wire:click="closeModal"
+                <div class="mt-4 flex justify-between">
+                    <button @click="clearSignature()"
+                        class="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50">
+                        <svg class="inline-block mr-1 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        Clear Signature
+                    </button>
+                    <div>
+                        <button @click="closeApprovalModal"
                             class="inline-flex justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mr-3">
                             Cancel
                         </button>
-                        <button wire:click="rejectLeave"
-                            class="inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700">
-                            Reject Request
+                        <button @click="submitApproval" :disabled="approvalSubmitting"
+                            class="inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 disabled:opacity-75 disabled:cursor-not-allowed">
+                            <span x-show="approvalSubmitting" class="inline-block mr-2">
+                                <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </span>
+                            Approve Request
                         </button>
                     </div>
-                @endif
+                </div>
             </div>
         </div>
-    </x-modals.modal>
+    </div>
+
+    <!-- Rejection Modal -->
+    <div x-show="rejectionModalOpen" x-cloak class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div @click.away="closeRejectionModal" class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="border-b border-gray-200 bg-gray-50 px-6 py-4 flex justify-between items-center">
+                <h3 class="text-lg font-medium text-gray-900">Reject Leave Request</h3>
+                <button @click="closeRejectionModal" class="text-gray-500 hover:text-gray-700">
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6">
+                <!-- Rejection Form -->
+                <div class="mb-4">
+                    <label for="rejectionReason" class="block text-sm font-medium text-gray-700">
+                        Reason for Rejection
+                    </label>
+                    <p class="text-sm text-gray-500 mb-2">Please provide a detailed explanation for rejecting this
+                        leave request.</p>
+                    <textarea id="rejectionReason" x-model="rejectionReason" rows="4"
+                        class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        placeholder="Enter reason for rejection"></textarea>
+                    <div x-show="rejectionReasonError" class="mt-1 text-sm text-red-600" x-text="rejectionReasonError"></div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button @click="closeRejectionModal"
+                        class="inline-flex justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mr-3">
+                        Cancel
+                    </button>
+                    <button @click="submitRejection" :disabled="rejectionSubmitting"
+                        class="inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 disabled:opacity-75 disabled:cursor-not-allowed">
+                        <span x-show="rejectionSubmitting" class="inline-block mr-2">
+                            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </span>
+                        Reject Request
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script>
         document.addEventListener('alpine:init', () => {
+            Alpine.data('leaveManagement', () => ({
+                approvalModalOpen: false,
+                rejectionModalOpen: false,
+                currentLeaveId: null,
+                rejectionReason: '',
+                rejectionReasonError: '',
+                rejectionSubmitting: false,
+                approvalSubmitting: false,
+                approvalError: '',
+                
+                // Open the approval modal
+                openApprovalModal(leaveId) {
+                    this.currentLeaveId = leaveId;
+                    this.approvalModalOpen = true;
+                    this.approvalError = '';
+                    this.approvalSubmitting = false;
+                },
+                
+                // Open the rejection modal
+                openRejectionModal(leaveId) {
+                    this.currentLeaveId = leaveId;
+                    this.rejectionReason = '';
+                    this.rejectionReasonError = '';
+                    this.rejectionModalOpen = true;
+                    this.rejectionSubmitting = false;
+                },
+                
+                // Close approval modal
+                closeApprovalModal() {
+                    this.approvalModalOpen = false;
+                    this.currentLeaveId = null;
+                    this.approvalError = '';
+                    this.approvalSubmitting = false;
+                },
+                
+                // Close rejection modal
+                closeRejectionModal() {
+                    this.rejectionModalOpen = false;
+                    this.currentLeaveId = null;
+                    this.rejectionReason = '';
+                    this.rejectionReasonError = '';
+                    this.rejectionSubmitting = false;
+                },
+                
+                // Submit the approval with signature
+                async submitApproval() {
+                    // Get signature from the component
+                    const signatureComponent = Alpine.$data(document.querySelector('[x-data="signaturePad()"]'));
+                    
+                    if (!signatureComponent.signaturePadInstance || signatureComponent.signaturePadInstance.isEmpty()) {
+                        this.approvalError = 'Please sign before approving';
+                        return;
+                    }
+                    
+                    try {
+                        this.approvalSubmitting = true;
+                        this.approvalError = '';
+                        
+                        const signature = signatureComponent.signaturePadInstance.toDataURL('image/png');
+                        
+                        // Call the server using fetch API
+                        const response = await fetch('/api/manager/leave/approve', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({
+                                leaveId: this.currentLeaveId,
+                                signature: signature
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (!response.ok) {
+                            throw new Error(result.message || 'Failed to approve leave request');
+                        }
+                        
+                        // Show success notification
+                        this.showNotification('Leave request approved successfully. It has been forwarded to HR for review.', 'success');
+                        
+                        // Close the modal and refresh the component
+                        this.closeApprovalModal();
+                        Livewire.dispatch('refresh');
+                        
+                    } catch (error) {
+                        this.approvalError = error.message || 'Failed to approve leave request. Please try again.';
+                    } finally {
+                        this.approvalSubmitting = false;
+                    }
+                },
+                
+                // Submit the rejection with reason
+                async submitRejection() {
+                    // Validate rejection reason
+                    if (!this.rejectionReason || this.rejectionReason.length < 5) {
+                        this.rejectionReasonError = 'Please provide a reason for rejection (at least 5 characters)';
+                        return;
+                    }
+                    
+                    try {
+                        this.rejectionSubmitting = true;
+                        this.rejectionReasonError = '';
+                        
+                        // Call the server using fetch API
+                        const response = await fetch('/api/manager/leave/reject', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({
+                                leaveId: this.currentLeaveId,
+                                reason: this.rejectionReason
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (!response.ok) {
+                            throw new Error(result.message || 'Failed to reject leave request');
+                        }
+                        
+                        // Show success notification
+                        this.showNotification('Leave request has been rejected', 'success');
+                        
+                        // Close the modal and refresh the component
+                        this.closeRejectionModal();
+                        Livewire.dispatch('refresh');
+                        
+                    } catch (error) {
+                        this.rejectionReasonError = error.message || 'Failed to reject leave request. Please try again.';
+                    } finally {
+                        this.rejectionSubmitting = false;
+                    }
+                },
+                
+                // Download PDF
+                async downloadPdf(leaveId) {
+                    try {
+                        window.location.href = `/manager/leave/${leaveId}/pdf`;
+                    } catch (error) {
+                        this.showNotification('Failed to download PDF. Please try again.', 'error');
+                    }
+                },
+                
+                // Show notification
+                showNotification(message, type = 'success') {
+                    const event = type === 'success' ? 'notify-success' : 'notify-error';
+                    window.dispatchEvent(new CustomEvent(event, { 
+                        detail: { message } 
+                    }));
+                }
+            }));
+            
             Alpine.data('signaturePad', () => ({
                 signaturePadInstance: null,
 
@@ -474,12 +652,14 @@
                     this.$nextTick(() => {
                         this.initSignaturePad();
                     });
-
-                    // Listen for modal open/close events to properly initialize
-                    Livewire.on('modalOpened', () => {
-                        setTimeout(() => {
-                            this.initSignaturePad();
-                        }, 100);
+                    
+                    // Re-initialize when approvalModalOpen changes
+                    this.$watch('$parent.approvalModalOpen', (value) => {
+                        if (value) {
+                            setTimeout(() => {
+                                this.initSignaturePad();
+                            }, 100);
+                        }
                     });
                 },
 
@@ -508,16 +688,6 @@
                 clearSignature() {
                     if (this.signaturePadInstance) {
                         this.signaturePadInstance.clear();
-                    }
-                },
-
-                upload() {
-                    if (this.signaturePadInstance && !this.signaturePadInstance.isEmpty()) {
-                        const data = this.signaturePadInstance.toDataURL('image/png');
-                        @this.set('signature', data);
-                        @this.call('approveLeave');
-                    } else {
-                        alert('Please sign before approving');
                     }
                 }
             }));

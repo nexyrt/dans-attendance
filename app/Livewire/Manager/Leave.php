@@ -20,159 +20,39 @@ class Leave extends Component
     public $status = '';
     public $departmentId = '';
     public $searchTerm = '';
-    public $dateRange = '';
+    public $start_date;
+    public $end_date;
     
-    // Signature variables
-    public $signature;
-    public $currentLeaveId;
-    
-    // UI state
-    public $isModalOpen = false;
-    public $rejectionReason = '';
-    public $actionType = '';
+    // UI state - these are now handled by Alpine.js
+    // but we keep them for potential server-side fallbacks
+
+    protected $listeners = [
+        'date-range-selected' => 'updateDateRange',
+        'refresh' => '$refresh'  // Add refresh listener for Alpine.js integration
+    ];
 
     public function mount()
     {
         // Set manager's department as default filter
         $this->departmentId = Auth::user()->department_id;
-    }
-    
-    /**
-     * Opens approval modal for the selected leave request
-     */
-    public function openApprovalModal($leaveId)
-    {
-        $this->currentLeaveId = $leaveId;
-        $this->actionType = 'approve';
-        $this->signature = null;
-        $this->isModalOpen = true;
-    }
-    
-    /**
-     * Opens rejection modal for the selected leave request
-     */
-    public function openRejectionModal($leaveId)
-    {
-        $this->currentLeaveId = $leaveId;
-        $this->actionType = 'reject';
-        $this->rejectionReason = '';
-        $this->isModalOpen = true;
-    }
-    
-    /**
-     * Close modal and reset all form fields
-     */
-    public function closeModal()
-    {
-        $this->isModalOpen = false;
-        $this->currentLeaveId = null;
-        $this->signature = null;
-        $this->rejectionReason = '';
-        $this->actionType = '';
+        
+        // Initialize date range for filter
+        $this->start_date = Carbon::now()->subMonth()->format('Y-m-d');
+        $this->end_date = Carbon::now()->format('Y-m-d');
     }
 
     /**
-     * Approve the leave request with manager's signature
+     * Update date range from the date picker component
      */
-    public function approveLeave()
+    public function updateDateRange($data)
     {
-        // Validate signature
-        $this->validate([
-            'signature' => 'required',
-        ], [
-            'signature.required' => 'Your signature is required to approve this leave request',
-        ]);
-
-        try {
-            $leaveRequest = LeaveRequest::findOrFail($this->currentLeaveId);
-            
-            // Check if this user is authorized to approve (must be manager of the employee's department)
-            $employee = User::findOrFail($leaveRequest->user_id);
-            $manager = Auth::user();
-            
-            if ($employee->department_id != $manager->department_id) {
-                session()->flash('error', 'You are not authorized to approve leaves for employees outside your department');
-                $this->closeModal();
-                return;
-            }
-            
-            // Save manager's signature
-            $image_data = base64_decode(Str::of($this->signature)->after(','));
-            $filename = Str::slug("manager, {$manager->name}, {$manager->id}") . '.png';
-            
-            // Define the path where the image will be stored
-            $directory = public_path('signatures');
-            if (!file_exists($directory)) {
-                mkdir($directory, 0755, true);
-            }
-            
-            // Save the image with transparency preserved
-            $img = imagecreatefromstring($image_data);
-            imagesavealpha($img, true);
-            imagepng($img, "{$directory}/{$filename}", 0);
-            imagedestroy($img);
-            
-            $signature_path = 'signatures/' . $filename;
-            
-            // Update leave request
-            $leaveRequest->status = 'pending_hr';
-            $leaveRequest->manager_id = $manager->id;
-            $leaveRequest->manager_approved_at = now();
-            $leaveRequest->manager_signature = $signature_path;
-            $leaveRequest->save();
-            
-            session()->flash('message', 'Leave request approved successfully. It has been forwarded to HR for review.');
-            $this->closeModal();
-            
-        } catch (\Exception $e) {
-            session()->flash('error', 'Failed to approve leave request: ' . $e->getMessage());
-            $this->closeModal();
-        }
+        $this->start_date = $data['startDate'];
+        $this->end_date = $data['endDate'];
     }
-    
-    /**
-     * Reject the leave request with reason
-     */
-    public function rejectLeave()
-    {
-        // Validate rejection reason
-        $this->validate([
-            'rejectionReason' => 'required|min:5',
-        ], [
-            'rejectionReason.required' => 'Please provide a reason for rejection',
-            'rejectionReason.min' => 'Rejection reason must be at least 5 characters',
-        ]);
 
-        try {
-            $leaveRequest = LeaveRequest::findOrFail($this->currentLeaveId);
-            
-            // Check if this user is authorized to reject (must be manager of the employee's department)
-            $employee = User::findOrFail($leaveRequest->user_id);
-            $manager = Auth::user();
-            
-            if ($employee->department_id != $manager->department_id) {
-                session()->flash('error', 'You are not authorized to reject leaves for employees outside your department');
-                $this->closeModal();
-                return;
-            }
-            
-            // Update leave request
-            $leaveRequest->status = 'rejected_manager';
-            $leaveRequest->manager_id = $manager->id;
-            $leaveRequest->rejection_reason = $this->rejectionReason;
-            $leaveRequest->save();
-            
-            session()->flash('message', 'Leave request has been rejected');
-            $this->closeModal();
-            
-        } catch (\Exception $e) {
-            session()->flash('error', 'Failed to reject leave request: ' . $e->getMessage());
-            $this->closeModal();
-        }
-    }
-    
     /**
      * Generate PDF for the leave request
+     * This needs to stay in the Livewire component for direct download
      */
     public function generatePdf($leaveId)
     {
@@ -221,7 +101,8 @@ class Leave extends Component
     {
         $this->status = '';
         $this->searchTerm = '';
-        $this->dateRange = '';
+        $this->start_date = Carbon::now()->subMonth()->format('Y-m-d');
+        $this->end_date = Carbon::now()->format('Y-m-d');
         $this->resetPage();
     }
     
@@ -253,21 +134,18 @@ class Leave extends Component
         }
         
         // Apply date range filter
-        if ($this->dateRange) {
-            $dates = explode(' to ', $this->dateRange);
-            if (count($dates) == 2) {
-                $startDate = Carbon::parse($dates[0])->startOfDay();
-                $endDate = Carbon::parse($dates[1])->endOfDay();
-                
-                $query->where(function($q) use ($startDate, $endDate) {
-                    $q->whereBetween('start_date', [$startDate, $endDate])
-                      ->orWhereBetween('end_date', [$startDate, $endDate])
-                      ->orWhere(function($q) use ($startDate, $endDate) {
-                          $q->where('start_date', '<=', $startDate)
-                            ->where('end_date', '>=', $endDate);
-                      });
-                });
-            }
+        if ($this->start_date && $this->end_date) {
+            $startDate = Carbon::parse($this->start_date)->startOfDay();
+            $endDate = Carbon::parse($this->end_date)->endOfDay();
+            
+            $query->where(function($q) use ($startDate, $endDate) {
+                $q->whereBetween('start_date', [$startDate, $endDate])
+                  ->orWhereBetween('end_date', [$startDate, $endDate])
+                  ->orWhere(function($q) use ($startDate, $endDate) {
+                      $q->where('start_date', '<=', $startDate)
+                        ->where('end_date', '>=', $endDate);
+                  });
+            });
         }
         
         return $query->paginate(10);

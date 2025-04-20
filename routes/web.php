@@ -134,6 +134,11 @@ Route::middleware(['auth', 'role:manager'])
         Route::get('/leave', ManagerLeave::class)->name('leave.index');
     });
 
+// Manager PDF download route
+Route::middleware(['auth', 'role:manager'])->get('/manager/leave/{id}/pdf', function ($id) {
+    return app(\App\Livewire\Manager\Leave::class)->generatePdf($id);
+})->name('manager.leave.pdf');
+
 /*
 |--------------------------------------------------------------------------
 | Manager Routes
