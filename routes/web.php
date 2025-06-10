@@ -168,4 +168,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });
 
+Route::get('/proposal', function () {
+    return view('proposal');
+})->name('proposal');
+
 require __DIR__ . '/auth.php';
