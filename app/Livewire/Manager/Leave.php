@@ -11,6 +11,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class Leave extends Component
 {
@@ -22,13 +23,10 @@ class Leave extends Component
     public $searchTerm = '';
     public $start_date;
     public $end_date;
-    
-    // UI state - these are now handled by Alpine.js
-    // but we keep them for potential server-side fallbacks
 
     protected $listeners = [
         'date-range-selected' => 'updateDateRange',
-        'refresh' => '$refresh'  // Add refresh listener for Alpine.js integration
+        'refresh' => '$refresh'
     ];
 
     public function mount()
@@ -52,7 +50,6 @@ class Leave extends Component
 
     /**
      * Generate PDF for the leave request
-     * This needs to stay in the Livewire component for direct download
      */
     public function generatePdf($leaveId)
     {
@@ -92,6 +89,99 @@ class Leave extends Component
             fn() => print($pdf->output()),
             $filename
         );
+    }
+    
+    /**
+     * Approve a leave request - called from the Alpine component
+     */
+    public function approveLeave($leaveId, $signature)
+    {
+        try {
+            $leaveRequest = LeaveRequest::findOrFail($leaveId);
+            
+            // Check if the authenticated user is authorized to approve this leave
+            $user = Auth::user();
+            $leaveOwner = $leaveRequest->user;
+            
+            if ($user->department_id !== $leaveOwner->department_id || 
+                $user->role !== 'manager' || 
+                $leaveRequest->status !== 'pending_manager') {
+                session()->flash('error', 'You are not authorized to approve this leave request');
+                $this->dispatch('notify-error', ['message' => 'You are not authorized to approve this leave request']);
+                return;
+            }
+            
+            // Save the manager's signature
+            $image_data = base64_decode(Str::of($signature)->after(','));
+            $filename = 'manager_approval_' . $leaveRequest->id . '_' . time() . '.png';
+            
+            $directory = public_path('signatures');
+            if (!file_exists($directory)) {
+                mkdir($directory, 0755, true);
+            }
+            
+            $img = imagecreatefromstring($image_data);
+            imagesavealpha($img, true); // Preserve transparency
+            imagepng($img, "{$directory}/{$filename}", 0); // Max quality
+            imagedestroy($img);
+            
+            $signature_path = 'signatures/' . $filename;
+            
+            // Update leave request using the correct column name: manager_approved_at
+            $leaveRequest->status = 'pending_hr';
+            $leaveRequest->manager_id = $user->id;
+            $leaveRequest->manager_signature = $signature_path;
+            $leaveRequest->manager_approved_at = now();
+            $leaveRequest->save();
+            
+            session()->flash('message', 'Leave request approved successfully');
+            $this->dispatch('notify-success', ['message' => 'Leave request approved successfully']);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to approve leave request: ' . $e->getMessage());
+            $this->dispatch('notify-error', ['message' => 'Failed to approve leave request: ' . $e->getMessage()]);
+            return false;
+        }
+    }
+    
+    /**
+     * Reject a leave request - called from the Alpine component
+     */
+    public function rejectLeave($leaveId, $reason)
+    {
+        try {
+            $leaveRequest = LeaveRequest::findOrFail($leaveId);
+            
+            // Check if the authenticated user is authorized to reject this leave
+            $user = Auth::user();
+            $leaveOwner = $leaveRequest->user;
+            
+            if ($user->department_id !== $leaveOwner->department_id || 
+                $user->role !== 'manager' || 
+                $leaveRequest->status !== 'pending_manager') {
+                session()->flash('error', 'You are not authorized to reject this leave request');
+                $this->dispatch('notify-error', ['message' => 'You are not authorized to reject this leave request']);
+                return false;
+            }
+            
+            // Update leave request using the correct column name
+            $leaveRequest->status = 'rejected_manager';
+            $leaveRequest->manager_id = $user->id;
+            $leaveRequest->rejection_reason = $reason;
+            $leaveRequest->manager_approved_at = now(); // Use as timestamp for rejection too
+            $leaveRequest->save();
+            
+            session()->flash('message', 'Leave request rejected successfully');
+            $this->dispatch('notify-success', ['message' => 'Leave request rejected successfully']);
+            return true;
+            
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to reject leave request: ' . $e->getMessage());
+            $this->dispatch('notify-error', ['message' => 'Failed to reject leave request: ' . $e->getMessage()]);
+            return false;
+        }
     }
 
     /**

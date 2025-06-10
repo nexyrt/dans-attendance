@@ -52,6 +52,7 @@ class Leave extends Component
     public function openSignatureModal($leaveRequestId)
     {
         $this->selectedLeaveRequest = LeaveRequest::find($leaveRequestId);
+        $this->signature = '';
         $this->dispatch('open-modal', 'signature-modal');
     }
 
@@ -93,46 +94,57 @@ class Leave extends Component
         // Validate signature
         $this->validate([
             'signature' => 'required'
+        ], [
+            'signature.required' => 'Please sign before approving'
         ]);
 
-        $user = Auth::user();
-        $currentTime = now();
+        try {
+            $user = Auth::user();
+            $currentTime = now();
 
-        // Create signatures directory if not exists
-        $directory = public_path('signatures');
-        if (!File::exists($directory)) {
-            File::makeDirectory($directory, 0755, true);
+            // Create signatures directory if not exists
+            $directory = public_path('signatures');
+            if (!File::exists($directory)) {
+                File::makeDirectory($directory, 0755, true);
+            }
+
+            // Generate signature filename
+            $filename = 'hr_approval_' . $this->selectedLeaveRequest->id . '_' . time() . '.png';
+
+            // Save signature image
+            $imageData = base64_decode(Str::of($this->signature)->after(','));
+            
+            // Convert to GD image and preserve transparency
+            $img = imagecreatefromstring($imageData);
+            imagesavealpha($img, true); // Preserve transparency
+            
+            // Save PNG with transparency
+            $signaturePath = 'signatures/' . $filename;
+            imagepng($img, public_path($signaturePath), 0);
+            imagedestroy($img);
+
+            // Add signature to document if applicable
+            $documentSigned = $this->addSignatureToDocument($signaturePath);
+
+            // Update the leave request status
+            $this->selectedLeaveRequest->update([
+                'status' => 'pending_director',
+                'hr_id' => $user->id,
+                'hr_approved_at' => $currentTime,
+                'hr_signature' => $signaturePath
+            ]);
+
+            // Show success message
+            session()->flash('message', 'Leave request approved and sent to Director.');
+            $this->dispatch('close-modal', 'signature-modal');
+            
+            // Reset signature
+            $this->resetSignature();
+            
+        } catch (\Exception $e) {
+            session()->flash('message', 'Failed to approve leave request: ' . $e->getMessage());
+            session()->flash('type', 'error');
         }
-
-        // Generate signature filename
-        $filename = sprintf(
-            '%s_%s_%s.png',
-            'hr',
-            Str::slug($user->name),
-            $user->id
-        );
-
-        // Save signature image
-        $imageData = base64_decode(Str::of($this->signature)->after(','));
-        $signaturePath = 'signatures/' . $filename;
-        File::put(public_path($signaturePath), $imageData);
-
-        // Add signature to document
-        $documentSigned = $this->addSignatureToDocument($signaturePath);
-
-        // Update the leave request status to pending_director
-        $this->selectedLeaveRequest->update([
-            'status' => LeaveRequest::STATUS_PENDING_DIRECTOR,
-            'hr_id' => $user->id,
-            'hr_approved_at' => $currentTime,
-            'hr_signature' => $signaturePath
-        ]);
-
-        session()->flash('message', 'Leave request approved and sent to Director.' . 
-            ($documentSigned ? ' Document has been signed.' : ''));
-
-        $this->dispatch('close-modal', 'signature-modal');
-        $this->resetSignature();
     }
 
     /**
@@ -166,7 +178,7 @@ class Leave extends Component
 
         DB::transaction(function () {
             $this->selectedRequest->update([
-                'status' => LeaveRequest::STATUS_REJECTED_HR,
+                'status' => 'rejected_hr',
                 'hr_id' => auth()->id(),
                 'hr_approved_at' => now(),
                 'rejection_reason' => $this->rejectReason
