@@ -318,7 +318,7 @@
                                             {{ $request->manager->name ?? 'N/A' }}
                                         </div>
                                         <div class="text-gray-500">
-                                            @if($request->manager_approved_at)
+                                            @if ($request->manager_approved_at)
                                                 {{ $request->manager_approved_at->format('M j, Y H:i') }}
                                             @else
                                                 Not approved yet
@@ -441,52 +441,67 @@
 
                 <!-- Signature Modal -->
                 <x-modals.modal name="signature-modal" maxWidth="md">
-                    <div class="p-6">
-                        <h2 class="text-lg font-medium text-gray-900 mb-4">
-                            Digital Signature
-                        </h2>
-            
-                        <!-- Your signature pad component -->
-                        <div x-data="signaturePad(@entangle('signature'))">
+                    <div x-data="signaturePad()">
+                        <div class="border-b border-gray-200 bg-gray-50 px-6 py-4 flex justify-between items-center">
+                            <h3 class="text-lg font-medium text-gray-900">Sign to Approve Leave Request</h3>
+                            <button @click="$dispatch('close-modal', 'signature-modal')"
+                                class="text-gray-500 hover:text-gray-700">
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="p-6">
                             <div class="mb-4">
-                                <canvas 
-                                    x-ref="signature_canvas" 
-                                    class="border rounded shadow w-full" 
-                                    height="200">
-                                </canvas>
+                                <p class="text-sm text-gray-600">Please sign below to approve this leave request.</p>
+                                <p class="text-sm text-gray-600 mt-1">After your approval, this request will be sent to the
+                                    Director for final review.</p>
                             </div>
-                            
-                            <div class="mt-4 flex justify-end space-x-3">
-                                <button
-                                    type="button"
-                                    x-on:click="$dispatch('close-modal', 'signature-modal')"
-                                    class="bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200">
-                                    Cancel
+
+                            <div
+                                class="border border-gray-300 rounded-lg shadow-sm overflow-hidden bg-white w-full mx-auto">
+                                <canvas x-ref="signature_canvas" class="w-full h-64"></canvas>
+                            </div>
+
+                            <div x-show="signatureError" class="mt-2 text-sm text-red-600" x-text="signatureError"></div>
+
+                            <div class="mt-4 flex justify-between">
+                                <button @click="clearSignature()"
+                                    class="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50">
+                                    <svg class="inline-block mr-1 h-4 w-4 text-gray-500"
+                                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                    Clear
                                 </button>
-                                <button
-                                    type="button"
-                                    wire:click="saveSignatureAndApprove"
-                                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                                    Submit Approval
-                                </button>
+                                <div>
+                                    <button @click="$dispatch('close-modal', 'signature-modal')"
+                                        class="inline-flex justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mr-3">
+                                        Cancel
+                                    </button>
+                                    <button @click="upload()" :disabled="signatureSubmitting"
+                                        class="inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 disabled:opacity-75 disabled:cursor-not-allowed">
+                                        <span x-show="signatureSubmitting" class="inline-block mr-2">
+                                            <svg class="animate-spin h-4 w-4 text-white"
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                    stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor"
+                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                                </path>
+                                            </svg>
+                                        </span>
+                                        Approve Request
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    <script>
-                        document.addEventListener('alpine:init', () => {
-                            Alpine.data('signaturePad', (value) => ({
-                                signaturePadInstance: null,
-                                value: value,
-                                init(){
-                                    this.signaturePadInstance = new SignaturePad(this.$refs.signature_canvas);
-                                    this.signaturePadInstance.addEventListener("endStroke", ()=>{
-                                       this.value = this.signaturePadInstance.toDataURL('image/png');
-                                    });
-                                },
-                            }))
-                        })
-                    </script>
                 </x-modals.modal>
 
                 <!-- Reject Modal -->
@@ -605,4 +620,79 @@
             @endif
         </div>
     </div>
-</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('signaturePad', () => ({
+                signaturePadInstance: null,
+                signatureError: '',
+                signatureSubmitting: false,
+
+                init() {
+                    this.$nextTick(() => {
+                        this.initSignaturePad();
+                        document.addEventListener('open-modal', (event) => {
+                            if (event.detail === 'signature-modal') {
+                                setTimeout(() => {
+                                    this.initSignaturePad();
+                                }, 100);
+                            }
+                        });
+                    });
+                },
+
+                initSignaturePad() {
+                    const canvas = this.$refs.signature_canvas;
+                    if (!canvas) return;
+
+                    if (this.signaturePadInstance) this.signaturePadInstance.off();
+
+                    this.signaturePadInstance = new SignaturePad(canvas, {
+                        penColor: 'rgb(0, 0, 128)'
+                    });
+
+                    // Set canvas dimensions to match the container
+                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                    canvas.width = canvas.offsetWidth * ratio;
+                    canvas.height = canvas.offsetHeight * ratio;
+                    canvas.getContext("2d").scale(ratio, ratio);
+                },
+
+                clearSignature() {
+                    if (this.signaturePadInstance) this.signaturePadInstance.clear();
+                    this.signatureError = '';
+                },
+
+                upload() {
+                    if (this.signaturePadInstance && !this.signaturePadInstance.isEmpty()) {
+                        try {
+                            this.signatureError = '';
+                            this.signatureSubmitting = true;
+
+                            const data = this.signaturePadInstance.toDataURL('image/png');
+
+                            // Send signature data to Livewire component
+                            @this.set('signature', data);
+                            @this.saveSignatureAndApprove().then(() => {
+                                this.$dispatch('close-modal', 'signature-modal');
+                            }).catch(error => {
+                                console.error('Error during approval:', error);
+                                this.signatureError =
+                                    'Failed to approve leave request. Please try again.';
+                            }).finally(() => {
+                                this.signatureSubmitting = false;
+                            });
+
+                        } catch (error) {
+                            this.signatureError = 'Failed to process signature. Please try again.';
+                            this.signatureSubmitting = false;
+                        }
+                    } else {
+                        this.signatureError = 'Please sign before approving';
+                    }
+                }
+            }));
+        });
+    </script>

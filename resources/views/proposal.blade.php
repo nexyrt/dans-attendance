@@ -1494,139 +1494,282 @@
             </div>
 
             <div class="section">
-                <h3 class="section-title">Timeline Implementasi SIMRS ICHA dengan JKB</h3>
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                    <div class="grid-4" style="text-align: center;">
-                        <div style="padding: 15px;">
-                            <div
-                                style="background: #e3f2fd; border-radius: 50%; width: 60px; height: 60px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; color: #1976d2; font-weight: bold;">
-                                M1</div>
-                            <h5 style="color: #2E4A99; margin-bottom: 8px;">Bulan 1</h5>
-                            <div style="font-size: 0.85em; color: #666;">Assessment & Planning</div>
+                <h3 class="section-title">Action Plan Implementasi SIMRS ICHA dengan JKB (Juli 2025 - Januari 2026)</h3>
+                
+                <!-- Timeline Header -->
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 300px repeat(7, 1fr); gap: 5px; align-items: center;">
+                        <div style="font-weight: bold; color: #2E4A99;">Fase Implementasi</div>
+                        <div style="text-align: center; font-weight: bold; color: #2E4A99; font-size: 0.9em;">Jul 2025</div>
+                        <div style="text-align: center; font-weight: bold; color: #2E4A99; font-size: 0.9em;">Ags 2025</div>
+                        <div style="text-align: center; font-weight: bold; color: #2E4A99; font-size: 0.9em;">Sep 2025</div>
+                        <div style="text-align: center; font-weight: bold; color: #2E4A99; font-size: 0.9em;">Okt 2025</div>
+                        <div style="text-align: center; font-weight: bold; color: #2E4A99; font-size: 0.9em;">Nov 2025</div>
+                        <div style="text-align: center; font-weight: bold; color: #2E4A99; font-size: 0.9em;">Des 2025</div>
+                        <div style="text-align: center; font-weight: bold; color: #2E4A99; font-size: 0.9em;">Jan 2026</div>
+                    </div>
+                </div>
+
+                <!-- Project Phases with Gantt Chart Style -->
+                <div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                    
+                    <!-- Phase 1: Project Initiation -->
+                    <div style="display: grid; grid-template-columns: 300px repeat(7, 1fr); gap: 0; border-bottom: 1px solid #ddd; min-height: 60px;">
+                        <div style="padding: 15px; background: #e3f2fd; border-right: 1px solid #ddd; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-weight: bold; color: #1976d2; font-size: 0.9em;">Project Initiation</div>
+                            <div style="font-size: 0.8em; color: #666; margin-top: 3px;">Kickoff & Planning</div>
                         </div>
-                        <div style="padding: 15px;">
-                            <div
-                                style="background: #fff3e0; border-radius: 50%; width: 60px; height: 60px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; color: #f57c00; font-weight: bold;">
-                                M2-3</div>
-                            <h5 style="color: #2E4A99; margin-bottom: 8px;">Bulan 2-3</h5>
-                            <div style="font-size: 0.85em; color: #666;">Installation & Setup</div>
+                        <div style="padding: 10px; border-right: 1px solid #ddd; display: flex; align-items: center; position: relative;">
+                            <div style="width: 100%; height: 8px; background: #1976d2; border-radius: 4px;"></div>
+                            <div style="position: absolute; top: 5px; left: 50%; transform: translateX(-50%); font-size: 0.7em; color: #1976d2; font-weight: bold; background: white; padding: 0 4px;">Week 1-2</div>
                         </div>
-                        <div style="padding: 15px;">
-                            <div
-                                style="background: #f3e5f5; border-radius: 50%; width: 60px; height: 60px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; color: #8e24aa; font-weight: bold;">
-                                M4</div>
-                            <h5 style="color: #2E4A99; margin-bottom: 8px;">Bulan 4</h5>
-                            <div style="font-size: 0.85em; color: #666;">Testing & Training</div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div></div>
+                    </div>
+
+                    <!-- Phase 2: Requirement Analysis -->
+                    <div style="display: grid; grid-template-columns: 300px repeat(7, 1fr); gap: 0; border-bottom: 1px solid #ddd; min-height: 60px;">
+                        <div style="padding: 15px; background: #fff3e0; border-right: 1px solid #ddd; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-weight: bold; color: #f57c00; font-size: 0.9em;">Requirement Analysis</div>
+                            <div style="font-size: 0.8em; color: #666; margin-top: 3px;">Business Process Mapping</div>
                         </div>
-                        <div style="padding: 15px;">
-                            <div
-                                style="background: #e8f5e8; border-radius: 50%; width: 60px; height: 60px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; color: #28a745; font-weight: bold;">
-                                M5-6</div>
-                            <h5 style="color: #2E4A99; margin-bottom: 8px;">Bulan 5-6</h5>
-                            <div style="font-size: 0.85em; color: #666;">Go-Live & Support</div>
+                        <div style="padding: 10px; border-right: 1px solid #ddd; display: flex; align-items: center; position: relative;">
+                            <div style="width: 50%; height: 8px; background: #f57c00; border-radius: 4px; margin-left: 50%;"></div>
+                            <div style="position: absolute; top: 5px; right: 25%; transform: translateX(50%); font-size: 0.7em; color: #f57c00; font-weight: bold; background: white; padding: 0 4px;">Week 3-4</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div></div>
+                    </div>
+
+                    <!-- Phase 3: System Preparation -->
+                    <div style="display: grid; grid-template-columns: 300px repeat(7, 1fr); gap: 0; border-bottom: 1px solid #ddd; min-height: 60px;">
+                        <div style="padding: 15px; background: #fff3e0; border-right: 1px solid #ddd; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-weight: bold; color: #f57c00; font-size: 0.9em;">System Preparation</div>
+                            <div style="font-size: 0.8em; color: #666; margin-top: 3px;">Server Setup & Installation</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="padding: 10px; border-right: 1px solid #ddd; display: flex; align-items: center; position: relative;">
+                            <div style="width: 100%; height: 8px; background: #f57c00; border-radius: 4px;"></div>
+                            <div style="position: absolute; top: 5px; left: 50%; transform: translateX(-50%); font-size: 0.7em; color: #f57c00; font-weight: bold; background: white; padding: 0 4px;">Week 1-2</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div></div>
+                    </div>
+
+                    <!-- Phase 4: Core Configuration -->
+                    <div style="display: grid; grid-template-columns: 300px repeat(7, 1fr); gap: 0; border-bottom: 1px solid #ddd; min-height: 60px;">
+                        <div style="padding: 15px; background: #fff3e0; border-right: 1px solid #ddd; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-weight: bold; color: #f57c00; font-size: 0.9em;">Core Configuration</div>
+                            <div style="font-size: 0.8em; color: #666; margin-top: 3px;">Master Data & Templates</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="padding: 10px; border-right: 1px solid #ddd; display: flex; align-items: center; position: relative;">
+                            <div style="width: 50%; height: 8px; background: #f57c00; border-radius: 4px; margin-left: 50%;"></div>
+                            <div style="position: absolute; top: 5px; right: 25%; transform: translateX(50%); font-size: 0.7em; color: #f57c00; font-weight: bold; background: white; padding: 0 4px;">Week 3-4</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div></div>
+                    </div>
+
+                    <!-- Phase 5: Integration Setup -->
+                    <div style="display: grid; grid-template-columns: 300px repeat(7, 1fr); gap: 0; border-bottom: 1px solid #ddd; min-height: 60px;">
+                        <div style="padding: 15px; background: #f3e5f5; border-right: 1px solid #ddd; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-weight: bold; color: #8e24aa; font-size: 0.9em;">Integration Setup</div>
+                            <div style="font-size: 0.8em; color: #666; margin-top: 3px;">BPJS & System Bridging</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="padding: 10px; border-right: 1px solid #ddd; display: flex; align-items: center; position: relative;">
+                            <div style="width: 100%; height: 8px; background: #8e24aa; border-radius: 4px;"></div>
+                            <div style="position: absolute; top: 5px; left: 50%; transform: translateX(-50%); font-size: 0.7em; color: #8e24aa; font-weight: bold; background: white; padding: 0 4px;">Week 1-2</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div></div>
+                    </div>
+
+                    <!-- Phase 6: Module Testing -->
+                    <div style="display: grid; grid-template-columns: 300px repeat(7, 1fr); gap: 0; border-bottom: 1px solid #ddd; min-height: 60px;">
+                        <div style="padding: 15px; background: #f3e5f5; border-right: 1px solid #ddd; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-weight: bold; color: #8e24aa; font-size: 0.9em;">Module Testing</div>
+                            <div style="font-size: 0.8em; color: #666; margin-top: 3px;">End-to-End Testing</div>
+                        </div>
+                        <div class="border-right: 1px solid #ddd;"></div>
+                        <div class="border-right: 1px solid #ddd;"></div>
+                        <div style="padding: 10px; border-right: 1px solid #ddd; display: flex; align-items: center; position: relative;">
+                            <div style="width: 50%; height: 8px; background: #8e24aa; border-radius: 4px; margin-left: 50%;"></div>
+                            <div style="position: absolute; top: 5px; right: 25%; transform: translateX(50%); font-size: 0.7em; color: #8e24aa; font-weight: bold; background: white; padding: 0 4px;">Week 3-4</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div></div>
+                    </div>
+
+                    <!-- Phase 7: User Training Phase 1 -->
+                    <div style="display: grid; grid-template-columns: 300px repeat(7, 1fr); gap: 0; border-bottom: 1px solid #ddd; min-height: 60px;">
+                        <div style="padding: 15px; background: #e8f5e8; border-right: 1px solid #ddd; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-weight: bold; color: #28a745; font-size: 0.9em;">User Training Phase 1</div>
+                            <div style="font-size: 0.8em; color: #666; margin-top: 3px;">Management & Super User</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="padding: 10px; border-right: 1px solid #ddd; display: flex; align-items: center; position: relative;">
+                            <div style="width: 100%; height: 8px; background: #28a745; border-radius: 4px;"></div>
+                            <div style="position: absolute; top: 5px; left: 50%; transform: translateX(-50%); font-size: 0.7em; color: #28a745; font-weight: bold; background: white; padding: 0 4px;">Week 1-2</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div></div>
+                    </div>
+
+                    <!-- Phase 8: User Training Phase 2 -->
+                    <div style="display: grid; grid-template-columns: 300px repeat(7, 1fr); gap: 0; border-bottom: 1px solid #ddd; min-height: 60px;">
+                        <div style="padding: 15px; background: #e8f5e8; border-right: 1px solid #ddd; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-weight: bold; color: #28a745; font-size: 0.9em;">User Training Phase 2</div>
+                            <div style="font-size: 0.8em; color: #666; margin-top: 3px;">All Departments</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="padding: 10px; border-right: 1px solid #ddd; display: flex; align-items: center; position: relative;">
+                            <div style="width: 50%; height: 8px; background: #28a745; border-radius: 4px; margin-left: 50%;"></div>
+                            <div style="position: absolute; top: 5px; right: 25%; transform: translateX(50%); font-size: 0.7em; color: #28a745; font-weight: bold; background: white; padding: 0 4px;">Week 3-4</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div></div>
+                    </div>
+
+                    <!-- Phase 9: Pilot Implementation -->
+                    <div style="display: grid; grid-template-columns: 300px repeat(7, 1fr); gap: 0; border-bottom: 1px solid #ddd; min-height: 60px;">
+                        <div style="padding: 15px; background: #e8f5e8; border-right: 1px solid #ddd; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-weight: bold; color: #28a745; font-size: 0.9em;">Pilot Implementation</div>
+                            <div style="font-size: 0.8em; color: #666; margin-top: 3px;">Soft Launch & Testing</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="padding: 10px; border-right: 1px solid #ddd; display: flex; align-items: center; position: relative;">
+                            <div style="width: 100%; height: 8px; background: #28a745; border-radius: 4px;"></div>
+                            <div style="position: absolute; top: 5px; left: 50%; transform: translateX(-50%); font-size: 0.7em; color: #28a745; font-weight: bold; background: white; padding: 0 4px;">Week 1-2</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div></div>
+                    </div>
+
+                    <!-- Phase 10: Phase Rollout -->
+                    <div style="display: grid; grid-template-columns: 300px repeat(7, 1fr); gap: 0; border-bottom: 1px solid #ddd; min-height: 60px;">
+                        <div style="padding: 15px; background: #e8f5e8; border-right: 1px solid #ddd; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-weight: bold; color: #28a745; font-size: 0.9em;">Phase Rollout</div>
+                            <div style="font-size: 0.8em; color: #666; margin-top: 3px;">Gradual Department Rollout</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="padding: 10px; border-right: 1px solid #ddd; display: flex; align-items: center; position: relative;">
+                            <div style="width: 50%; height: 8px; background: #28a745; border-radius: 4px; margin-left: 50%;"></div>
+                            <div style="position: absolute; top: 5px; right: 25%; transform: translateX(50%); font-size: 0.7em; color: #28a745; font-weight: bold; background: white; padding: 0 4px;">Week 3-4</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div></div>
+                    </div>
+
+                    <!-- Phase 11: Full Go-Live -->
+                    <div style="display: grid; grid-template-columns: 300px repeat(7, 1fr); gap: 0; border-bottom: 1px solid #ddd; min-height: 60px;">
+                        <div style="padding: 15px; background: #c8e6c9; border-right: 1px solid #ddd; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-weight: bold; color: #2e7d32; font-size: 0.9em;">Full Go-Live</div>
+                            <div style="font-size: 0.8em; color: #666; margin-top: 3px;">Complete System Activation</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="padding: 10px; border-right: 1px solid #ddd; display: flex; align-items: center; position: relative;">
+                            <div style="width: 100%; height: 8px; background: #2e7d32; border-radius: 4px;"></div>
+                            <div style="position: absolute; top: 5px; left: 50%; transform: translateX(-50%); font-size: 0.7em; color: #2e7d32; font-weight: bold; background: white; padding: 0 4px;">Week 1-2</div>
+                        </div>
+                        <div></div>
+                    </div>
+
+                    <!-- Phase 12: Stabilization -->
+                    <div style="display: grid; grid-template-columns: 300px repeat(7, 1fr); gap: 0; border-bottom: 1px solid #ddd; min-height: 60px;">
+                        <div style="padding: 15px; background: #c8e6c9; border-right: 1px solid #ddd; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-weight: bold; color: #2e7d32; font-size: 0.9em;">Stabilization</div>
+                            <div style="font-size: 0.8em; color: #666; margin-top: 3px;">Post Go-Live Support</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="padding: 10px; border-right: 1px solid #ddd; display: flex; align-items: center; position: relative;">
+                            <div style="width: 50%; height: 8px; background: #2e7d32; border-radius: 4px; margin-left: 50%;"></div>
+                            <div style="position: absolute; top: 5px; right: 25%; transform: translateX(50%); font-size: 0.7em; color: #2e7d32; font-weight: bold; background: white; padding: 0 4px;">Week 3-4</div>
+                        </div>
+                        <div></div>
+                    </div>
+
+                    <!-- Phase 13: Project Closure -->
+                    <div style="display: grid; grid-template-columns: 300px repeat(7, 1fr); gap: 0; min-height: 60px;">
+                        <div style="padding: 15px; background: #c8e6c9; border-right: 1px solid #ddd; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-weight: bold; color: #2e7d32; font-size: 0.9em;">Project Closure</div>
+                            <div style="font-size: 0.8em; color: #666; margin-top: 3px;">Final Optimization & Handover</div>
+                        </div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="border-right: 1px solid #ddd;"></div>
+                        <div style="padding: 10px; display: flex; align-items: center; position: relative;">
+                            <div style="width: 100%; height: 8px; background: #2e7d32; border-radius: 4px;"></div>
+                            <div style="position: absolute; top: 5px; left: 50%; transform: translateX(-50%); font-size: 0.7em; color: #2e7d32; font-weight: bold; background: white; padding: 0 4px;">Week 1-4</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid-2">
-                    <div class="phase-box">
-                        <h4 style="color: #8e24aa; margin-bottom: 15px;">🎯 Key Milestones</h4>
-                        <ul style="list-style: none; padding: 0; color: #8e24aa; font-size: 0.9em;">
-                            <li style="margin-bottom: 8px;">✓ Week 1: Project kickoff & team formation</li>
-                            <li style="margin-bottom: 8px;">✓ Week 4: Infrastructure ready & validated</li>
-                            <li style="margin-bottom: 8px;">✓ Week 8: Core modules live & tested</li>
-                            <li style="margin-bottom: 8px;">✓ Week 12: All integrations working</li>
-                            <li style="margin-bottom: 8px;">✓ Week 16: User training completed</li>
-                            <li style="margin-bottom: 8px;">✓ Week 20: Full go-live successful</li>
-                            <li style="margin-bottom: 8px;">✓ Week 24: Post-implementation review</li>
-                        </ul>
-                    </div>
-                    <div class="success-box">
-                        <h4 style="color: #2e7
-                    <div class="success-box">
-                        <h4 style="color: #2e7d32; margin-bottom: 15px;">🚀 Success Factors</h4>
-                        <ul style="list-style: none; padding: 0; color: #2e7d32; font-size: 0.9em;">
-                            <li style="margin-bottom: 8px;">✓ Dedicated JKB project manager</li>
-                            <li style="margin-bottom: 8px;">✓ 24/7 technical support team</li>
-                            <li style="margin-bottom: 8px;">✓ Comprehensive change management</li>
-                            <li style="margin-bottom: 8px;">✓ Role-based training programs</li>
-                            <li style="margin-bottom: 8px;">✓ Parallel running safety net</li>
-                            <li style="margin-bottom: 8px;">✓ Performance monitoring real-time</li>
-                            <li style="margin-bottom: 8px;">✓ Continuous optimization</li>
-                        </ul>
+                <!-- Legend -->
+                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-weight: bold; color: #2E4A99; margin-bottom: 10px;">Legend:</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 0.85em;">
+                        <div style="display: flex; align-items: center;">
+                            <div style="width: 20px; height: 8px; background: #1976d2; border-radius: 4px; margin-right: 8px;"></div>
+                            <span>Project Setup</span>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <div style="width: 20px; height: 8px; background: #f57c00; border-radius: 4px; margin-right: 8px;"></div>
+                            <span>System Development</span>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <div style="width: 20px; height: 8px; background: #8e24aa; border-radius: 4px; margin-right: 8px;"></div>
+                            <span>Integration & Testing</span>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <div style="width: 20px; height: 8px; background: #28a745; border-radius: 4px; margin-right: 8px;"></div>
+                            <span>Training & Go-Live</span>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="section">
-                <h3 class="section-title">Training & Change Management Program</h3>
-                <table class="comparison-table">
-                    <thead>
-                        <tr>
-                            <th>Target Group</th>
-                            <th>Training Module</th>
-                            <th>Duration</th>
-                            <th>Delivery Method</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Management</strong></td>
-                            <td>Dashboard & Reporting</td>
-                            <td>4 jam</td>
-                            <td>Executive briefing</td>
-                        </tr>
-                        <tr>
-                            <td><strong>IT Admin</strong></td>
-                            <td>System Administration</td>
-                            <td>16 jam</td>
-                            <td>Hands-on workshop</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Dokter</strong></td>
-                            <td>EMR & Clinical Workflow</td>
-                            <td>8 jam</td>
-                            <td>Simulation-based</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Perawat</strong></td>
-                            <td>Patient Care & Documentation</td>
-                            <td>12 jam</td>
-                            <td>Role-based training</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Farmasi</strong></td>
-                            <td>Inventory & E-Prescription</td>
-                            <td>8 jam</td>
-                            <td>Process-focused</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Lab & Radiologi</strong></td>
-                            <td>Integration & Workflow</td>
-                            <td>6 jam</td>
-                            <td>Departmental training</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Keuangan</strong></td>
-                            <td>Billing & BPJS Claims</td>
-                            <td>10 jam</td>
-                            <td>Compliance-focused</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Pendaftaran</strong></td>
-                            <td>Registration & Queue System</td>
-                            <td>6 jam</td>
-                            <td>Customer service oriented</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="cta-section">
-                <h3 class="cta-title">Implementasi Terjamin dengan JKB Professional Service</h3>
-                <p style="margin-bottom: 20px; opacity: 0.9;">
-                    End-to-end implementation, 24/7 support, comprehensive training - semua dalam satu paket
-                </p>
             </div>
         </div>
 
