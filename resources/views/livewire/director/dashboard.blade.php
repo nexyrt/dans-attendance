@@ -1,7 +1,7 @@
 <!-- resources/views/livewire/director/dashboard.blade.php -->
 <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
     <!-- Enhanced Header with Glassmorphism -->
-    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-white/20 shadow-lg shadow-black/5">
+    <header class="bg-white/80 backdrop-blur-lg border-b border-white/20 shadow-lg shadow-black/5">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-6">
                 <div class="flex items-center space-x-4">
@@ -29,10 +29,11 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        <!-- Enhanced Executive Summary Cards with Animations -->
-        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Enhanced Executive Summary Cards with Tooltips -->
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- In Office Card -->
-            <div class="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+            <div class="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1" 
+                 data-tooltip="Shows number of employees currently checked in vs total workforce. Real-time tracking based on attendance system.">
                 <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
                 <div class="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
                 <div class="relative p-6">
@@ -53,32 +54,16 @@
                         <p class="text-blue-100 text-xs">Excellent attendance today</p>
                     </div>
                 </div>
-            </div>
-
-            <!-- Payroll Card -->
-            <div class="group relative overflow-hidden bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-                <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-                <div class="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
-                <div class="relative p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                            <i class="fas fa-dollar-sign text-white text-2xl"></i>
-                        </div>
-                        <div class="flex items-center text-emerald-100 text-sm">
-                            <i class="fas fa-arrow-up text-xs mr-1"></i>
-                            <span>+2.3%</span>
-                        </div>
-                    </div>
-                    <div>
-                        <p class="text-emerald-100 text-sm font-medium mb-2">Monthly Payroll</p>
-                        <p class="text-4xl font-bold text-white mb-1">$87.5K</p>
-                        <p class="text-emerald-100 text-xs">vs. last month</p>
-                    </div>
+                <!-- Tooltip -->
+                <div class="tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap z-50">
+                    Real-time office occupancy tracking
+                    <div class="tooltip-arrow absolute top-full left-1/2 transform -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                 </div>
             </div>
 
             <!-- Pending Approvals Card -->
-            <div class="group relative overflow-hidden bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+            <div class="group relative overflow-hidden bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
+                 data-tooltip="Leave requests and other approvals awaiting director's decision. Click to view pending items requiring immediate attention.">
                 <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
                 <div class="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
                 <div class="relative p-6">
@@ -98,10 +83,16 @@
                         <p class="text-amber-100 text-xs">3 urgent, 5 regular</p>
                     </div>
                 </div>
+                <!-- Tooltip -->
+                <div class="tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap z-50">
+                    Items requiring director approval
+                    <div class="tooltip-arrow absolute top-full left-1/2 transform -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                </div>
             </div>
 
             <!-- Company Health Card -->
-            <div class="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+            <div class="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
+                 data-tooltip="Overall company performance score based on attendance rate, productivity metrics, employee satisfaction, and operational efficiency.">
                 <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
                 <div class="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
                 <div class="relative p-6">
@@ -125,6 +116,11 @@
                         <p class="text-4xl font-bold text-white mb-1">8.4<span class="text-xl text-purple-200">/10</span></p>
                         <p class="text-purple-100 text-xs">Excellent performance</p>
                     </div>
+                </div>
+                <!-- Tooltip -->
+                <div class="tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap z-50">
+                    Composite score: attendance, productivity & efficiency
+                    <div class="tooltip-arrow absolute top-full left-1/2 transform -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                 </div>
             </div>
         </section>
@@ -413,8 +409,8 @@
                         <h3 class="text-lg font-bold text-gray-900">Today's Overview</h3>
                         <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                     </div>
-                    <div id="attendance-donut-chart" class="h-64">
-                        </div>
+                    <div id="attendance-donut-chart" class="h-64"></div>
+                </div>
 
                 <!-- Check-in Time Chart -->
                 <div class="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
@@ -431,7 +427,7 @@
         </section>
 
         <!-- Enhanced Analytics Section -->
-        <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <section class="grid grid-cols-1 gap-8">
             <!-- Attendance Trends -->
             <div class="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
                 <div class="flex items-center justify-between mb-6">
@@ -445,21 +441,6 @@
                     </div>
                 </div>
                 <div id="attendance-trend-chart" class="h-64"></div>
-            </div>
-
-            <!-- Productivity Hours -->
-            <div class="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h2 class="text-xl font-bold text-gray-900">Peak Productivity Hours</h2>
-                        <p class="text-sm text-gray-500 mt-1">Optimal working time analysis</p>
-                    </div>
-                    <div class="flex items-center space-x-2 bg-purple-50 px-3 py-2 rounded-lg">
-                        <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
-                        <span class="text-xs font-medium text-purple-700">9 AM Peak</span>
-                    </div>
-                </div>
-                <div id="productivity-hours-chart" class="h-64"></div>
             </div>
         </section>
 
@@ -795,7 +776,7 @@
         </section>
     </main>
 
-    <!-- Enhanced JavaScript with Better Animations -->
+    <!-- Enhanced JavaScript with Better Animations & Tooltips -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize with staggered animations
@@ -803,6 +784,7 @@
             initializeCharts();
             initializeTabs();
             initializeRealTimeUpdates();
+            initializeTooltips();
         });
 
         function initializeWithAnimations() {
@@ -816,6 +798,31 @@
                     card.style.opacity = '1';
                     card.style.transform = 'translateY(0)';
                 }, index * 100);
+            });
+        }
+
+        function initializeTooltips() {
+            // Enhanced tooltip functionality
+            const tooltipTriggers = document.querySelectorAll('[data-tooltip]');
+            
+            tooltipTriggers.forEach(trigger => {
+                const tooltip = trigger.querySelector('.tooltip');
+                
+                trigger.addEventListener('mouseenter', function() {
+                    if (tooltip) {
+                        tooltip.style.opacity = '1';
+                        tooltip.style.visibility = 'visible';
+                        tooltip.style.transform = 'translateX(-50%) translateY(-8px)';
+                    }
+                });
+                
+                trigger.addEventListener('mouseleave', function() {
+                    if (tooltip) {
+                        tooltip.style.opacity = '0';
+                        tooltip.style.visibility = 'hidden';
+                        tooltip.style.transform = 'translateX(-50%) translateY(0)';
+                    }
+                });
             });
         }
 
@@ -993,102 +1000,18 @@
                     hover: {
                         size: 6
                     }
+                },
+                tooltip: {
+                    shared: true,
+                    intersect: false,
+                    y: {
+                        formatter: function (val) {
+                            return val + " employees"
+                        }
+                    }
                 }
             });
             attendanceTrendChart.render();
-
-            // Enhanced Productivity Hours Chart
-            const productivityHoursChart = new ApexCharts(document.querySelector("#productivity-hours-chart"), {
-                series: [{
-                    name: 'Productivity %',
-                    data: [5, 25, 70, 95, 85, 60, 30, 40, 75, 85, 65, 45]
-                }],
-                chart: {
-                    type: 'area',
-                    height: 250,
-                    toolbar: { show: false },
-                    animations: {
-                        enabled: true,
-                        easing: 'easeinout',
-                        speed: 800
-                    }
-                },
-                colors: ['#8B5CF6'],
-                dataLabels: { enabled: false },
-                stroke: {
-                    curve: 'smooth',
-                    width: 3
-                },
-                fill: {
-                    type: 'gradient',
-                    gradient: {
-                        shadeIntensity: 1,
-                        opacityFrom: 0.4,
-                        opacityTo: 0.1,
-                        stops: [0, 90, 100],
-                        colorStops: [
-                            {
-                                offset: 0,
-                                color: '#8B5CF6',
-                                opacity: 0.4
-                            },
-                            {
-                                offset: 100,
-                                color: '#8B5CF6',
-                                opacity: 0.1
-                            }
-                        ]
-                    }
-                },
-                xaxis: {
-                    categories: ['6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM'],
-                    labels: {
-                        style: { fontSize: '11px', fontWeight: 500 }
-                    }
-                },
-                yaxis: {
-                    min: 0,
-                    max: 100,
-                    labels: {
-                        style: { fontSize: '11px' },
-                        formatter: function(val) {
-                            return val + '%';
-                        }
-                    }
-                },
-                grid: {
-                    borderColor: '#E5E7EB',
-                    strokeDashArray: 3
-                },
-                annotations: {
-                    yaxis: [{
-                        y: 80,
-                        borderColor: '#10B981',
-                        strokeDashArray: 5,
-                        label: {
-                            borderColor: '#10B981',
-                            style: {
-                                color: '#fff',
-                                background: '#10B981',
-                                fontSize: '11px',
-                                fontWeight: 600
-                            },
-                            text: 'Peak Threshold (80%)'
-                        }
-                    }]
-                },
-                tooltip: {
-                    style: {
-                        fontSize: '12px'
-                    },
-                    y: {
-                        formatter: function(val) {
-                            return val + '%';
-                        }
-                    }
-                }
-            });
-            productivityHoursChart.render();
         }
 
         function initializeTabs() {
@@ -1303,8 +1226,110 @@
             .backdrop-blur-lg {
                 backdrop-filter: blur(16px);
             }
+
+            /* Enhanced Tooltip Styles */
+            .tooltip {
+                max-width: 200px;
+                word-wrap: break-word;
+                font-size: 11px;
+                line-height: 1.4;
+                pointer-events: none;
+                z-index: 9999;
+            }
+
+            .tooltip-arrow {
+                width: 0;
+                height: 0;
+            }
+
+            /* Enhanced Card Hover Effects */
+            .group:hover .tooltip {
+                animation: tooltipFadeIn 0.3s ease-out;
+            }
+
+            @keyframes tooltipFadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateX(-50%) translateY(5px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(-8px);
+                }
+            }
+
+            /* Progress Bar Animation */
+            @keyframes progressFill {
+                from {
+                    width: 0%;
+                }
+                to {
+                    width: var(--target-width);
+                }
+            }
+
+            /* Enhanced Pulse Animation */
+            @keyframes enhancedPulse {
+                0%, 100% {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+                50% {
+                    opacity: 0.7;
+                    transform: scale(1.05);
+                }
+            }
+
+            .animate-pulse {
+                animation: enhancedPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+
+            /* Smooth Transitions */
+            * {
+                transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+                transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+                transition-duration: 150ms;
+            }
+
+            /* Enhanced Focus States */
+            button:focus,
+            [tabindex]:focus {
+                outline: 2px solid #3B82F6;
+                outline-offset: 2px;
+            }
+
+            /* Loading State */
+            .loading {
+                pointer-events: none;
+                opacity: 0.7;
+            }
+
+            /* Enhanced Mobile Responsiveness */
+            @media (max-width: 768px) {
+                .tooltip {
+                    font-size: 10px;
+                    max-width: 150px;
+                }
+                
+                .group:hover .tooltip {
+                    display: none;
+                }
+            }
+
+            /* Print Styles */
+            @media print {
+                .tooltip,
+                button,
+                .animate-pulse {
+                    display: none !important;
+                }
+                
+                * {
+                    animation: none !important;
+                    transition: none !important;
+                }
+            }
         `;
         document.head.appendChild(style);
     </script>
 </div>
-        
