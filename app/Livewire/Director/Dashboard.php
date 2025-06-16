@@ -6,23 +6,17 @@ use App\Models\Attendance;
 use App\Models\Department;
 use App\Models\LeaveRequest;
 use App\Models\User;
-use Asantibanez\LivewireCharts\Models\ColumnChartModel;
-use Asantibanez\LivewireCharts\Models\LineChartModel;
-use Asantibanez\LivewireCharts\Models\PieChartModel;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class Dashboard extends Component
 {
-    public $selectedDateRange = 'this month';
+    public $selectedDateRange = 'today';
     public $selectedDepartment = null;
-    public $showDataLabels = true;
 
-    // Cards animation
+    // Real-time data properties
     public $readyToLoad = false;
-
-    // Tab for mobile view
-    public $activeTab = 'attendance';
 
     protected $listeners = [
         'refreshDashboard' => '$refresh'
@@ -30,326 +24,452 @@ class Dashboard extends Component
 
     public function mount()
     {
-        // Simulate loading time for animations
         $this->readyToLoad = true;
     }
 
-    public function changeTab($tab)
-    {
-        $this->activeTab = $tab;
-    }
-
-    public function getAttendanceStats()
+    public function getInOfficeStatsProperty()
     {
         if (!$this->readyToLoad) {
-            return [];
-        }
-
-        $query = Attendance::query();
-
-        if ($this->selectedDateRange === 'this month') {
-            $query->whereMonth('date', now()->month)
-                ->whereYear('date', now()->year);
-        } elseif ($this->selectedDateRange === 'last month') {
-            $query->whereMonth('date', now()->subMonth()->month)
-                ->whereYear('date', now()->subMonth()->year);
-        } elseif ($this->selectedDateRange === 'this year') {
-            $query->whereYear('date', now()->year);
-        }
-
-        if ($this->selectedDepartment) {
-            $query->whereHas('user', function ($q) {
-                $q->where('department_id', $this->selectedDepartment);
-            });
-        }
-
-        return [
-            'total_present' => $query->where('status', 'present')->count(),
-            'total_late' => $query->where('status', 'late')->count(),
-            'total_early_leave' => $query->where('status', 'early_leave')->count(),
-            'average_working_hours' => round($query->whereNotNull('working_hours')
-                ->avg('working_hours'), 1),
-            'by_department' => User::select(
-                'departments.name',
-                \DB::raw('COUNT(attendances.id) as attendance_count')
-            )
-                ->join('departments', 'users.department_id', '=', 'departments.id')
-                ->leftJoin('attendances', 'users.id', '=', 'attendances.user_id')
-                ->groupBy('departments.name')
-                ->get()
-        ];
-    }
-
-    public function getLeaveStats()
-    {
-        if (!$this->readyToLoad) {
-            return [];
-        }
-
-        $query = LeaveRequest::query();
-
-        if ($this->selectedDateRange === 'this month') {
-            $query->whereMonth('start_date', now()->month)
-                ->whereYear('start_date', now()->year);
-        } elseif ($this->selectedDateRange === 'last month') {
-            $query->whereMonth('start_date', now()->subMonth()->month)
-                ->whereYear('start_date', now()->subMonth()->year);
-        } elseif ($this->selectedDateRange === 'this year') {
-            $query->whereYear('start_date', now()->year);
-        }
-
-        if ($this->selectedDepartment) {
-            $query->whereHas('user', function ($q) {
-                $q->where('department_id', $this->selectedDepartment);
-            });
-        }
-
-        return [
-            'pending_requests' => $query->where('status', 'pending_director')->count(),
-            'approved_requests' => $query->where('status', 'approved')->count(),
-            'rejected_requests' => $query->whereIn('status', [
-                'rejected_manager',
-                'rejected_hr',
-                'rejected_director'
-            ])->count(),
-            'by_type' => $query->select('type', \DB::raw('count(*) as count'))
-                ->groupBy('type')
-                ->get(),
-            'by_department' => $query->select(
-                'departments.name',
-                \DB::raw('COUNT(*) as leave_count')
-            )
-                ->join('users', 'leave_requests.user_id', '=', 'users.id')
-                ->join('departments', 'users.department_id', '=', 'departments.id')
-                ->groupBy('departments.name')
-                ->get()
-        ];
-    }
-
-    public function getStaffStats()
-    {
-        if (!$this->readyToLoad) {
-            return [];
-        }
-
-        $query = User::query();
-
-        if ($this->selectedDepartment) {
-            $query->where('department_id', $this->selectedDepartment);
-        }
-
-        return [
-            'total_employees' => $query->count(),
-            'role_distribution' => $query->select('role', \DB::raw('count(*) as count'))
-                ->groupBy('role')
-                ->get(),
-            'department_distribution' => $query->select(
-                'departments.name',
-                \DB::raw('COUNT(*) as employee_count'),
-                \DB::raw('AVG(users.salary) as avg_salary')
-            )
-                ->join('departments', 'users.department_id', '=', 'departments.id')
-                ->groupBy('departments.name')
-                ->get(),
-            'salary_ranges' => [
-                'min' => $query->min('salary') ?? 0,
-                'max' => $query->max('salary') ?? 0,
-                'avg' => round($query->avg('salary') ?? 0, 2)
-            ]
-        ];
-    }
-
-    public function getCurrentMonthPerformance()
-    {
-        if (!$this->readyToLoad) {
-            return [];
-        }
-
-        $totalUsers = User::count();
-        if ($totalUsers === 0) {
             return [
-                'attendance_rate' => 0,
-                'leave_utilization' => 0,
-                'avg_working_hours' => 0
+                'current' => 0,
+                'total' => 0,
+                'percentage' => 0
             ];
         }
 
-        $startDate = now()->startOfMonth();
-        $endDate = now()->endOfMonth();
+        $today = Carbon::today();
 
-        if ($this->selectedDateRange === 'last month') {
-            $startDate = now()->subMonth()->startOfMonth();
-            $endDate = now()->subMonth()->endOfMonth();
-        } elseif ($this->selectedDateRange === 'this year') {
-            $startDate = now()->startOfYear();
-            $endDate = now()->endOfYear();
-        }
+        // Get total active employees
+        $totalEmployees = User::whereNull('deleted_at')->count();
 
-        $workingDays = Carbon::parse($startDate)->diffInDaysFiltered(function (Carbon $date) {
-            return !$date->isWeekend();
-        }, Carbon::parse($endDate));
-
-        $attendanceDays = Attendance::whereBetween('date', [$startDate, $endDate])
-            ->where('status', 'present')
+        // Get employees currently in office (checked in but not checked out today)
+        $currentlyInOffice = Attendance::whereDate('date', $today)
+            ->whereNotNull('check_in')
+            ->whereNull('check_out')
             ->count();
 
         return [
-            'attendance_rate' => $workingDays > 0 ? round(($attendanceDays / ($totalUsers * $workingDays)) * 100, 1) : 0,
-            'leave_utilization' => LeaveRequest::whereBetween('start_date', [$startDate, $endDate])
-                ->where('status', 'approved')
-                ->count(),
-            'avg_working_hours' => round(Attendance::whereBetween('date', [$startDate, $endDate])
-                ->whereNotNull('working_hours')
-                ->avg('working_hours') ?? 0, 1)
+            'current' => $currentlyInOffice,
+            'total' => $totalEmployees,
+            'percentage' => $totalEmployees > 0 ? round(($currentlyInOffice / $totalEmployees) * 100, 1) : 0
         ];
     }
 
-    // Chart for Attendance Status
-    public function getAttendanceStatusChart()
+    public function getPendingApprovalsProperty()
     {
-        $stats = $this->getAttendanceStats();
-
-        return (new PieChartModel())
-            ->setTitle('Attendance Status')
-            ->addSlice('Present', $stats['total_present'], '#10B981')
-            ->addSlice('Late', $stats['total_late'], '#F59E0B')
-            ->addSlice('Early Leave', $stats['total_early_leave'], '#EF4444')
-            ->withDataLabels($this->showDataLabels);
-    }
-
-    // Chart for Leave Requests by Type
-    public function getLeaveTypeChart()
-    {
-        $stats = $this->getLeaveStats();
-
-        $chart = new PieChartModel();
-        $chart->setTitle('Leave Types');
-
-        // Check if there's data available
-        $hasData = false;
-
-        foreach ($stats['by_type'] as $type) {
-            $hasData = true;
-            $color = match ($type->type) {
-                'sick' => '#EF4444',
-                'annual' => '#3B82F6',
-                'important' => '#F59E0B',
-                'other' => '#6B7280',
-                default => '#9333EA',
-            };
-
-            $chart->addSlice(ucfirst($type->type), $type->count, $color);
+        if (!$this->readyToLoad) {
+            return [
+                'total' => 0,
+                'urgent' => 0,
+                'regular' => 0
+            ];
         }
 
-        // If no data, add a placeholder
-        if (!$hasData) {
-            $chart->addSlice('No Data', 1, '#D1D5DB');
-        }
+        // Get leave requests pending director approval
+        $pendingLeaves = LeaveRequest::where('status', LeaveRequest::STATUS_PENDING_DIRECTOR)->count();
 
-        return $chart->withDataLabels($this->showDataLabels);
+        // Consider urgent as requests submitted more than 3 days ago
+        $urgentLeaves = LeaveRequest::where('status', LeaveRequest::STATUS_PENDING_DIRECTOR)
+            ->where('created_at', '<=', Carbon::now()->subDays(3))
+            ->count();
+
+        return [
+            'total' => $pendingLeaves,
+            'urgent' => $urgentLeaves,
+            'regular' => $pendingLeaves - $urgentLeaves
+        ];
     }
 
-    // Chart for Role Distribution
-    public function getRoleDistributionChart()
+    public function getCompanyHealthScoreProperty()
     {
-        $stats = $this->getStaffStats();
-
-        $chart = new PieChartModel();
-        $chart->setTitle('Role Distribution');
-
-        foreach ($stats['role_distribution'] as $role) {
-            $color = match ($role->role) {
-                'admin' => '#9333EA',
-                'manager' => '#3B82F6',
-                'staff' => '#10B981',
-                'director' => '#F59E0B',
-                default => '#6B7280',
-            };
-
-            $chart->addSlice(ucfirst($role->role), $role->count, $color);
+        if (!$this->readyToLoad) {
+            return [
+                'score' => 0,
+                'rating' => 0,
+                'status' => 'Loading...'
+            ];
         }
 
-        return $chart->withDataLabels($this->showDataLabels);
+        // Calculate company health based on multiple factors
+        $attendanceRate = $this->getAttendanceRate();
+        $leaveApprovalRate = $this->getLeaveApprovalRate();
+        $productivityScore = $this->getProductivityScore();
+
+        // Weighted average
+        $healthScore = ($attendanceRate * 0.4) + ($leaveApprovalRate * 0.3) + ($productivityScore * 0.3);
+        $rating = round($healthScore / 10, 1);
+
+        $status = match (true) {
+            $rating >= 8.0 => 'Excellent',
+            $rating >= 7.0 => 'Good',
+            $rating >= 6.0 => 'Fair',
+            default => 'Needs Attention'
+        };
+
+        return [
+            'score' => round($healthScore, 1),
+            'rating' => $rating,
+            'status' => $status
+        ];
     }
 
-    // Chart for Department Distribution
-    public function getDepartmentDistributionChart()
+    public function getTodayAttendanceProperty()
     {
-        $stats = $this->getStaffStats();
-
-        $chart = new ColumnChartModel();
-        $chart->setTitle('Department Distribution');
-
-        $colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#9333EA', '#6B7280'];
-        $i = 0;
-
-        foreach ($stats['department_distribution'] as $dept) {
-            $color = $colors[$i % count($colors)];
-            $i++;
-
-            $chart->addColumn($dept->name, $dept->employee_count, $color);
+        if (!$this->readyToLoad) {
+            return [];
         }
 
-        return $chart->withDataLabels($this->showDataLabels);
-    }
+        $today = Carbon::today();
 
-    // Chart for Monthly Attendance Trend
-    public function getMonthlyAttendanceTrendChart()
-    {
-        if ($this->selectedDateRange === 'this year') {
-            $chart = new LineChartModel();
-            $chart->setTitle('Monthly Attendance Trend');
-
-            $months = [];
-
-            // Get last 12 months
-            for ($i = 11; $i >= 0; $i--) {
-                $month = now()->subMonths($i);
-                $months[] = [
-                    'name' => $month->format('M'),
-                    'date' => $month->format('Y-m')
+        $attendances = Attendance::with(['user.department'])
+            ->whereDate('date', $today)
+            ->get()
+            ->map(function ($attendance) {
+                return [
+                    'id' => $attendance->id,
+                    'user' => [
+                        'name' => $attendance->user->name,
+                        'position' => $this->getUserPosition($attendance->user),
+                        'initials' => $this->getInitials($attendance->user->name),
+                        'department' => $attendance->user->department->name ?? 'No Department'
+                    ],
+                    'check_in' => $attendance->check_in ? $attendance->check_in->format('H:i A') : null,
+                    'check_out' => $attendance->check_out ? $attendance->check_out->format('H:i A') : null,
+                    'status' => $attendance->status,
+                    'working_hours' => $attendance->working_hours ? number_format($attendance->working_hours, 1) . 'h' : '0h',
+                    'late_duration' => $this->getLateDuration($attendance),
+                    'status_color' => $this->getStatusColor($attendance->status),
+                    'department_color' => $this->getDepartmentColor($attendance->user->department->name ?? 'default')
                 ];
-            }
+            });
 
-            // Get attendance data for each month
-            foreach ($months as $month) {
-                $query = Attendance::whereYear('date', substr($month['date'], 0, 4))
-                    ->whereMonth('date', substr($month['date'], 5, 2));
+        // Add absent employees
+        $presentUserIds = $attendances->pluck('user.id')->toArray();
+        $absentUsers = User::with('department')
+            ->whereNotIn('id', $presentUserIds)
+            ->whereNull('deleted_at')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => null,
+                    'user' => [
+                        'name' => $user->name,
+                        'position' => $this->getUserPosition($user),
+                        'initials' => $this->getInitials($user->name),
+                        'department' => $user->department->name ?? 'No Department'
+                    ],
+                    'check_in' => null,
+                    'check_out' => null,
+                    'status' => 'absent',
+                    'working_hours' => '0h',
+                    'late_duration' => null,
+                    'status_color' => $this->getStatusColor('absent'),
+                    'department_color' => $this->getDepartmentColor($user->department->name ?? 'default'),
+                    'absence_reason' => $this->getAbsenceReason($user)
+                ];
+            });
 
-                if ($this->selectedDepartment) {
-                    $query->whereHas('user', function ($q) {
-                        $q->where('department_id', $this->selectedDepartment);
-                    });
+        return $attendances->concat($absentUsers);
+    }
+
+    public function getAttendanceStatsProperty()
+    {
+        if (!$this->readyToLoad) {
+            return [
+                'total_present' => 0,
+                'total_late' => 0,
+                'total_absent' => 0,
+                'on_time_rate' => 0,
+                'avg_check_in' => '--',
+                'chart_data' => [35, 7, 5, 5]
+            ];
+        }
+
+        $today = Carbon::today();
+
+        $totalPresent = Attendance::whereDate('date', $today)
+            ->where('status', 'present')
+            ->count();
+
+        $totalLate = Attendance::whereDate('date', $today)
+            ->where('status', 'late')
+            ->count();
+
+        $totalEmployees = User::whereNull('deleted_at')->count();
+        $totalAbsent = $totalEmployees - ($totalPresent + $totalLate);
+
+        $onTimeRate = $totalEmployees > 0 ? round((($totalPresent) / $totalEmployees) * 100, 1) : 0;
+
+        // Calculate average check-in time
+        $avgCheckIn = Attendance::whereDate('date', $today)
+            ->whereNotNull('check_in')
+            ->selectRaw('AVG(TIME_TO_SEC(TIME(check_in))) as avg_seconds')
+            ->first();
+
+        $avgCheckInTime = '--';
+        if ($avgCheckIn && $avgCheckIn->avg_seconds) {
+            $hours = floor($avgCheckIn->avg_seconds / 3600);
+            $minutes = floor(($avgCheckIn->avg_seconds % 3600) / 60);
+            $avgCheckInTime = sprintf('%02d:%02d', $hours, $minutes);
+        }
+
+        return [
+            'total_present' => $totalPresent,
+            'total_late' => $totalLate,
+            'total_absent' => $totalAbsent,
+            'on_time_rate' => $onTimeRate,
+            'avg_check_in' => $avgCheckInTime,
+            'chart_data' => [$totalPresent, $totalLate, $totalAbsent, max(0, $totalEmployees - $totalPresent - $totalLate - $totalAbsent)]
+        ];
+    }
+
+    public function getCheckinDistributionProperty()
+    {
+        if (!$this->readyToLoad) {
+            return [2, 8, 15, 12, 7, 3, 0, 0];
+        }
+
+        $today = Carbon::today();
+
+        $checkinData = Attendance::whereDate('date', $today)
+            ->whereNotNull('check_in')
+            ->selectRaw('
+                SUM(CASE WHEN TIME(check_in) BETWEEN "07:00:00" AND "07:29:59" THEN 1 ELSE 0 END) as slot_1,
+                SUM(CASE WHEN TIME(check_in) BETWEEN "07:30:00" AND "07:59:59" THEN 1 ELSE 0 END) as slot_2,
+                SUM(CASE WHEN TIME(check_in) BETWEEN "08:00:00" AND "08:29:59" THEN 1 ELSE 0 END) as slot_3,
+                SUM(CASE WHEN TIME(check_in) BETWEEN "08:30:00" AND "08:59:59" THEN 1 ELSE 0 END) as slot_4,
+                SUM(CASE WHEN TIME(check_in) BETWEEN "09:00:00" AND "09:29:59" THEN 1 ELSE 0 END) as slot_5,
+                SUM(CASE WHEN TIME(check_in) BETWEEN "09:30:00" AND "09:59:59" THEN 1 ELSE 0 END) as slot_6,
+                SUM(CASE WHEN TIME(check_in) BETWEEN "10:00:00" AND "10:29:59" THEN 1 ELSE 0 END) as slot_7,
+                SUM(CASE WHEN TIME(check_in) >= "10:30:00" THEN 1 ELSE 0 END) as slot_8
+            ')
+            ->first();
+
+        return [
+            $checkinData->slot_1 ?? 0,
+            $checkinData->slot_2 ?? 0,
+            $checkinData->slot_3 ?? 0,
+            $checkinData->slot_4 ?? 0,
+            $checkinData->slot_5 ?? 0,
+            $checkinData->slot_6 ?? 0,
+            $checkinData->slot_7 ?? 0,
+            $checkinData->slot_8 ?? 0,
+        ];
+    }
+
+    public function getWeeklyTrendProperty()
+    {
+        if (!$this->readyToLoad) {
+            return [
+                'present' => [49, 50, 48, 49, 44, 13, 8],
+                'late' => [3, 2, 4, 3, 8, 2, 1]
+            ];
+        }
+
+        $weekStart = Carbon::now()->startOfWeek();
+        $dates = collect(range(0, 6))->map(fn($i) => $weekStart->copy()->addDays($i));
+
+        $weekData = $dates->map(function ($date) {
+            $present = Attendance::whereDate('date', $date)
+                ->where('status', 'present')
+                ->count();
+
+            $late = Attendance::whereDate('date', $date)
+                ->where('status', 'late')
+                ->count();
+
+            return ['present' => $present, 'late' => $late];
+        });
+
+        return [
+            'present' => $weekData->pluck('present')->toArray(),
+            'late' => $weekData->pluck('late')->toArray()
+        ];
+    }
+
+    public function getDepartmentPerformanceProperty()
+    {
+        if (!$this->readyToLoad) {
+            return [];
+        }
+
+        $today = Carbon::today();
+
+        return Department::with(['users'])
+            ->get()
+            ->map(function ($department) use ($today) {
+                $totalEmployees = $department->users->count();
+
+                if ($totalEmployees === 0) {
+                    return null;
                 }
 
-                $present = $query->where('status', 'present')->count();
-                $late = $query->where('status', 'late')->count();
+                $attendanceData = Attendance::whereDate('date', $today)
+                    ->whereHas('user', function ($query) use ($department) {
+                        $query->where('department_id', $department->id);
+                    })
+                    ->selectRaw('
+                        COUNT(*) as total_attendance,
+                        SUM(CASE WHEN status = "present" THEN 1 ELSE 0 END) as present_count,
+                        AVG(working_hours) as avg_hours
+                    ')
+                    ->first();
 
-                $chart->addPoint($month['name'], $present, '#10B981');
-                $chart->addPoint($month['name'] . ' (Late)', $late, '#F59E0B');
-            }
+                $attendanceRate = $totalEmployees > 0 ?
+                    round(($attendanceData->present_count / $totalEmployees) * 100) : 0;
 
-            return $chart;
+                $performance = match (true) {
+                    $attendanceRate >= 95 => ['label' => 'Excellent', 'color' => 'green', 'score' => 5],
+                    $attendanceRate >= 90 => ['label' => 'Good', 'color' => 'yellow', 'score' => 4],
+                    $attendanceRate >= 80 => ['label' => 'Fair', 'color' => 'orange', 'score' => 3],
+                    default => ['label' => 'Needs Attention', 'color' => 'red', 'score' => 2]
+                };
+
+                return [
+                    'name' => $department->name,
+                    'attendance_rate' => $attendanceRate,
+                    'team_size' => $totalEmployees,
+                    'avg_hours' => $attendanceData->avg_hours ? number_format($attendanceData->avg_hours, 1) : '0.0',
+                    'performance' => $performance,
+                    'icon' => $this->getDepartmentIcon($department->name)
+                ];
+            })
+            ->filter()
+            ->values();
+    }
+
+    // Helper methods
+    private function getAttendanceRate()
+    {
+        $today = Carbon::today();
+        $totalEmployees = User::whereNull('deleted_at')->count();
+        $presentEmployees = Attendance::whereDate('date', $today)
+            ->whereIn('status', ['present', 'late'])
+            ->count();
+
+        return $totalEmployees > 0 ? ($presentEmployees / $totalEmployees) * 100 : 0;
+    }
+
+    private function getLeaveApprovalRate()
+    {
+        $totalRequests = LeaveRequest::whereMonth('created_at', Carbon::now()->month)->count();
+        $approvedRequests = LeaveRequest::whereMonth('created_at', Carbon::now()->month)
+            ->where('status', LeaveRequest::STATUS_APPROVED)
+            ->count();
+
+        return $totalRequests > 0 ? ($approvedRequests / $totalRequests) * 100 : 100;
+    }
+
+    private function getProductivityScore()
+    {
+        $today = Carbon::today();
+        $avgWorkingHours = Attendance::whereDate('date', $today)
+            ->whereNotNull('working_hours')
+            ->avg('working_hours') ?? 0;
+
+        // Normalize to 100 (assuming 8 hours = 100%)
+        return min(100, ($avgWorkingHours / 8) * 100);
+    }
+
+    private function getUserPosition($user)
+    {
+        // You can extend this based on your user model structure
+        return match ($user->role) {
+            'director' => 'Director',
+            'manager' => 'Manager',
+            'admin' => 'Administrator',
+            default => 'Staff'
+        };
+    }
+
+    private function getInitials($name)
+    {
+        $nameParts = explode(' ', $name);
+        $initials = '';
+        foreach ($nameParts as $part) {
+            $initials .= strtoupper(substr($part, 0, 1));
+            if (strlen($initials) >= 2)
+                break;
+        }
+        return $initials ?: 'U';
+    }
+
+    private function getLateDuration($attendance)
+    {
+        if ($attendance->status !== 'late' || !$attendance->late_hours) {
+            return null;
         }
 
-        return null;
+        $hours = floor($attendance->late_hours);
+        $minutes = round(($attendance->late_hours - $hours) * 60);
+
+        if ($hours > 0) {
+            return "{$hours}h {$minutes}m";
+        }
+        return "{$minutes}m";
+    }
+
+    private function getStatusColor($status)
+    {
+        return match ($status) {
+            'present' => 'green',
+            'late' => 'red',
+            'early_leave' => 'yellow',
+            'absent' => 'gray',
+            default => 'gray'
+        };
+    }
+
+    private function getDepartmentColor($departmentName)
+    {
+        return match (strtolower($departmentName)) {
+            'digital marketing' => 'blue',
+            'sydital' => 'teal',
+            'detax' => 'purple',
+            'hr' => 'indigo',
+            default => 'gray'
+        };
+    }
+
+    private function getDepartmentIcon($departmentName)
+    {
+        return match (strtolower($departmentName)) {
+            'digital marketing' => 'fas fa-bullhorn',
+            'sydital' => 'fas fa-code',
+            'detax' => 'fas fa-calculator',
+            'hr' => 'fas fa-users',
+            default => 'fas fa-building'
+        };
+    }
+
+    private function getAbsenceReason($user)
+    {
+        // Check if user has approved leave today
+        $today = Carbon::today();
+        $leave = LeaveRequest::where('user_id', $user->id)
+            ->where('status', LeaveRequest::STATUS_APPROVED)
+            ->where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->first();
+
+        if ($leave) {
+            return ucfirst($leave->type) . ' Leave';
+        }
+
+        return 'Not Checked In';
     }
 
     public function render()
     {
-        $departments = Department::all();
-        $this->dispatch('refresh-preline');
         return view('livewire.director.dashboard', [
-            'departments' => $departments,
-            'attendanceStats' => $this->getAttendanceStats(),
-            'leaveStats' => $this->getLeaveStats(),
-            'staffStats' => $this->getStaffStats(),
-            'monthlyPerformance' => $this->getCurrentMonthPerformance(),
-            'attendanceStatusChart' => $this->getAttendanceStatusChart(),
-            'leaveTypeChart' => $this->getLeaveTypeChart(),
-            'roleDistributionChart' => $this->getRoleDistributionChart(),
-            'departmentDistributionChart' => $this->getDepartmentDistributionChart(),
-            'monthlyAttendanceTrendChart' => $this->getMonthlyAttendanceTrendChart(),
-        ])->layout('layouts.director', ['title' => 'Dashboard']);
+            'inOfficeStats' => $this->inOfficeStats,
+            'pendingApprovals' => $this->pendingApprovals,
+            'companyHealthScore' => $this->companyHealthScore,
+            'todayAttendance' => $this->todayAttendance,
+            'attendanceStats' => $this->attendanceStats,
+            'checkinDistribution' => $this->checkinDistribution,
+            'weeklyTrend' => $this->weeklyTrend,
+            'departmentPerformance' => $this->departmentPerformance,
+        ])->layout('layouts.director', ['title' => 'Executive Dashboard']);
     }
 }
