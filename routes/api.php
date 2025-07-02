@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttendanceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\ManagerLeaveController;
@@ -24,3 +25,15 @@ Route::middleware(['auth', 'role:manager'])->prefix('manager/leave')->group(func
     Route::post('/approve', [ManagerLeaveController::class, 'approve']);
     Route::post('/reject', [ManagerLeaveController::class, 'reject']);
 });
+
+// Universal attendance endpoint (new) - supports both GET and POST
+Route::match(['get', 'post'], '/attendance/universal', [AttendanceController::class, 'universalAttendance'])->name('attendance.api.universal');
+
+// Get attendance status
+Route::get('/attendance/status', [AttendanceController::class, 'getAttendanceStatus'])->name('attendance.api.status');
+
+// Optional: QR code file saving endpoint (if you want server-side QR storage)
+Route::post('/qr-codes/save', function(\Illuminate\Http\Request $request) {
+    // Handle QR code file saving if needed
+    return response()->json(['success' => true, 'message' => 'QR code saved']);
+})->name('qr.save');
