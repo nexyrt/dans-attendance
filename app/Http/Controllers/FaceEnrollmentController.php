@@ -75,11 +75,10 @@ class FaceEnrollmentController extends Controller
             // Sanitize username for file system
             $sanitizedUsername = $this->sanitizeUsername($username);
             
-            // Create directory if it doesn't exist
-            $faceDirectory = 'faces/' . $sanitizedUsername;
-            
-            if (!Storage::disk('public')->exists($faceDirectory)) {
-                Storage::disk('public')->makeDirectory($faceDirectory, 0755, true);
+            // Create directory in public path
+            $publicPath = public_path('faces/' . $sanitizedUsername);
+            if (!file_exists($publicPath)) {
+                mkdir($publicPath, 0755, true);
             }
 
             // Generate unique filename
@@ -91,20 +90,16 @@ class FaceEnrollmentController extends Controller
             // Check if file already exists (very unlikely but good to check)
             $counter = 1;
             $originalFilename = $filename;
-            while (Storage::disk('public')->exists($faceDirectory . '/' . $filename)) {
+            while (file_exists($publicPath . '/' . $filename)) {
                 $pathInfo = pathinfo($originalFilename);
                 $filename = $pathInfo['filename'] . '_' . $counter . '.' . $pathInfo['extension'];
                 $counter++;
             }
 
-            // Store the image
-            $path = Storage::disk('public')->putFileAs(
-                $faceDirectory,
-                $faceImage,
-                $filename
-            );
+            // Move the uploaded file to public directory
+            $moved = $faceImage->move($publicPath, $filename);
 
-            if (!$path) {
+            if (!$moved) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to save face image to storage'
@@ -112,7 +107,8 @@ class FaceEnrollmentController extends Controller
             }
 
             // Verify the file was actually saved
-            if (!Storage::disk('public')->exists($path)) {
+            $fullPath = $publicPath . '/' . $filename;
+            if (!file_exists($fullPath)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Image file was not saved properly'
@@ -120,17 +116,18 @@ class FaceEnrollmentController extends Controller
             }
 
             // Get file information
-            $fileSize = Storage::disk('public')->size($path);
-            $fileUrl = Storage::disk('public')->url($path);
+            $fileSize = filesize($fullPath);
+            $relativePath = 'faces/' . $sanitizedUsername . '/' . $filename;
+            $fileUrl = asset($relativePath);
 
             // Optional: Save to database for tracking
-            $this->saveFaceEnrollmentToDatabase($username, $path, $filename, $fileSize);
+            $this->saveFaceEnrollmentToDatabase($username, $relativePath, $filename, $fileSize);
 
             // Log successful enrollment
             Log::info('Face enrollment successful', [
                 'username' => $username,
                 'filename' => $filename,
-                'path' => $path,
+                'path' => $relativePath,
                 'size' => $fileSize,
                 'ip' => $request->ip(),
                 'user_agent' => $request->userAgent()
@@ -142,7 +139,7 @@ class FaceEnrollmentController extends Controller
                 'data' => [
                     'username' => $username,
                     'filename' => $filename,
-                    'path' => $path,
+                    'path' => $relativePath,
                     'url' => $fileUrl,
                     'size' => $fileSize,
                     'dimensions' => [
@@ -175,18 +172,18 @@ class FaceEnrollmentController extends Controller
     {
         try {
             $username = $request->query('username');
-            $facesDirectory = 'faces';
+            $facesDirectory = public_path('faces');
             $enrolledFaces = [];
 
-            if (Storage::disk('public')->exists($facesDirectory)) {
+            if (is_dir($facesDirectory)) {
                 if ($username) {
                     // Get faces for specific username
                     $sanitizedUsername = $this->sanitizeUsername($username);
                     $userDirectory = $facesDirectory . '/' . $sanitizedUsername;
                     
-                    if (Storage::disk('public')->exists($userDirectory)) {
-                        $files = Storage::disk('public')->files($userDirectory);
-                        $userFaces = $this->processImageFiles($files);
+                    if (is_dir($userDirectory)) {
+                        $files = glob($userDirectory . '/*.{jpg,jpeg,png}', GLOB_BRACE);
+                        $userFaces = $this->processImageFiles($files, $sanitizedUsername);
                         
                         $enrolledFaces[] = [
                             'username' => $username,
@@ -196,12 +193,12 @@ class FaceEnrollmentController extends Controller
                     }
                 } else {
                     // Get all enrolled faces
-                    $directories = Storage::disk('public')->directories($facesDirectory);
+                    $directories = glob($facesDirectory . '/*', GLOB_ONLYDIR);
                     
                     foreach ($directories as $directory) {
                         $username = basename($directory);
-                        $files = Storage::disk('public')->files($directory);
-                        $userFaces = $this->processImageFiles($files);
+                        $files = glob($directory . '/*.{jpg,jpeg,png}', GLOB_BRACE);
+                        $userFaces = $this->processImageFiles($files, $username);
                         
                         if (!empty($userFaces)) {
                             $enrolledFaces[] = [
@@ -264,9 +261,9 @@ class FaceEnrollmentController extends Controller
             }
 
             $sanitizedUsername = $this->sanitizeUsername($identifier);
-            $userDirectory = 'faces/' . $sanitizedUsername;
+            $userDirectory = public_path('faces/' . $sanitizedUsername);
 
-            if (!Storage::disk('public')->exists($userDirectory)) {
+            if (!is_dir($userDirectory)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'User face directory not found'
@@ -278,7 +275,7 @@ class FaceEnrollmentController extends Controller
 
             if ($deleteAll) {
                 // Delete entire user directory
-                $deleted = Storage::disk('public')->deleteDirectory($userDirectory);
+                $deleted = $this->deleteDirectory($userDirectory);
                 
                 if ($deleted) {
                     Log::info('All face enrollments deleted for user', [
@@ -300,14 +297,14 @@ class FaceEnrollmentController extends Controller
                 // Delete specific file
                 $filePath = $userDirectory . '/' . basename($filename);
                 
-                if (!Storage::disk('public')->exists($filePath)) {
+                if (!file_exists($filePath)) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Face image file not found'
                     ], 404);
                 }
 
-                $deleted = Storage::disk('public')->delete($filePath);
+                $deleted = unlink($filePath);
                 
                 if ($deleted) {
                     Log::info('Face enrollment deleted', [
@@ -354,7 +351,7 @@ class FaceEnrollmentController extends Controller
     public function statistics(): JsonResponse
     {
         try {
-            $facesDirectory = 'faces';
+            $facesDirectory = public_path('faces');
             $stats = [
                 'total_users' => 0,
                 'total_faces' => 0,
@@ -362,28 +359,25 @@ class FaceEnrollmentController extends Controller
                 'recent_enrollments' => []
             ];
 
-            if (Storage::disk('public')->exists($facesDirectory)) {
-                $directories = Storage::disk('public')->directories($facesDirectory);
+            if (is_dir($facesDirectory)) {
+                $directories = glob($facesDirectory . '/*', GLOB_ONLYDIR);
                 $stats['total_users'] = count($directories);
 
                 $recentEnrollments = [];
 
                 foreach ($directories as $directory) {
-                    $files = Storage::disk('public')->files($directory);
-                    $imageFiles = array_filter($files, function ($file) {
-                        return Str::endsWith($file, ['.jpg', '.jpeg', '.png']);
-                    });
+                    $files = glob($directory . '/*.{jpg,jpeg,png}', GLOB_BRACE);
+                    $stats['total_faces'] += count($files);
 
-                    $stats['total_faces'] += count($imageFiles);
-
-                    foreach ($imageFiles as $file) {
-                        $stats['total_storage_size'] += Storage::disk('public')->size($file);
+                    foreach ($files as $file) {
+                        $fileSize = filesize($file);
+                        $stats['total_storage_size'] += $fileSize;
                         
                         $recentEnrollments[] = [
                             'username' => basename($directory),
                             'filename' => basename($file),
-                            'size' => Storage::disk('public')->size($file),
-                            'enrolled_at' => Storage::disk('public')->lastModified($file)
+                            'size' => $fileSize,
+                            'enrolled_at' => filemtime($file)
                         ];
                     }
                 }
@@ -432,27 +426,24 @@ class FaceEnrollmentController extends Controller
     /**
      * Process image files and return formatted array
      */
-    private function processImageFiles($files)
+    private function processImageFiles($files, $username)
     {
         $imageFiles = [];
         
         foreach ($files as $file) {
-            if (Str::endsWith($file, ['.jpg', '.jpeg', '.png'])) {
-                // Fix URL generation to avoid double slashes
-                $url = Storage::disk('public')->url($file);
-                // Clean up any double slashes in the URL
-                $url = preg_replace('/([^:]\/)\/+/', '$1', $url);
-                
-                $imageFiles[] = [
-                    'filename' => basename($file),
-                    'path' => $file,
-                    'url' => $url,
-                    'size' => Storage::disk('public')->size($file),
-                    'formatted_size' => $this->formatBytes(Storage::disk('public')->size($file)),
-                    'last_modified' => Storage::disk('public')->lastModified($file),
-                    'enrolled_at' => Carbon::createFromTimestamp(Storage::disk('public')->lastModified($file))->toISOString()
-                ];
-            }
+            $filename = basename($file);
+            $relativePath = 'faces/' . $username . '/' . $filename;
+            $url = asset($relativePath);
+            
+            $imageFiles[] = [
+                'filename' => $filename,
+                'path' => $relativePath,
+                'url' => $url,
+                'size' => filesize($file),
+                'formatted_size' => $this->formatBytes(filesize($file)),
+                'last_modified' => filemtime($file),
+                'enrolled_at' => Carbon::createFromTimestamp(filemtime($file))->toISOString()
+            ];
         }
 
         // Sort by last modified (newest first)
@@ -461,6 +452,25 @@ class FaceEnrollmentController extends Controller
         });
 
         return $imageFiles;
+    }
+
+    /**
+     * Delete directory recursively
+     */
+    private function deleteDirectory($dir)
+    {
+        if (!is_dir($dir)) {
+            return false;
+        }
+
+        $files = array_diff(scandir($dir), ['.', '..']);
+        
+        foreach ($files as $file) {
+            $path = $dir . '/' . $file;
+            is_dir($path) ? $this->deleteDirectory($path) : unlink($path);
+        }
+        
+        return rmdir($dir);
     }
 
     /**
