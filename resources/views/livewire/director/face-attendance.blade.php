@@ -1,5 +1,5 @@
 <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     {{-- Header --}}
     <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
         <h2 class="text-xl font-semibold text-white">Face Recognition Attendance</h2>
@@ -104,16 +104,17 @@
         <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
             <h4 class="font-semibold text-yellow-900 mb-4 flex items-center">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>
                 Face Enrollment
             </h4>
             <p class="text-yellow-800 text-sm mb-4">Save your face for future attendance recognition</p>
-            
+
             <div class="flex flex-col sm:flex-row gap-4">
                 <div class="flex-1">
                     <label for="username" class="block text-sm font-medium text-yellow-900 mb-2">Username</label>
-                    <input type="text" id="username" placeholder="Enter your username" 
+                    <input type="text" id="username" placeholder="Enter your username"
                         class="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
                 </div>
                 <div class="flex items-end">
@@ -121,18 +122,21 @@
                         class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2 rounded-lg flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled>
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
+                            </path>
                         </svg>
                         <span>Save Face</span>
                     </button>
                 </div>
             </div>
-            
+
             {{-- Save Status --}}
             <div id="save-status" class="mt-4 hidden">
                 <div class="flex items-center space-x-2 text-green-700">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <span id="save-message">Face saved successfully!</span>
                 </div>
@@ -168,7 +172,11 @@
     </div>
 
     {{-- Include Face Attendance JavaScript --}}
+    @if(app()->environment('local'))
     @vite(['resources/js/face-attendance.js'])
+    @else
+    <script type="module" src="{{ asset('build/assets/face-attendance.js') }}"></script>
+    @endif
 
     <script>
         // Initialize when component loads
