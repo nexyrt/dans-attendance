@@ -16,7 +16,7 @@
         </div>
     </div>
 
-    <flux:modal.trigger name="edit-profile">
+    {{-- <flux:modal.trigger name="edit-profile">
         <flux:button>Edit profile</flux:button>
     </flux:modal.trigger>
 
@@ -37,7 +37,7 @@
                 <flux:button type="submit" variant="primary">Save changes</flux:button>
             </div>
         </div>
-    </flux:modal>
+    </flux:modal> --}}
 
     <!-- Mobile-optimized content -->
     <div class="pt-4 lg:pt-8 px-4 sm:px-6 lg:px-8">

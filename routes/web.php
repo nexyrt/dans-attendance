@@ -43,6 +43,7 @@ use App\Livewire\Director\{
     Attendances as DirectorAttendances,
     Offices as DirectorOffices,
     QrAttendance as QrAttendance,
+    FaceAttendance as FaceAttendance,
 };
 
 use App\Livewire\Hr\{
@@ -161,6 +162,7 @@ Route::middleware(['auth', 'role:director'])
         Route::get('/attendance/qr/scan', function() {
             return redirect()->route('qr.attendance');
         })->name('attendance.qr.scan');
+        Route::get('/face-attendance', FaceAttendance::class)->name('faceattendace');
     });
 
 /*

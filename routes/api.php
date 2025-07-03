@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\FaceEnrollmentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\ManagerLeaveController;
@@ -37,3 +38,6 @@ Route::post('/qr-codes/save', function(\Illuminate\Http\Request $request) {
     // Handle QR code file saving if needed
     return response()->json(['success' => true, 'message' => 'QR code saved']);
 })->name('qr.save');
+
+Route::post('/face-enrollment', [FaceEnrollmentController::class, 'store']);
+Route::get('/face-enrollment', [FaceEnrollmentController::class, 'index']);

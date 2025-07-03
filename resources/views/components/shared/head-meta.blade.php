@@ -19,7 +19,6 @@
 @notifyCss
 @livewireStyles
 @filamentStyles
-@fluxAppearance
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 
 <style>
