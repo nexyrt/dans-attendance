@@ -175,7 +175,8 @@
     @if(app()->environment('local'))
     @vite(['resources/js/face-attendance.js'])
     @else
-    <script type="module" src="{{ asset('build/assets/face-attendance.js') }}"></script>
+    <script src="{{ asset('js/face-attendance.js') }}"></script>
+
     @endif
 
     <script>
