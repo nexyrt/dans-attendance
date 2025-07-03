@@ -171,13 +171,7 @@
         </div>
     </div>
 
-    {{-- Include Face Attendance JavaScript --}}
-    @if(app()->environment('local'))
-    @vite(['resources/js/face-attendance.js'])
-    @else
-    <script src="{{ asset('js/filament/face-attendance.js') }}"></script>
 
-    @endif
 
     <script>
         // Initialize when component loads
