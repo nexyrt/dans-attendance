@@ -11,7 +11,7 @@ class FaceAttendanceSystem {
         this.isDetecting = false;
         this.detectionInterval = null;
         this.currentStream = null;
-
+        this.isInitialized = false;
         // Face recognition settings
         this.faceDetectionOptions = new faceapi.SsdMobilenetv1Options({
             minConfidence: 0.6, // Increased confidence for better accuracy
@@ -35,24 +35,33 @@ class FaceAttendanceSystem {
      * Initialize the face attendance system
      */
     async init() {
-        console.log('Initializing Face Attendance System...');
-
         try {
+            console.log('🚀 Initializing Face Attendance System...');
+            this.updateInitializationStatus('Initializing Face Attendance System...');
+
             // Get DOM elements
             this.video = document.getElementById('video');
             this.canvas = document.getElementById('overlay');
 
             if (!this.video || !this.canvas) {
-                console.error('Required DOM elements not found');
+                console.error('❌ Required DOM elements not found');
+                this.updateInitializationStatus('Error: Required DOM elements not found', 'error');
                 return;
             }
+
+            console.log('✅ DOM elements found');
+            this.updateInitializationStatus('DOM elements found');
 
             // Load face-api.js models
             await this.loadModels();
 
-            console.log('Face Attendance System initialized successfully');
+            this.isInitialized = true;
+            console.log('🎉 Face Attendance System initialized successfully');
+            this.updateInitializationStatus('Face Attendance System initialized successfully', 'success');
+
         } catch (error) {
-            console.error('Failed to initialize Face Attendance System:', error);
+            console.error('❌ Failed to initialize Face Attendance System:', error);
+            this.updateInitializationStatus('Failed to initialize: ' + error.message, 'error');
         }
     }
 
@@ -60,7 +69,8 @@ class FaceAttendanceSystem {
      * Load face-api.js models
      */
     async loadModels() {
-        console.log('Loading face-api.js models...');
+        console.log('📦 Loading face-api.js models...');
+        this.updateInitializationStatus('Loading face-api.js models...');
 
         try {
             // Define model path (adjust according to your Laravel public path)
@@ -68,23 +78,31 @@ class FaceAttendanceSystem {
 
             // Try to load face detection and recognition models
             try {
+                console.log('⏳ Loading detection models...');
+                this.updateInitializationStatus('Loading face detection models...');
+
                 await Promise.all([
                     faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
                     faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
                     faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
                 ]);
 
-                console.log('Face detection and recognition models loaded successfully');
+                console.log('✅ Face detection and recognition models loaded successfully');
+                this.updateInitializationStatus('Face detection models loaded');
 
                 // Load reference faces for recognition
+                console.log('👥 Loading reference faces...');
+                this.updateInitializationStatus('Loading reference faces...');
                 await this.loadReferenceFaces();
 
             } catch (recognitionError) {
-                console.warn('Failed to load recognition models, falling back to detection only:', recognitionError.message);
+                console.warn('⚠️ Failed to load recognition models, falling back to detection only:', recognitionError.message);
+                this.updateInitializationStatus('Loading basic face detection...');
 
                 // Fallback to detection only
                 await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-                console.log('Face detection model loaded (recognition disabled)');
+                console.log('✅ Face detection model loaded (recognition disabled)');
+                this.updateInitializationStatus('Face detection loaded (recognition disabled)');
                 this.isRecognitionReady = false;
             }
 
@@ -94,14 +112,27 @@ class FaceAttendanceSystem {
             const message = this.isRecognitionReady ?
                 'Face recognition system ready!' :
                 'Face detection ready (recognition disabled)';
-            this.showMessage(message, 'success');
+
+            console.log('🎯 ' + message);
+            this.updateInitializationStatus(message);
 
         } catch (error) {
-            console.error('Error loading models:', error);
+            console.error('❌ Error loading models:', error);
+            this.updateInitializationStatus('Error loading models: ' + error.message, 'error');
             this.showMessage('Error loading face detection models. Please check if model files are available.', 'error');
         }
     }
 
+    updateInitializationStatus(message, type = 'info') {
+        // Dispatch custom event for UI updates
+        document.dispatchEvent(new CustomEvent('initializationProgress', {
+            detail: {
+                message: message,
+                type: type,
+                isInitialized: this.isInitialized
+            }
+        }));
+    }
     /**
      * Start camera and face detection
      */

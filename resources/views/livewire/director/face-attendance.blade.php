@@ -33,9 +33,10 @@
                     <div
                         class="inline-block w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin mb-4">
                     </div>
-                    <p class="text-sm">Initializing Camera...</p>
+                    <p id="loading-text" class="text-sm">Initializing System...</p>
                 </div>
             </div>
+
 
             {{-- No Camera Message --}}
             <div id="no-camera" class="absolute inset-0 flex items-center justify-center bg-gray-800 text-white hidden">
@@ -204,28 +205,87 @@
             const faceStatus = document.getElementById('face-status');
             const saveStatus = document.getElementById('save-status');
             const saveMessage = document.getElementById('save-message');
+
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const loadingText = loadingIndicator.querySelector('p');
+
+            loadingIndicator.classList.remove('hidden');
             
             // Track if face is currently detected
             let faceDetected = false;
+
+            // Disable start button initially and show loading state
+            startButton.disabled = true;
+            startButton.querySelector('span').textContent = '⏳ Initializing...';
+
+            document.addEventListener('initializationProgress', (event) => {
+                const { message, type, isInitialized } = event.detail;
+                console.log(`📊 ${message}`);
+                
+                const buttonText = startButton.querySelector('span');
+                
+                // Update loading indicator text
+                if (type === 'error') {
+                    loadingText.textContent = '❌ ' + message;
+                    loadingText.className = 'text-sm text-red-300';
+                    // Hide loading indicator after 3 seconds on error
+                    setTimeout(() => {
+                        loadingIndicator.classList.add('hidden');
+                    }, 3000);
+                    
+                    startButton.disabled = true;
+                    buttonText.textContent = '❌ Failed to Initialize';
+                    startButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    startButton.classList.remove('hover:bg-blue-700');
+                } else if (isInitialized) {
+                    loadingText.textContent = '✅ System Ready!';
+                    loadingText.className = 'text-sm text-green-300';
+                    
+                    // Hide loading indicator after showing success
+                    setTimeout(() => {
+                        loadingIndicator.classList.add('hidden');
+                    }, 1500);
+                    
+                    startButton.disabled = false;
+                    buttonText.textContent = 'Start Camera';
+                    startButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                    startButton.classList.add('hover:bg-blue-700');
+                    console.log('🎉 System ready! You can now start the camera.');
+                } else {
+                    loadingText.textContent = message;
+                    loadingText.className = 'text-sm text-white';
+                    buttonText.textContent = `⏳ ${message}`;
+                    startButton.disabled = true;
+                }
+            });
             
             startButton.addEventListener('click', async () => {
                 startButton.classList.add('hidden');
-                document.getElementById('loading-indicator').classList.remove('hidden');
+                loadingIndicator.classList.remove('hidden');
+                loadingText.textContent = 'Starting Camera...';
+                loadingText.className = 'text-sm text-white';
                 
                 try {
                     await faceAttendance.startCamera();
-                    document.getElementById('loading-indicator').classList.add('hidden');
+                    loadingIndicator.classList.add('hidden');
                     document.getElementById('camera-status').classList.remove('hidden');
                     stopButton.classList.remove('hidden');
                     captureButton.classList.remove('hidden');
                     updateSaveFaceButton();
                 } catch (error) {
                     console.error('Error starting camera:', error);
-                    document.getElementById('loading-indicator').classList.add('hidden');
-                    document.getElementById('no-camera').classList.remove('hidden');
-                    startButton.classList.remove('hidden');
+                    loadingText.textContent = '❌ Camera access denied or unavailable';
+                    loadingText.className = 'text-sm text-red-300';
+                    
+                    // Show error for 3 seconds, then hide and show start button
+                    setTimeout(() => {
+                        loadingIndicator.classList.add('hidden');
+                        document.getElementById('no-camera').classList.remove('hidden');
+                        startButton.classList.remove('hidden');
+                    }, 3000);
                 }
             });
+
             
             stopButton.addEventListener('click', () => {
                 faceAttendance.stopCamera();
@@ -289,6 +349,42 @@
                     saveFaceButton.innerHTML = `
                     `;
                     updateSaveFaceButton();
+                }
+            });
+
+            document.addEventListener('initializationProgress', (event) => {
+                const { message, type, isInitialized } = event.detail;
+                console.log(`📊 ${message}`);
+                
+                const buttonText = startButton.querySelector('span');
+                const buttonIcon = startButton.querySelector('svg, div');
+                
+                if (type === 'error') {
+                    startButton.disabled = true;
+                    buttonText.textContent = 'Initialization Failed';
+                    if (buttonIcon) {
+                        buttonIcon.outerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>`;
+                    }
+                    startButton.className = "bg-red-600 text-white px-6 py-3 rounded-lg flex items-center space-x-2 cursor-not-allowed opacity-50";
+                } else if (isInitialized) {
+                    // Enable the start button when initialization is complete
+                    startButton.disabled = false;
+                    buttonText.textContent = 'Start Camera';
+                    if (buttonIcon) {
+                        buttonIcon.outerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>`;
+                    }
+                    startButton.className = "bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors";
+                    console.log('🎉 System ready! You can now start the camera.');
+                } else {
+                    // Show progress message
+                    buttonText.textContent = message;
+                    if (buttonIcon) {
+                        buttonIcon.outerHTML = '<div class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>';
+                    }
                 }
             });
 
