@@ -12,6 +12,12 @@ class FaceAttendanceSystem {
         this.detectionInterval = null;
         this.currentStream = null;
         this.isInitialized = false;
+        this.detectionHistory = new Map(); // Store detection history for each person
+        this.requiredDetections = 5; // Number of consecutive detections needed
+        this.detectionWindow = 3000; // Time window in ms (3 seconds)
+        this.checkedInToday = new Set(); // Track who has already checked in today
+        this.lastProcessedAttendance = new Map(); // Prevent duplicate processing
+
         // Face recognition settings
         this.faceDetectionOptions = new faceapi.SsdMobilenetv1Options({
             minConfidence: 0.6, // Increased confidence for better accuracy
@@ -36,92 +42,157 @@ class FaceAttendanceSystem {
      */
     async init() {
         try {
-            console.log('🚀 Initializing Face Attendance System...');
+            console.log('🚀 STEP 1: SYSTEM INITIALIZATION STARTED');
+            console.log('├── Current time:', new Date().toISOString());
+            console.log('├── Document ready state:', document.readyState);
+
             this.updateInitializationStatus('Initializing Face Attendance System...');
 
             // Get DOM elements
+            console.log('├── Getting DOM elements...');
             this.video = document.getElementById('video');
             this.canvas = document.getElementById('overlay');
 
             if (!this.video || !this.canvas) {
-                console.error('❌ Required DOM elements not found');
+                console.error('❌ STEP 1 FAILED: Required DOM elements not found');
+                console.error('├── Video element:', this.video);
+                console.error('└── Canvas element:', this.canvas);
                 this.updateInitializationStatus('Error: Required DOM elements not found', 'error');
                 return;
             }
 
-            console.log('✅ DOM elements found');
+            console.log('✅ STEP 1a: DOM elements found');
+            console.log('├── Video element ID:', this.video.id);
+            console.log('└── Canvas element ID:', this.canvas.id);
+
             this.updateInitializationStatus('DOM elements found');
 
             // Load face-api.js models
+            console.log('🔄 STEP 1b: Loading models...');
             await this.loadModels();
 
+            console.log('🔄 STEP 1c: Loading today\'s attendance...');
+            await this.loadTodaysAttendance();
+
             this.isInitialized = true;
-            console.log('🎉 Face Attendance System initialized successfully');
-            this.updateInitializationStatus('Face Attendance System initialized successfully', 'success');
+            console.log('🎉 STEP 1 COMPLETED: Face Attendance System initialized successfully');
+            console.log('└── isInitialized:', this.isInitialized);
+
+            this.updateInitializationStatus('Face Attendance System initialized successfully', 'success', true);
 
         } catch (error) {
-            console.error('❌ Failed to initialize Face Attendance System:', error);
+            console.error('❌ STEP 1 FAILED: Failed to initialize Face Attendance System');
+            console.error('├── Error:', error.message);
+            console.error('└── Stack:', error.stack);
             this.updateInitializationStatus('Failed to initialize: ' + error.message, 'error');
         }
     }
+
+
 
     /**
      * Load face-api.js models
      */
     async loadModels() {
-        console.log('📦 Loading face-api.js models...');
-        this.updateInitializationStatus('Loading face-api.js models...');
+        console.log('📦 STEP 2: MODEL LOADING STARTED');
 
         try {
-            // Define model path (adjust according to your Laravel public path)
-            const MODEL_URL = '/models'; // You'll need to place models in public/models
+            const MODEL_URL = '/models';
+            console.log('├── Model URL:', MODEL_URL);
 
-            // Try to load face detection and recognition models
+            // Test model accessibility
+            console.log('├── Testing model file accessibility...');
             try {
-                console.log('⏳ Loading detection models...');
-                this.updateInitializationStatus('Loading face detection models...');
-
-                await Promise.all([
-                    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-                ]);
-
-                console.log('✅ Face detection and recognition models loaded successfully');
-                this.updateInitializationStatus('Face detection models loaded');
-
-                // Load reference faces for recognition
-                console.log('👥 Loading reference faces...');
-                this.updateInitializationStatus('Loading reference faces...');
-                await this.loadReferenceFaces();
-
-            } catch (recognitionError) {
-                console.warn('⚠️ Failed to load recognition models, falling back to detection only:', recognitionError.message);
-                this.updateInitializationStatus('Loading basic face detection...');
-
-                // Fallback to detection only
-                await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-                console.log('✅ Face detection model loaded (recognition disabled)');
-                this.updateInitializationStatus('Face detection loaded (recognition disabled)');
-                this.isRecognitionReady = false;
+                const testResponse = await fetch(`${MODEL_URL}/ssd_mobilenetv1_model-weights_manifest.json`);
+                console.log('├── Model test response status:', testResponse.status);
+                if (!testResponse.ok) {
+                    throw new Error(`Model files not accessible. Status: ${testResponse.status}`);
+                }
+                console.log('✅ STEP 2a: Model files are accessible');
+            } catch (fetchError) {
+                console.error('❌ STEP 2a FAILED: Cannot access model files');
+                console.error('├── URL tested:', `${MODEL_URL}/ssd_mobilenetv1_model-weights_manifest.json`);
+                console.error('└── Error:', fetchError.message);
+                throw fetchError;
             }
 
+            console.log('⏳ STEP 2b: Loading face-api.js models...');
+            this.updateInitializationStatus('Loading face detection models...');
+
+            const modelLoadStart = performance.now();
+            await Promise.all([
+                faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+            ]);
+            const modelLoadEnd = performance.now();
+
+            console.log('✅ STEP 2b: Models loaded successfully');
+            console.log('├── Load time:', Math.round(modelLoadEnd - modelLoadStart) + 'ms');
+            console.log('├── SSD MobileNet loaded:', faceapi.nets.ssdMobilenetv1.isLoaded);
+            console.log('├── Face Landmark loaded:', faceapi.nets.faceLandmark68Net.isLoaded);
+            console.log('└── Face Recognition loaded:', faceapi.nets.faceRecognitionNet.isLoaded);
+
+            console.log('🔄 STEP 2c: Loading reference faces...');
+            await this.loadReferenceFaces();
+
             this.isModelLoaded = true;
-
-            // Show success message
-            const message = this.isRecognitionReady ?
-                'Face recognition system ready!' :
-                'Face detection ready (recognition disabled)';
-
-            console.log('🎯 ' + message);
-            this.updateInitializationStatus(message);
+            console.log('🎉 STEP 2 COMPLETED: All models loaded');
+            console.log('└── isRecognitionReady:', this.isRecognitionReady);
 
         } catch (error) {
-            console.error('❌ Error loading models:', error);
-            this.updateInitializationStatus('Error loading models: ' + error.message, 'error');
-            this.showMessage('Error loading face detection models. Please check if model files are available.', 'error');
+            console.error('❌ STEP 2 FAILED: Error loading models');
+            console.error('├── Error:', error.message);
+            console.error('└── Stack:', error.stack);
+            throw error;
         }
     }
+
+    async loadTodaysAttendance() {
+        console.log('📋 STEP 3: LOADING TODAY\'S ATTENDANCE');
+
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            console.log('├── Date:', today);
+
+            const url = `/api/attendance/today?date=${today}`;
+            console.log('├── API URL:', url);
+
+            const response = await fetch(url);
+            console.log('├── Response status:', response.status);
+            console.log('├── Response ok:', response.ok);
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('├── API Response success:', data.success);
+
+                if (data.success && data.data && data.data.attendances) {
+                    console.log('├── Total attendances found:', data.data.attendances.length);
+
+                    data.data.attendances.forEach((attendance, index) => {
+                        if (attendance.user_name) {
+                            this.checkedInToday.add(attendance.user_name.toLowerCase());
+                            console.log(`├── [${index + 1}] Added to checkedIn:`, attendance.user_name.toLowerCase());
+                        }
+                    });
+
+                    console.log('✅ STEP 3 COMPLETED: Loaded existing check-ins');
+                    console.log('└── Total checked in today:', this.checkedInToday.size);
+                    console.log('└── Checked in users:', Array.from(this.checkedInToday));
+                } else {
+                    console.log('├── No attendances found or API returned error');
+                    console.log('└── Data structure:', data);
+                }
+            } else {
+                console.warn('⚠️ STEP 3 WARNING: Failed to load today\'s attendance');
+                console.warn('└── Status:', response.status);
+            }
+        } catch (error) {
+            console.warn('⚠️ STEP 3 WARNING: Could not load today\'s attendance');
+            console.warn('└── Error:', error.message);
+        }
+    }
+
 
     updateInitializationStatus(message, type = 'info') {
         // Dispatch custom event for UI updates
@@ -137,13 +208,16 @@ class FaceAttendanceSystem {
      * Start camera and face detection
      */
     async startCamera() {
+        console.log('📹 STEP 4: CAMERA ACTIVATION STARTED');
+
         if (!this.isModelLoaded) {
+            console.error('❌ STEP 4 FAILED: Models not loaded yet');
+            console.error('└── isModelLoaded:', this.isModelLoaded);
             this.showMessage('Please wait for models to load first.', 'warning');
             return;
         }
 
         try {
-            // Camera constraints
             const constraints = {
                 video: {
                     width: { ideal: 1280 },
@@ -151,30 +225,45 @@ class FaceAttendanceSystem {
                     facingMode: 'user'
                 }
             };
+            console.log('├── Camera constraints:', constraints);
 
-            // Get user media
+            console.log('├── Requesting camera access...');
             this.currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+            console.log('✅ STEP 4a: Camera access granted');
+            console.log('├── Stream tracks:', this.currentStream.getTracks().length);
+
             this.video.srcObject = this.currentStream;
 
-            // Wait for video to load
             return new Promise((resolve) => {
                 this.video.addEventListener('loadedmetadata', () => {
-                    // Match canvas dimensions to video
+                    console.log('✅ STEP 4b: Video metadata loaded');
+                    console.log('├── Video dimensions:', this.video.videoWidth + 'x' + this.video.videoHeight);
+
                     this.canvas.width = this.video.videoWidth;
                     this.canvas.height = this.video.videoHeight;
+                    console.log('├── Canvas dimensions set:', this.canvas.width + 'x' + this.canvas.height);
 
-                    // Start face detection
+                    console.log('🔄 STEP 4c: Starting face detection...');
                     this.startFaceDetection();
+
+                    console.log('🎉 STEP 4 COMPLETED: Camera started successfully');
                     resolve();
                 });
             });
 
         } catch (error) {
-            console.error('Error starting camera:', error);
+            console.error('❌ STEP 4 FAILED: Error starting camera');
+            console.error('├── Error name:', error.name);
+            console.error('├── Error message:', error.message);
+            console.error('└── Possible causes:');
+            console.error('    - Camera permissions denied');
+            console.error('    - No camera available');
+            console.error('    - Camera in use by another app');
+            console.error('    - Not using HTTPS (required for camera)');
             this.showMessage('Unable to access camera. Please grant camera permissions.', 'error');
+            throw error;
         }
     }
-
     /**
      * Stop camera and face detection
      */
@@ -192,7 +281,8 @@ class FaceAttendanceSystem {
         // Clear canvas
         const ctx = this.canvas.getContext('2d');
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
+        this.detectionHistory.clear();
+        this.lastProcessedAttendance.clear();
         console.log('Camera stopped');
     }
 
@@ -200,42 +290,68 @@ class FaceAttendanceSystem {
      * Start face detection loop
      */
     startFaceDetection() {
-        if (this.isDetecting) return;
+        if (this.isDetecting) {
+            console.warn('⚠️ STEP 5: Face detection already running');
+            return;
+        }
 
         this.isDetecting = true;
-        console.log('Starting face detection...');
+        console.log('🔍 STEP 5: FACE DETECTION LOOP STARTED');
+        console.log('├── Detection interval: 200ms');
+        console.log('├── Min confidence:', this.faceDetectionOptions.minConfidence);
+        console.log('└── Max results:', this.faceDetectionOptions.maxResults);
+
+        let detectionCount = 0;
 
         const detectFaces = async () => {
             if (!this.isDetecting || !this.video.videoWidth) return;
 
+            detectionCount++;
+            // Log every 25th detection to avoid spam (every 5 seconds)
+            const shouldLog = detectionCount % 25 === 0;
+
+            if (shouldLog) {
+                console.log(`🔄 STEP 5 LOOP: Detection #${detectionCount} (every 5s log)`);
+            }
+
             try {
-                // Detect faces with landmarks and descriptors for recognition
+                const detectionStart = performance.now();
+
                 const detections = await faceapi
                     .detectAllFaces(this.video, this.faceDetectionOptions)
                     .withFaceLandmarks()
                     .withFaceDescriptors();
 
-                // Clear previous drawings
+                const detectionEnd = performance.now();
+
+                if (shouldLog) {
+                    console.log(`├── Detection time: ${Math.round(detectionEnd - detectionStart)}ms`);
+                    console.log(`├── Faces found: ${detections.length}`);
+                }
+
                 const ctx = this.canvas.getContext('2d');
                 ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
                 if (detections.length > 0) {
-                    // Get only the first (best) detection
                     const detection = detections[0];
+                    const confidence = Math.round(detection.detection.score * 100);
 
-                    // Check if detection has the expected structure
+                    console.log(`👤 STEP 5a: FACE DETECTED - Confidence: ${confidence}%`);
+
                     if (!detection.detection) {
-                        console.error('Invalid detection object structure:', detection);
+                        console.error('❌ STEP 5a ERROR: Invalid detection structure');
+                        console.error('└── Detection object:', detection);
                         return;
                     }
 
-                    // Perform face recognition (with error handling)
                     let recognitionResult = null;
                     try {
+                        console.log('🧠 STEP 5b: Running face recognition...');
                         recognitionResult = this.recognizeFace(detection);
+                        console.log('├── Recognition result:', recognitionResult);
                     } catch (recognitionError) {
-                        console.warn('Face recognition error:', recognitionError.message);
-                        // Continue with basic face detection if recognition fails
+                        console.warn('⚠️ STEP 5b WARNING: Face recognition failed');
+                        console.warn('└── Error:', recognitionError.message);
                         recognitionResult = {
                             label: 'Unknown',
                             confidence: 0,
@@ -244,38 +360,38 @@ class FaceAttendanceSystem {
                         };
                     }
 
-                    // Resize detection to match display size
                     const resizedDetection = faceapi.resizeResults([detection], {
                         width: this.canvas.width,
                         height: this.canvas.height
                     })[0];
 
-                    // Draw face detection box with recognition label
                     this.drawDetection(resizedDetection, recognitionResult);
 
-                    // Process face for attendance
+                    console.log('🎯 STEP 5c: Processing for attendance...');
                     this.processFaceForAttendance(detection, recognitionResult);
 
-                    // Dispatch face detected event
                     document.dispatchEvent(new CustomEvent('faceDetected', {
                         detail: {
-                            confidence: Math.round(detection.detection.score * 100),
+                            confidence: confidence,
                             recognition: recognitionResult
                         }
                     }));
                 } else {
-                    // Dispatch face not detected event
+                    if (shouldLog) {
+                        console.log('👻 STEP 5: No faces detected');
+                    }
                     document.dispatchEvent(new CustomEvent('faceNotDetected'));
                 }
 
             } catch (error) {
-                console.error('Error in face detection:', error.message);
-                // Don't break the detection loop - just log the error
+                console.error('❌ STEP 5 ERROR: Face detection loop error');
+                console.error('├── Error:', error.message);
+                console.error('└── Continuing detection...');
             }
         };
 
-        // Run detection every 200ms for better performance
         this.detectionInterval = setInterval(detectFaces, 200);
+        console.log('✅ STEP 5: Detection interval started');
     }
 
     /**
@@ -452,15 +568,12 @@ class FaceAttendanceSystem {
     drawDetection(detection, recognitionResult = null) {
         const ctx = this.canvas.getContext('2d');
 
-        // Handle different detection object structures
         let box, score;
 
         if (detection.detection) {
-            // Detection with landmarks/descriptors
             box = detection.detection.box;
             score = detection.detection.score;
         } else if (detection.box) {
-            // Direct detection object
             box = detection.box;
             score = detection.score;
         } else {
@@ -470,17 +583,32 @@ class FaceAttendanceSystem {
 
         const { x, y, width, height } = box;
 
-        // Determine colors based on recognition result
-        let boxColor = '#10b981'; // Default green
+        // Determine colors based on recognition result and check-in status
+        let boxColor = '#10b981';
         let textBgColor = '#10b981';
         let label = `${Math.round(score * 100)}%`;
 
         if (recognitionResult) {
             if (recognitionResult.isKnown) {
-                // Known face - green
-                boxColor = '#10b981';
-                textBgColor = '#10b981';
-                label = `${recognitionResult.label} (${recognitionResult.confidence}%)`;
+                const username = recognitionResult.label.toLowerCase();
+                const isCheckedIn = this.checkedInToday.has(username);
+
+                if (isCheckedIn) {
+                    // Already checked in - blue color
+                    boxColor = '#3b82f6';
+                    textBgColor = '#3b82f6';
+                    label = `${recognitionResult.label} (Already checked in)`;
+                } else {
+                    // Not checked in yet - green color
+                    boxColor = '#10b981';
+                    textBgColor = '#10b981';
+
+                    // Show detection progress
+                    const userDetections = this.detectionHistory.get(username);
+                    const detectionCount = userDetections ? userDetections.length : 0;
+
+                    label = `${recognitionResult.label} (${detectionCount}/${this.requiredDetections})`;
+                }
             } else {
                 // Unknown face - red
                 boxColor = '#ef4444';
@@ -495,7 +623,6 @@ class FaceAttendanceSystem {
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
-        // Draw rounded rectangle
         const radius = 10;
         ctx.beginPath();
         ctx.moveTo(x + radius, y);
@@ -517,27 +644,23 @@ class FaceAttendanceSystem {
         const textHeight = 18;
         const padding = 8;
 
-        // Calculate label position (above the box if possible, otherwise below)
         let labelY = y - textHeight - padding;
         if (labelY < 0) {
             labelY = y + height + textHeight + padding;
         }
 
-        // Background for text
         ctx.fillStyle = textBgColor;
         ctx.fillRect(x, labelY - textHeight - padding / 2, textWidth + padding, textHeight + padding);
 
-        // Text
         ctx.fillStyle = 'white';
         ctx.fillText(label, x + padding / 2, labelY - padding / 2);
 
-        // Add additional info for known faces
+        // Add confidence indicator for known faces
         if (recognitionResult && recognitionResult.isKnown) {
-            const confidenceText = `Match: ${recognitionResult.confidence}%`;
+            const confidenceText = `${recognitionResult.confidence}% match`;
             ctx.font = '12px Arial';
             const confMetrics = ctx.measureText(confidenceText);
 
-            // Small confidence indicator
             ctx.fillStyle = 'rgba(16, 185, 129, 0.8)';
             ctx.fillRect(x + width - confMetrics.width - padding, y + 5, confMetrics.width + padding / 2, 16);
 
@@ -551,18 +674,228 @@ class FaceAttendanceSystem {
      */
     processFaceForAttendance(detection, recognitionResult = null) {
         const confidence = detection.detection ? detection.detection.score : detection.score;
+        const currentTime = Date.now();
 
-        // Only process faces with high confidence
-        if (confidence >= 0.8) {
-            if (recognitionResult && recognitionResult.isKnown) {
-                console.log(`Known face detected: ${recognitionResult.label} (${recognitionResult.confidence}% match)`);
-                // Here you can add automatic attendance capture for known faces
+        console.log('⚡ STEP 6: PROCESSING FACE FOR ATTENDANCE');
+        console.log('├── Face confidence:', Math.round(confidence * 100) + '%');
+        console.log('├── Recognition result:', recognitionResult);
+        console.log('├── Current time:', new Date(currentTime).toISOString());
+
+        // Check qualification criteria
+        const meetsConfidence = confidence >= 0.8;
+        const isKnown = recognitionResult && recognitionResult.isKnown;
+        const meetsRecognitionConfidence = recognitionResult && recognitionResult.confidence >= 50;
+
+        console.log('├── Qualification check:');
+        console.log('    ├── Face confidence ≥ 80%:', meetsConfidence, `(${Math.round(confidence * 100)}%)`);
+        console.log('    ├── Is known person:', isKnown);
+        console.log('    └── Recognition confidence ≥ 70%:', meetsRecognitionConfidence,
+            recognitionResult ? `(${recognitionResult.confidence}%)` : '(N/A)');
+
+        if (meetsConfidence && isKnown && meetsRecognitionConfidence) {
+            const username = recognitionResult.label.toLowerCase();
+
+            console.log('✅ STEP 6a: QUALIFIED FACE DETECTED');
+            console.log('├── Username:', username);
+            console.log('├── Original label:', recognitionResult.label);
+
+            // Check if already checked in
+            if (this.checkedInToday.has(username)) {
+                console.log('🔵 STEP 6b: USER ALREADY CHECKED IN TODAY');
+                console.log('└── Skipping attendance processing');
+                return;
+            }
+
+            console.log('🟢 STEP 6c: USER NOT CHECKED IN - TRACKING DETECTIONS');
+
+            // Initialize detection history
+            if (!this.detectionHistory.has(username)) {
+                this.detectionHistory.set(username, []);
+                console.log('├── Created new detection history for:', username);
+            }
+
+            const userDetections = this.detectionHistory.get(username);
+
+            // Add current detection
+            userDetections.push({
+                timestamp: currentTime,
+                confidence: recognitionResult.confidence
+            });
+
+            console.log('├── Added detection #' + userDetections.length);
+
+            // Remove old detections
+            const validDetections = userDetections.filter(
+                det => currentTime - det.timestamp <= this.detectionWindow
+            );
+            this.detectionHistory.set(username, validDetections);
+
+            console.log('├── Valid detections in window:', validDetections.length + '/' + this.requiredDetections);
+            console.log('├── Detection window:', this.detectionWindow + 'ms');
+
+            // Check if enough detections
+            if (validDetections.length >= this.requiredDetections) {
+                console.log('🎯 STEP 6d: SUFFICIENT DETECTIONS - CHECKING COOLDOWN');
+
+                const lastProcessed = this.lastProcessedAttendance.get(username) || 0;
+                const cooldownRemaining = 10000 - (currentTime - lastProcessed);
+
+                console.log('├── Last processed:', new Date(lastProcessed).toISOString());
+                console.log('├── Cooldown remaining:', cooldownRemaining + 'ms');
+
+                if (cooldownRemaining > 0) {
+                    console.log('⏰ STEP 6d: COOLDOWN ACTIVE - SKIPPING');
+                    return;
+                }
+
+                console.log('🚀 STEP 6e: TRIGGERING AUTOMATIC ATTENDANCE');
+                this.lastProcessedAttendance.set(username, currentTime);
+                this.processAutomaticAttendance(recognitionResult.label, validDetections);
+                this.detectionHistory.delete(username);
+
             } else {
-                console.log('Unknown face detected with high confidence:', Math.round(confidence * 100) + '%');
+                console.log('⏳ STEP 6d: NEED MORE DETECTIONS');
+                console.log('└── Progress:', validDetections.length + '/' + this.requiredDetections);
             }
         } else {
-            console.log('Face detected with low confidence:', Math.round(confidence * 100) + '%');
+            if (confidence >= 0.8 && (!recognitionResult || !recognitionResult.isKnown)) {
+                console.log('🔴 STEP 6: HIGH CONFIDENCE UNKNOWN FACE');
+                console.log('└── Confidence:', Math.round(confidence * 100) + '%');
+            } else {
+                console.log('⚪ STEP 6: FACE DOES NOT MEET CRITERIA');
+            }
         }
+    }
+
+    /**
+     * Process automatic attendance check-in
+     */
+    async processAutomaticAttendance(username, detections) {
+        console.log('🎯 STEP 7: AUTOMATIC ATTENDANCE PROCESSING STARTED');
+        console.log('├── Username:', username);
+        console.log('├── Detection count:', detections.length);
+
+        try {
+            console.log('📤 STEP 7a: Showing processing notification...');
+            this.showAttendanceNotification(username, 'processing');
+
+            // Calculate average confidence
+            const avgConfidence = Math.round(
+                detections.reduce((sum, det) => sum + det.confidence, 0) / detections.length
+            );
+            console.log('├── Average confidence:', avgConfidence + '%');
+            console.log('├── Individual confidences:', detections.map(d => d.confidence + '%'));
+
+            console.log('📸 STEP 7b: Capturing current frame...');
+            const captureStart = performance.now();
+            const imageBlob = await this.captureCurrentFrame();
+            const captureEnd = performance.now();
+
+            console.log('├── Capture time:', Math.round(captureEnd - captureStart) + 'ms');
+            console.log('├── Image blob size:', Math.round(imageBlob.size / 1024) + 'KB');
+
+            console.log('🌐 STEP 7c: Sending to server...');
+            const serverStart = performance.now();
+            const result = await this.sendAttendanceData(imageBlob, username, avgConfidence);
+            const serverEnd = performance.now();
+
+            console.log('├── Server response time:', Math.round(serverEnd - serverStart) + 'ms');
+            console.log('├── Server response:', result);
+
+            if (result.success) {
+                console.log('✅ STEP 7d: ATTENDANCE RECORDED SUCCESSFULLY');
+
+                this.checkedInToday.add(username.toLowerCase());
+                console.log('├── Added to checkedInToday:', username.toLowerCase());
+                console.log('├── Total checked in today:', this.checkedInToday.size);
+
+                this.showAttendanceNotification(username, 'success');
+
+                document.dispatchEvent(new CustomEvent('automaticCheckIn', {
+                    detail: {
+                        username: username,
+                        confidence: avgConfidence,
+                        timestamp: new Date().toISOString(),
+                        result: result
+                    }
+                }));
+
+                console.log('🎉 STEP 7 COMPLETED: Automatic check-in successful');
+                console.log('└── Attendance ID:', result.data?.attendance_id);
+            } else {
+                throw new Error(result.message || 'Failed to record attendance');
+            }
+
+        } catch (error) {
+            console.error('❌ STEP 7 FAILED: Error processing automatic attendance');
+            console.error('├── Username:', username);
+            console.error('├── Error message:', error.message);
+            console.error('└── Stack:', error.stack);
+            this.showAttendanceNotification(username, 'error', error.message);
+        }
+    }
+
+
+    showAttendanceNotification(username, status, message = '') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 transition-all duration-300';
+
+        let bgColor, icon, text;
+        switch (status) {
+            case 'processing':
+                bgColor = 'bg-blue-500';
+                icon = '⏳';
+                text = `Processing check-in for ${username}...`;
+                break;
+            case 'success':
+                bgColor = 'bg-green-500';
+                icon = '✅';
+                text = `${username} checked in successfully!`;
+                break;
+            case 'error':
+                bgColor = 'bg-red-500';
+                icon = '❌';
+                text = `Check-in failed for ${username}${message ? ': ' + message : ''}`;
+                break;
+        }
+
+        notification.className += ` ${bgColor} text-white`;
+        notification.innerHTML = `
+            <div class="flex items-center space-x-3">
+                <span class="text-xl">${icon}</span>
+                <span class="font-medium">${text}</span>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+
+        // Auto remove after 4 seconds
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 4000);
+    }
+
+    /**
+     * Capture current frame as blob
+     */
+    async captureCurrentFrame() {
+        return new Promise((resolve) => {
+            const captureCanvas = document.createElement('canvas');
+            captureCanvas.width = this.video.videoWidth;
+            captureCanvas.height = this.video.videoHeight;
+
+            const captureCtx = captureCanvas.getContext('2d');
+            captureCtx.drawImage(this.video, 0, 0);
+
+            captureCanvas.toBlob(resolve, 'image/jpeg', 0.8);
+        });
     }
 
     /**
@@ -676,12 +1009,17 @@ class FaceAttendanceSystem {
     /**
      * Send attendance data to Laravel backend
      */
-    async sendAttendanceData(imageBlob) {
+    async sendAttendanceData(imageBlob, username = null, confidence = null) {
         const formData = new FormData();
         formData.append('image', imageBlob, 'attendance.jpg');
         formData.append('timestamp', new Date().toISOString());
 
-        // Add CSRF token for Laravel
+        if (username) {
+            formData.append('username', username);
+            formData.append('confidence', confidence);
+            formData.append('auto_checkin', 'true');
+        }
+
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         if (csrfToken) {
             formData.append('_token', csrfToken);
@@ -700,7 +1038,10 @@ class FaceAttendanceSystem {
         }
 
         const result = await response.json();
-        this.showMessage('Attendance recorded successfully!', 'success');
+
+        if (!username) {
+            this.showMessage('Attendance recorded successfully!', 'success');
+        }
 
         return result;
     }

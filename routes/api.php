@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\FaceEnrollmentController;
+use App\Http\Controllers\FaceRecognitionAttendanceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\ManagerLeaveController;
@@ -42,3 +43,8 @@ Route::post('/qr-codes/save', function(\Illuminate\Http\Request $request) {
 Route::post('/face-enrollment', [FaceEnrollmentController::class, 'store']);
 Route::get('/face-enrollment', [FaceEnrollmentController::class, 'index']);
 Route::delete('/face-enrollment/{identifier}', [FaceEnrollmentController::class, 'destroy']);
+
+// Face recognition attendance routes
+Route::post('/attendance/face-recognition', [FaceRecognitionAttendanceController::class, 'store']);
+Route::get('/attendance/today', [FaceRecognitionAttendanceController::class, 'getTodaysAttendance']);
+Route::get('/attendance/statistics', [FaceRecognitionAttendanceController::class, 'getStatistics']);

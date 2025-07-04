@@ -59,6 +59,31 @@
                 </div>
             </div>
 
+            <div id="auto-checkin-status" class="absolute bottom-4 left-4 hidden">
+                <div class="bg-blue-600 bg-opacity-90 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                        <span id="auto-checkin-text">Auto Check-in Active</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Add this after the Face Enrollment Section (around line 130): --}}
+
+            {{-- Today's Check-ins Display --}}
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <h4 class="font-semibold text-green-900 mb-3 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Today's Check-ins
+                </h4>
+                <div id="todays-checkins" class="space-y-2">
+                    <p class="text-green-700 text-sm">No check-ins recorded yet today.</p>
+                </div>
+            </div>
+
             {{-- Center Guide for Face Positioning --}}
             <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div class="border-2 border-white border-dashed rounded-full w-64 h-80 opacity-30"></div>
@@ -214,6 +239,8 @@
             // Track if face is currently detected
             let faceDetected = false;
 
+            loadTodaysCheckins();
+
             // Disable start button initially and show loading state
             startButton.disabled = true;
             startButton.querySelector('span').textContent = '⏳ Initializing...';
@@ -284,6 +311,14 @@
                         startButton.classList.remove('hidden');
                     }, 3000);
                 }
+                setTimeout(() => {
+                    const autoCheckinStatus = document.getElementById('auto-checkin-status');
+                    const autoCheckinText = document.getElementById('auto-checkin-text');
+                    
+                    autoCheckinStatus.classList.remove('hidden');
+                    autoCheckinText.textContent = 'Auto Check-in Active - Show your face to check in';
+                    autoCheckinStatus.querySelector('div').className = 'bg-blue-600 bg-opacity-90 text-white px-4 py-2 rounded-lg text-sm font-medium';
+                }, 1000);
             });
 
             
@@ -434,5 +469,69 @@
             // Make faceAttendance available globally for debugging
             window.faceAttendance = faceAttendance;
         }
+
+    document.addEventListener('automaticCheckIn', (event) => {
+        const { username, confidence, timestamp, result } = event.detail;
+        console.log(`🎉 Automatic check-in completed for ${username}!`);
+        
+        // Update today's check-ins display
+        updateTodaysCheckinsDisplay(username, timestamp, confidence);
+        
+        // Show success status
+        const autoCheckinStatus = document.getElementById('auto-checkin-status');
+        const autoCheckinText = document.getElementById('auto-checkin-text');
+        
+        autoCheckinStatus.classList.remove('hidden');
+        autoCheckinText.textContent = `✅ ${username} checked in automatically!`;
+        autoCheckinStatus.querySelector('div').className = 'bg-green-600 bg-opacity-90 text-white px-4 py-2 rounded-lg text-sm font-medium';
+        
+        // Hide after 5 seconds
+        setTimeout(() => {
+            autoCheckinStatus.classList.add('hidden');
+        }, 5000);
+    });
+
+
+    function updateTodaysCheckinsDisplay(username, timestamp, confidence) {
+        const container = document.getElementById('todays-checkins');
+        const time = new Date(timestamp).toLocaleTimeString();
+        
+ 
+        
+        // Remove "no check-ins" message if it exists
+        const noCheckinsMsg = container.querySelector('p');
+        if (noCheckinsMsg && noCheckinsMsg.textContent.includes('No check-ins')) {
+            noCheckinsMsg.remove();
+        }
+        
+        // Add new entry at the top
+        container.insertBefore(entry, container.firstChild);
+    }
+
+    async function loadTodaysCheckins() {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const response = await fetch(`/api/attendance/today?date=${today}`);
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.attendances && data.attendances.length > 0) {
+                const container = document.getElementById('todays-checkins');
+                container.innerHTML = ''; // Clear existing content
+                
+                data.attendances.forEach(attendance => {
+                    const time = new Date(attendance.check_in || attendance.created_at).toLocaleTimeString();
+                    updateTodaysCheckinsDisplay(
+                        attendance.user_name || attendance.username, 
+                        attendance.check_in || attendance.created_at,
+                        attendance.confidence || 'N/A'
+                    );
+                });
+            }
+        }
+    } catch (error) {
+        console.warn('Could not load today\'s check-ins:', error);
+    }
+    }
     </script>
 </div>
