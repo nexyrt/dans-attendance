@@ -7,6 +7,7 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
+                'resources/js/face-attendance.js',  // Add thi
                 'resources/js/qr-attendance.js'  // Add this
             ],
             refresh: true,
