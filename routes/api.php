@@ -41,3 +41,4 @@ Route::post('/qr-codes/save', function(\Illuminate\Http\Request $request) {
 
 Route::post('/face-enrollment', [FaceEnrollmentController::class, 'store']);
 Route::get('/face-enrollment', [FaceEnrollmentController::class, 'index']);
+Route::delete('/face-enrollment/{identifier}', [FaceEnrollmentController::class, 'destroy']);

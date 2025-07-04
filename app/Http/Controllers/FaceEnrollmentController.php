@@ -18,6 +18,13 @@ class FaceEnrollmentController extends Controller
     public function store(Request $request): JsonResponse
     {
         try {
+            // Add detailed logging to debug the issue
+            Log::info('Face enrollment request received', [
+                'files' => $request->allFiles(),
+                'data' => $request->except(['face_image']),
+                'headers' => $request->headers->all()
+            ]);
+
             // Validate the request
             $validator = Validator::make($request->all(), [
                 'face_image' => 'required|file|image|mimes:jpeg,jpg,png|max:5120', // Max 5MB
@@ -37,6 +44,10 @@ class FaceEnrollmentController extends Controller
             ]);
 
             if ($validator->fails()) {
+                Log::warning('Face enrollment validation failed', [
+                    'errors' => $validator->errors()->toArray()
+                ]);
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
@@ -47,17 +58,34 @@ class FaceEnrollmentController extends Controller
             $username = trim($request->input('username'));
             $faceImage = $request->file('face_image');
             
+            Log::info('Processing face enrollment', [
+                'username' => $username,
+                'file_size' => $faceImage->getSize(),
+                'file_type' => $faceImage->getMimeType(),
+                'original_name' => $faceImage->getClientOriginalName()
+            ]);
+            
             // Additional validation
             if (!$faceImage->isValid()) {
+                Log::error('Invalid face image file', [
+                    'username' => $username,
+                    'error' => $faceImage->getErrorMessage()
+                ]);
+                
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid or corrupted image file'
+                    'message' => 'Invalid or corrupted image file: ' . $faceImage->getErrorMessage()
                 ], 400);
             }
 
             // Validate image dimensions (optional)
             $imageInfo = getimagesize($faceImage->getPathname());
             if (!$imageInfo) {
+                Log::error('Unable to read image file', [
+                    'username' => $username,
+                    'file_path' => $faceImage->getPathname()
+                ]);
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'Unable to read image file'
@@ -66,6 +94,11 @@ class FaceEnrollmentController extends Controller
 
             [$width, $height] = $imageInfo;
             if ($width < 100 || $height < 100) {
+                Log::warning('Image dimensions too small', [
+                    'username' => $username,
+                    'dimensions' => [$width, $height]
+                ]);
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'Image dimensions too small. Minimum 100x100 pixels required'
@@ -74,11 +107,53 @@ class FaceEnrollmentController extends Controller
 
             // Sanitize username for file system
             $sanitizedUsername = $this->sanitizeUsername($username);
+            Log::info('Username sanitized', [
+                'original' => $username,
+                'sanitized' => $sanitizedUsername
+            ]);
             
             // Create directory in public path
             $publicPath = public_path('faces/' . $sanitizedUsername);
-            if (!file_exists($publicPath)) {
-                mkdir($publicPath, 0755, true);
+            
+            // Check if public path is writable
+            $parentDir = public_path('faces');
+            if (!is_dir($parentDir)) {
+                Log::info('Creating faces directory', ['path' => $parentDir]);
+                if (!mkdir($parentDir, 0755, true)) {
+                    Log::error('Failed to create faces directory', ['path' => $parentDir]);
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Failed to create storage directory'
+                    ], 500);
+                }
+            }
+            
+            if (!is_dir($publicPath)) {
+                Log::info('Creating user directory', ['path' => $publicPath]);
+                if (!mkdir($publicPath, 0755, true)) {
+                    Log::error('Failed to create user directory', [
+                        'path' => $publicPath,
+                        'parent_writable' => is_writable($parentDir)
+                    ]);
+                    
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Failed to create user directory'
+                    ], 500);
+                }
+            }
+
+            // Check if directory is writable
+            if (!is_writable($publicPath)) {
+                Log::error('Directory not writable', [
+                    'path' => $publicPath,
+                    'permissions' => substr(sprintf('%o', fileperms($publicPath)), -4)
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Storage directory is not writable'
+                ], 500);
             }
 
             // Generate unique filename
@@ -96,10 +171,21 @@ class FaceEnrollmentController extends Controller
                 $counter++;
             }
 
+            Log::info('Moving uploaded file', [
+                'from' => $faceImage->getPathname(),
+                'to' => $publicPath . '/' . $filename,
+                'filename' => $filename
+            ]);
+
             // Move the uploaded file to public directory
             $moved = $faceImage->move($publicPath, $filename);
 
             if (!$moved) {
+                Log::error('Failed to move uploaded file', [
+                    'source' => $faceImage->getPathname(),
+                    'destination' => $publicPath . '/' . $filename
+                ]);
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to save face image to storage'
@@ -109,6 +195,8 @@ class FaceEnrollmentController extends Controller
             // Verify the file was actually saved
             $fullPath = $publicPath . '/' . $filename;
             if (!file_exists($fullPath)) {
+                Log::error('File was not saved properly', ['path' => $fullPath]);
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'Image file was not saved properly'
@@ -120,15 +208,12 @@ class FaceEnrollmentController extends Controller
             $relativePath = 'faces/' . $sanitizedUsername . '/' . $filename;
             $fileUrl = asset($relativePath);
 
-            // Optional: Save to database for tracking
-            $this->saveFaceEnrollmentToDatabase($username, $relativePath, $filename, $fileSize);
-
-            // Log successful enrollment
             Log::info('Face enrollment successful', [
                 'username' => $username,
                 'filename' => $filename,
                 'path' => $relativePath,
                 'size' => $fileSize,
+                'url' => $fileUrl,
                 'ip' => $request->ip(),
                 'user_agent' => $request->userAgent()
             ]);
@@ -153,13 +238,15 @@ class FaceEnrollmentController extends Controller
         } catch (\Exception $e) {
             Log::error('Face enrollment error: ' . $e->getMessage(), [
                 'username' => $request->input('username', 'unknown'),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
                 'request_data' => $request->except(['face_image']) // Don't log file data
             ]);
             
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while enrolling face',
+                'message' => 'An error occurred while enrolling face: ' . $e->getMessage(),
                 'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
@@ -174,6 +261,12 @@ class FaceEnrollmentController extends Controller
             $username = $request->query('username');
             $facesDirectory = public_path('faces');
             $enrolledFaces = [];
+
+            Log::info('Fetching enrolled faces', [
+                'username' => $username,
+                'faces_directory' => $facesDirectory,
+                'directory_exists' => is_dir($facesDirectory)
+            ]);
 
             if (is_dir($facesDirectory)) {
                 if ($username) {
@@ -216,6 +309,11 @@ class FaceEnrollmentController extends Controller
                     });
                 }
             }
+
+            Log::info('Enrolled faces fetched successfully', [
+                'total_users' => count($enrolledFaces),
+                'total_faces' => array_sum(array_column($enrolledFaces, 'face_count'))
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -471,41 +569,6 @@ class FaceEnrollmentController extends Controller
         }
         
         return rmdir($dir);
-    }
-
-    /**
-     * Save face enrollment to database (optional)
-     */
-    private function saveFaceEnrollmentToDatabase($username, $path, $filename, $fileSize)
-    {
-        // Uncomment and modify this if you create the FaceEnrollment model
-        /*
-        try {
-            \App\Models\FaceEnrollment::create([
-                'username' => $username,
-                'image_path' => $path,
-                'original_filename' => $filename,
-                'file_size' => $fileSize,
-                'metadata' => json_encode([
-                    'enrollment_ip' => request()->ip(),
-                    'user_agent' => request()->userAgent(),
-                    'enrolled_at' => Carbon::now()->toISOString()
-                ]),
-                'enrolled_at' => Carbon::now()
-            ]);
-            
-            Log::info('Face enrollment database record created', [
-                'username' => $username,
-                'path' => $path
-            ]);
-            
-        } catch (\Exception $e) {
-            Log::warning('Failed to save face enrollment to database: ' . $e->getMessage(), [
-                'username' => $username,
-                'path' => $path
-            ]);
-        }
-        */
     }
 
     /**
