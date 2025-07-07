@@ -489,6 +489,9 @@ class FaceAttendanceSystem {
         }
     }
 
+
+
+
     /**
      * Load face descriptor from image URL
      */
@@ -1005,45 +1008,96 @@ class FaceAttendanceSystem {
         });
     }
 
+    
+
 
     /**
      * Send attendance data to Laravel backend
      */
     async sendAttendanceData(imageBlob, username = null, confidence = null) {
+        console.log('📡 STEP 8: SENDING ATTENDANCE DATA TO SERVER');
+        console.log('├── Username:', username);
+        console.log('├── Confidence:', confidence);
+        console.log('├── Image size:', Math.round(imageBlob.size / 1024) + 'KB');
+
         const formData = new FormData();
         formData.append('image', imageBlob, 'attendance.jpg');
-        formData.append('timestamp', new Date().toISOString());
+        
+        const now = new Date();
+        const makassarTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+        // FIXED: Get proper Makassar timestamp
+        const makassarTimestamp = makassarTime.toISOString();
+        formData.append('timestamp', makassarTimestamp);
+        
+        console.log('├── Timestamp being sent:', makassarTimestamp);
 
         if (username) {
             formData.append('username', username);
             formData.append('confidence', confidence);
-            formData.append('auto_checkin', 'true');
+            formData.append('auto_checkin', '1');
+            console.log('├── Auto check-in mode: 1');
         }
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        console.log('├── CSRF token found:', !!csrfToken);
+        
         if (csrfToken) {
             formData.append('_token', csrfToken);
         }
 
-        const response = await fetch('/api/attendance/face-recognition', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRF-TOKEN': csrfToken
+        // Debug: Log all FormData entries
+        console.log('├── FormData contents:');
+        for (let [key, value] of formData.entries()) {
+            if (key === 'image') {
+                console.log(`    ${key}: [File object - ${Math.round(value.size / 1024)}KB]`);
+            } else {
+                console.log(`    ${key}: ${value}`);
             }
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to submit attendance');
         }
 
-        const result = await response.json();
+        console.log('├── Sending POST request to: /api/attendance/face-recognition');
+        
+        try {
+            const response = await fetch('/api/attendance/face-recognition', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            });
 
-        if (!username) {
-            this.showMessage('Attendance recorded successfully!', 'success');
-        }
+            console.log('├── Response status:', response.status);
+            console.log('├── Response ok:', response.ok);
 
-        return result;
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ STEP 8 FAILED: Server returned error');
+                console.error('├── Status:', response.status);
+                console.error('├── Status text:', response.statusText);
+                console.error('└── Response body:', errorText);
+                throw new Error('Failed to submit attendance: ' + response.status);
+            }
+
+            const result = await response.json();
+            console.log('✅ STEP 8 COMPLETED: Server response received');
+            console.log('├── Success:', result.success);
+            console.log('├── Message:', result.message);
+            console.log('├── Check-in time (Makassar):', result.data?.check_in_time);
+            console.log('├── Timezone:', result.data?.timezone);
+            console.log('└── Full response data:', result.data);
+
+            if (!username) {
+                this.showMessage('Attendance recorded successfully!', 'success');
+            }
+
+            return result;
+
+            } catch (error) {
+                console.error('❌ STEP 8 FAILED: Network or parsing error');
+                console.error('├── Error:', error.message);
+                console.error('└── Stack:', error.stack);
+                throw error;
+            }
     }
 
     /**
