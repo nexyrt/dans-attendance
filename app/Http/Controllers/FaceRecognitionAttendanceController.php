@@ -90,6 +90,9 @@ class FaceRecognitionAttendanceController extends Controller
             $confidence = $request->input('confidence');
             $isAutoCheckin = $request->boolean('auto_checkin');
 
+            $currentTimeMakassar = Carbon::now('Asia/Makassar');
+            $todayMakassar = $currentTimeMakassar->format('Y-m-d');
+
             Log::info('📋 STEP 8b: PROCESSED DATA', [
                 'parsed_timestamp' => $timestamp->toISOString(),
                 'username' => $username,
@@ -280,14 +283,119 @@ class FaceRecognitionAttendanceController extends Controller
                 $imagePath = null;
             }
 
+            // LATE HOURS CALCULATION
+            Log::info('STEP 8f: CALCULATING LATE HOURS AND STATUS');
+
+            // Define work start time (8:30 AM) for the SAME DATE as check-in
+            $checkInDate = $timestamp->format('Y-m-d'); // Get the date from check-in timestamp
+            $workStartTime = Carbon::parse($checkInDate . ' 08:30:00', 'Asia/Makassar');
+
+            Log::info('Late calculation details - DEBUGGING', [
+                'check_in_timestamp_original' => $request->input('timestamp'),
+                'check_in_timestamp_parsed' => $timestamp->toISOString(),
+                'check_in_date_extracted' => $checkInDate,
+                'work_start_time_created' => $workStartTime->toISOString(),
+                'work_start_formatted' => $workStartTime->format('Y-m-d H:i:s'),
+                'check_in_formatted' => $timestamp->format('Y-m-d H:i:s'),
+                'timezone' => 'Asia/Makassar'
+            ]);
+
+            // Calculate if late and late hours
+            $isLate = $timestamp->isAfter($workStartTime);
+            $lateHours = 0;
+            $status = 'present'; // Default status
+
+            if ($isLate) {
+                // Calculate late duration in minutes - FIXED CALCULATION
+                $lateMinutes = $workStartTime->diffInMinutes($timestamp);
+                
+                // Convert to hours (decimal format: 1.5 hours = 1 hour 30 minutes)
+                $lateHours = round($lateMinutes / 60, 2);
+                
+                // Set status to late
+                $status = 'late';
+                
+                Log::info('LATE ATTENDANCE DETECTED - FIXED CALCULATION', [
+                    'user' => $username,
+                    'work_start_date' => $workStartTime->format('Y-m-d'),
+                    'work_start_time' => $workStartTime->format('H:i:s'),
+                    'check_in_date' => $timestamp->format('Y-m-d'),
+                    'check_in_time' => $timestamp->format('H:i:s'),
+                    'time_difference_calculation' => [
+                        'work_start_timestamp' => $workStartTime->timestamp,
+                        'check_in_timestamp' => $timestamp->timestamp,
+                        'difference_seconds' => $timestamp->timestamp - $workStartTime->timestamp,
+                        'difference_minutes' => $lateMinutes,
+                        'difference_hours_decimal' => $lateHours
+                    ],
+                    'late_minutes' => $lateMinutes,
+                    'late_hours' => $lateHours,
+                    'status' => $status
+                ]);
+                
+                // Additional validation to catch errors
+                if ($lateHours > 12) {
+                    Log::error('SUSPICIOUS LATE HOURS DETECTED - POSSIBLE CALCULATION ERROR', [
+                        'late_hours_calculated' => $lateHours,
+                        'late_minutes_calculated' => $lateMinutes,
+                        'work_start_full' => $workStartTime->toISOString(),
+                        'check_in_full' => $timestamp->toISOString(),
+                        'carbon_diff_result' => $workStartTime->diffInMinutes($timestamp),
+                        'manual_calculation' => [
+                            'work_start_hour' => $workStartTime->hour,
+                            'work_start_minute' => $workStartTime->minute,
+                            'check_in_hour' => $timestamp->hour,
+                            'check_in_minute' => $timestamp->minute,
+                            'hour_diff' => $timestamp->hour - $workStartTime->hour,
+                            'minute_diff' => $timestamp->minute - $workStartTime->minute,
+                            'manual_late_minutes' => (($timestamp->hour - $workStartTime->hour) * 60) + ($timestamp->minute - $workStartTime->minute),
+                            'manual_late_hours' => round(((($timestamp->hour - $workStartTime->hour) * 60) + ($timestamp->minute - $workStartTime->minute)) / 60, 2)
+                        ]
+                    ]);
+                    
+                    // Use manual calculation as fallback
+                    $manualLateMinutes = (($timestamp->hour - $workStartTime->hour) * 60) + ($timestamp->minute - $workStartTime->minute);
+                    
+                    // Only use manual calculation if it's reasonable (less than 12 hours)
+                    if ($manualLateMinutes > 0 && $manualLateMinutes < 720) { // 720 minutes = 12 hours
+                        $lateMinutes = $manualLateMinutes;
+                        $lateHours = round($lateMinutes / 60, 2);
+                        
+                        Log::info('USED MANUAL CALCULATION AS FALLBACK', [
+                            'corrected_late_minutes' => $lateMinutes,
+                            'corrected_late_hours' => $lateHours
+                        ]);
+                    }
+                }
+            } else {
+                Log::info('ON TIME ATTENDANCE', [
+                    'user' => $username,
+                    'work_start' => $workStartTime->format('H:i:s'),
+                    'check_in' => $timestamp->format('H:i:s'),
+                    'status' => $status
+                ]);
+            }
+
+            // Final validation
+            Log::info('FINAL LATE CALCULATION RESULT', [
+                'is_late' => $isLate,
+                'late_hours' => $lateHours,
+                'late_minutes' => $isLate ? $lateMinutes : 0,
+                'status' => $status,
+                'calculation_method' => $lateHours > 12 ? 'manual_fallback' : 'carbon_diff'
+            ]);
+
+
+
 
             // Create attendance record
-            Log::info('📝 STEP 8g: CREATING ATTENDANCE RECORD');
-            
+             Log::info('STEP 8g: CREATING ATTENDANCE RECORD WITH LATE CALCULATION');
+        
             $attendanceData = [
-                'date' => $today,
+                'date' => $todayMakassar,
                 'check_in' => $timestamp,
-                'status' => 'present',
+                'status' => $status,                    // 'present' or 'late'
+                'late_hours' => $lateHours,            // Decimal hours (e.g., 1.5 for 1h 30m)
                 'device_type' => 'web_face_recognition'
             ];
 
@@ -295,13 +403,23 @@ class FaceRecognitionAttendanceController extends Controller
                 $attendanceData['user_id'] = $user->id;
             }
 
-            // Create comprehensive metadata
+            // Enhanced metadata with late information
             $faceRecognitionData = [
                 'method' => 'face_recognition',
                 'auto_checkin' => $isAutoCheckin,
                 'confidence' => $confidence,
                 'image_path' => $imagePath,
                 'timestamp' => $timestamp->toISOString(),
+                'timezone' => 'Asia/Makassar',
+                
+                // Late calculation metadata
+                'work_start_time' => $workStartTime->format('H:i:s'),
+                'check_in_time' => $timestamp->format('H:i:s'),
+                'is_late' => $isLate,
+                'late_minutes' => $isLate ? $workStartTime->diffInMinutes($timestamp) : 0,
+                'late_hours_calculated' => $lateHours,
+                'attendance_status' => $status,
+                
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'image_size' => $image->getSize(),
@@ -320,14 +438,14 @@ class FaceRecognitionAttendanceController extends Controller
 
             $attendanceData['notes'] = json_encode($faceRecognitionData);
 
-            
-            Log::info('├── Attendance data prepared:', [
+            Log::info('Attendance data prepared with late calculation', [
                 'user_id' => $attendanceData['user_id'] ?? null,
                 'date' => $attendanceData['date'],
-                'check_in' => $attendanceData['check_in']->toISOString(),
+                'check_in_makassar' => $attendanceData['check_in']->format('Y-m-d H:i:s'),
                 'status' => $attendanceData['status'],
-                'device_type' => $attendanceData['device_type'],
-                'notes_size_bytes' => strlen($attendanceData['notes']),
+                'late_hours' => $attendanceData['late_hours'],
+                'is_late' => $isLate,
+                'timezone' => 'Asia/Makassar',
             ]);
 
             $dbStart = microtime(true);
@@ -338,25 +456,35 @@ class FaceRecognitionAttendanceController extends Controller
                 throw new \Exception('Attendance::create returned null');
             }
 
-            Log::info('✅ STEP 8g: ATTENDANCE RECORD CREATED', [
+            Log::info('STEP 8g SUCCESS: ATTENDANCE RECORD CREATED WITH LATE CALCULATION', [
                 'attendance_id' => $attendance->id,
                 'database_time_ms' => round(($dbEnd - $dbStart) * 1000, 2),
-                'created_at' => $attendance->created_at->toISOString(),
+                'status' => $attendance->status,
+                'late_hours' => $attendance->late_hours,
+                'is_late' => $isLate,
+                'work_start_time' => $workStartTime->format('H:i:s'),
+                'check_in_time' => $timestamp->format('H:i:s'),
             ]);
 
-            // Prepare response
-            Log::info('📤 STEP 8h: PREPARING RESPONSE');
-            
+            // Enhanced response with late information
             $responseData = [
                 'attendance_id' => $attendance->id,
-                'date' => $today,
+                'date' => $todayMakassar,
                 'check_in_time' => $timestamp->format('H:i:s'),
                 'check_in_full' => $timestamp->toISOString(),
+                'timezone' => 'Asia/Makassar',
                 'method' => 'face_recognition',
                 'auto_checkin' => $isAutoCheckin,
                 'confidence' => $confidence,
-                'status' => 'success',
-                'processing_time_ms' => round((microtime(true) - LARAVEL_START) * 1000, 2),
+                'status' => $status,
+                
+                // Late information in response
+                'is_late' => $isLate,
+                'late_hours' => $lateHours,
+                'work_start_time' => $workStartTime->format('H:i:s'),
+                'late_message' => $isLate ? 
+                    "Late by " . $this->formatLateHours($lateHours) : 
+                    "On time",
             ];
 
             if ($user) {
@@ -376,48 +504,44 @@ class FaceRecognitionAttendanceController extends Controller
                 $responseData['image_path'] = $imagePath;
             }
 
-            Log::info('🎉 STEP 8 COMPLETED: ATTENDANCE PROCESSED SUCCESSFULLY', [
+            Log::info('STEP 8 COMPLETED: ATTENDANCE WITH LATE CALCULATION PROCESSED', [
                 'attendance_id' => $attendance->id,
                 'user_id' => $user?->id,
                 'username' => $username,
-                'confidence' => $confidence,
-                'auto_checkin' => $isAutoCheckin,
-                'date' => $today,
-                'check_in_time' => $timestamp->format('H:i:s'),
-                'image_stored' => !!$imagePath,
-                'response_size_bytes' => strlen(json_encode($responseData)),
-                '═══════════════════════════════════════════════════════════',
+                'check_in_time_makassar' => $timestamp->format('H:i:s'),
+                'status' => $status,
+                'is_late' => $isLate,
+                'late_hours' => $lateHours,
+                'late_message' => $responseData['late_message'],
             ]);
+
+            // Success message based on late status
+            $successMessage = $isAutoCheckin ? 'Automatic attendance recorded successfully' : 'Attendance recorded successfully';
+            if ($isLate) {
+                $successMessage .= ' (Late arrival detected)';
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => $isAutoCheckin ? 
-                    'Automatic attendance recorded successfully' : 
-                    'Attendance recorded successfully',
+                'message' => $successMessage,
                 'data' => $responseData
             ], 201);
 
         } catch (\Exception $e) {
-            Log::error('❌ STEP 8 FAILED: UNEXPECTED ERROR', [
+            Log::error('STEP 8 FAILED: UNEXPECTED ERROR', [
                 'error_class' => get_class($e),
                 'error_message' => $e->getMessage(),
                 'error_file' => $e->getFile(),
                 'error_line' => $e->getLine(),
                 'username' => $request->input('username'),
                 'auto_checkin' => $request->input('auto_checkin'),
-                'stack_trace' => $e->getTraceAsString(),
-                '═══════════════════════════════════════════════════════════',
+                'timezone' => 'Asia/Makassar',
             ]);
             
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while recording attendance',
-                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error',
-                'debug_info' => config('app.debug') ? [
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'request_id' => uniqid('err_'),
-                ] : null
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
     }
@@ -665,5 +789,29 @@ class FaceRecognitionAttendanceController extends Controller
                 'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
+    }
+
+    private function formatLateHours($lateHours)
+    {
+        if ($lateHours == 0) {
+            return "0 minutes";
+        }
+        
+        $hours = floor($lateHours);
+        $minutes = round(($lateHours - $hours) * 60);
+        
+        $result = '';
+        if ($hours > 0) {
+            $result .= $hours . ($hours == 1 ? ' hour' : ' hours');
+        }
+        
+        if ($minutes > 0) {
+            if ($hours > 0) {
+                $result .= ' ';
+            }
+            $result .= $minutes . ($minutes == 1 ? ' minute' : ' minutes');
+        }
+        
+        return $result;
     }
 }
