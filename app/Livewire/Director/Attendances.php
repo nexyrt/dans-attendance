@@ -84,7 +84,11 @@ class Attendances extends Component
     public function openAddNoteModal($attendanceId)
     {
         $this->selectedAttendanceId = $attendanceId;
-        $this->attendanceNote = '';
+        
+        // Get the current note content if editing
+        $attendance = Attendance::find($attendanceId);
+        $this->attendanceNote = $attendance && $attendance->notes ? $attendance->notes : '';
+        
         $this->dispatch('open-modal', 'add-note-modal');
     }
     
@@ -163,11 +167,63 @@ class Attendances extends Component
     
     public function export()
     {
-        // In a real implementation, this would export attendance data based on current filters
-        $this->dispatch('notify', [
-            'type' => 'info',
-            'message' => 'Attendance data export will be ready for download shortly.'
-        ]);
+        try {
+            // Generate filename based on current filters
+            $filename = 'attendance-report-' . now()->format('Y-m-d-H-i-s');
+            
+            // Add filter info to filename
+            if ($this->selectedDepartment) {
+                $filename .= '-' . \Str::slug($this->selectedDepartment);
+            }
+            if ($this->selectedStatus) {
+                $filename .= '-' . \Str::slug($this->selectedStatus);
+            }
+            if ($this->startDate && $this->endDate) {
+                $filename .= '-' . $this->startDate . '-to-' . $this->endDate;
+            }
+            
+            $filename .= '.xlsx';
+
+            // Use Director AttendanceExport with all current filters
+            return \Maatwebsite\Excel\Facades\Excel::download(
+                new \App\Exports\Director\AttendanceExport(
+                    $this->startDate ?: now()->format('Y-m-d'), 
+                    $this->endDate ?: now()->format('Y-m-d'), 
+                    $this->selectedDepartment ?: '',
+                    $this->selectedStatus ?: '',
+                    $this->searchTerm ?: ''
+                ), 
+                $filename
+            );
+
+        } catch (\Exception $e) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Export failed: ' . $e->getMessage()
+            ]);
+            
+            // Log the error for debugging
+            \Log::error('Attendance export failed: ' . $e->getMessage(), [
+                'filters' => [
+                    'startDate' => $this->startDate,
+                    'endDate' => $this->endDate,
+                    'selectedDepartment' => $this->selectedDepartment,
+                    'selectedStatus' => $this->selectedStatus,
+                    'searchTerm' => $this->searchTerm,
+                ],
+                'user_id' => auth()->id()
+            ]);
+        }
+    }
+    
+    public function clearFilters()
+    {
+        $this->selectedDepartment = '';
+        $this->selectedStatus = '';
+        $this->startDate = now()->format('Y-m-d');
+        $this->endDate = now()->format('Y-m-d');
+        $this->searchTerm = '';
+        $this->resetPage();
     }
     
     private function getAttendances()
@@ -185,11 +241,14 @@ class Attendances extends Component
             $query->where('date', '<=', $this->endDate);
         }
         
-        // Apply department filter
+        // Apply department filter - FIXED
         if ($this->selectedDepartment) {
-            $query->whereHas('user', function ($q) {
-                $q->where('department_id', Department::where('name', $this->selectedDepartment)->pluck('id'));
-            });
+            $departmentId = Department::where('name', $this->selectedDepartment)->value('id');
+            if ($departmentId) {
+                $query->whereHas('user', function ($q) use ($departmentId) {
+                    $q->where('department_id', $departmentId);
+                });
+            }
         }
         
         // Apply status filter
@@ -208,16 +267,41 @@ class Attendances extends Component
         return $query->paginate(10);
     }
     
+    // Helper method to get dashboard statistics
+    private function getDashboardStats()
+    {
+        $today = now()->format('Y-m-d');
+        
+        $todayCheckInsCount = Attendance::whereDate('date', $today)
+            ->whereNotNull('check_in')
+            ->count();
+            
+        $presentCount = Attendance::whereDate('date', $today)
+            ->where('status', 'present')
+            ->count();
+            
+        $lateCount = Attendance::whereDate('date', $today)
+            ->where('status', 'late')
+            ->count();
+            
+        $pendingApprovalCount = Attendance::where('status', 'pending present')
+            ->count();
+            
+        return compact('todayCheckInsCount', 'presentCount', 'lateCount', 'pendingApprovalCount');
+    }
+    
     public function render()
     {
         $attendances = $this->getAttendances();
         $departments = Department::all()->pluck('name');
+        $dashboardStats = $this->getDashboardStats();
+        
         $this->dispatch('refresh-preline');
         
-        return view('livewire.director.attendances', [
+        return view('livewire.director.attendances', array_merge([
             'attendances' => $attendances,
             'departments' => $departments,
             'statuses' => ['present', 'late', 'early_leave', 'holiday', 'pending present']
-        ])->layout('layouts.director', ['title' => 'Attendance Management']);
+        ], $dashboardStats))->layout('layouts.director', ['title' => 'Attendance Management']);
     }
 }
