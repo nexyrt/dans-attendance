@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Cake\Chronos\Chronos;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Services\LeaveDocumentGenerator;
 
 class LeaveRequest extends Model
 {
@@ -63,6 +64,7 @@ class LeaveRequest extends Model
         'director_approved_at',
         'director_signature',
         'attachment_path',
+        'document_path',  // Added document path for auto-generated leave form
         'rejection_reason'
     ];
 
@@ -187,6 +189,19 @@ class LeaveRequest extends Model
             ]);
         }
         return false;
+    }
+
+    /**
+     * Regenerate the leave document with current information
+     *
+     * @return string The path to the generated document
+     */
+    public function regenerateDocument()
+    {
+        $documentGenerator = new LeaveDocumentGenerator();
+        $documentPath = $documentGenerator->generate($this);
+        $this->update(['document_path' => $documentPath]);
+        return $documentPath;
     }
 
     public function getDurationInDays(): float

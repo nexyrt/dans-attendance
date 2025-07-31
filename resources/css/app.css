@@ -1,4 +1,5 @@
 @import 'boxicons/css/boxicons.min.css';
+/* @import '../../vendor/livewire/flux/dist/flux.css'; */
 
 @tailwind base;
 @tailwind components;

@@ -2,376 +2,249 @@
 
 namespace App\Livewire\Manager;
 
-use App\Models\User;
 use App\Models\LeaveRequest;
-use Auth;
-use File;
+use App\Models\LeaveBalance;
+use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-use Livewire\WithFileUploads;
-use Livewire\Attributes\On;
-use Illuminate\Support\Facades\DB;
-use PhpOffice\PhpWord\TemplateProcessor;
-use Str;
+use Livewire\WithPagination;
+use Carbon\Carbon;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class Leave extends Component
 {
-    use WithFileUploads;
+    use WithPagination;
+    
+    // Filter variables
+    public $status = '';
+    public $departmentId = '';
+    public $searchTerm = '';
+    public $start_date;
+    public $end_date;
 
-    /**
-     * Component Properties
-     */
-    public $activeTab = 'pending';
-    public $showPreview = false;
-    public $previewUrl = null;
-    public $previewType = null;
-    public $showRejectModal = false;
-    public $rejectReason = '';
-    public $selectedRequest = null;
-    public $selectedDepartment = null;
-    public $signature = '';
-    public $selectedLeaveRequest = null;
+    protected $listeners = [
+        'date-range-selected' => 'updateDateRange',
+        'refresh' => '$refresh'
+    ];
 
-    /**
-     * Initialize Component
-     */
     public function mount()
     {
-        $this->selectedDepartment = auth()->user()->department_id;
+        // Set manager's department as default filter
+        $this->departmentId = Auth::user()->department_id;
+        
+        // Initialize date range for filter
+        $this->start_date = Carbon::now()->subMonth()->format('Y-m-d');
+        $this->end_date = Carbon::now()->format('Y-m-d');
     }
 
     /**
-     * Modal Handlers
+     * Update date range from the date picker component
      */
-    public function closeRejectModal()
+    public function updateDateRange($data)
     {
-        $this->showRejectModal = false;
-        $this->selectedRequest = null;
-        $this->rejectReason = '';
-        $this->resetValidation();
-    }
-
-    public function openSignatureModal($leaveRequestId)
-    {
-        $this->selectedLeaveRequest = LeaveRequest::find($leaveRequestId);
-        $this->dispatch('open-modal', 'signature-modal');
+        $this->start_date = $data['startDate'];
+        $this->end_date = $data['endDate'];
     }
 
     /**
-     * Document Signature Handler
+     * Generate PDF for the leave request
      */
-    private function addSignatureToDocument($signaturePath)
+    public function generatePdf($leaveId)
+    {
+        $leave = LeaveRequest::with([
+            'user', 
+            'user.department',
+            'manager',
+            'hr',
+            'director'
+        ])
+        ->findOrFail($leaveId);
+
+        // Check if user has permission to generate this PDF (must be manager of the department)
+        $manager = Auth::user();
+        if ($leave->user->department_id !== $manager->department_id) {
+            session()->flash('error', 'You do not have permission to access this document');
+            return;
+        }
+
+        $pdf = Pdf::loadView('livewire.staff.leave-pdf', [
+            'leave' => $leave
+        ]);
+
+        // Set paper size to A4
+        $pdf->setPaper('a4', 'portrait');
+        
+        // Configure PDF settings for better quality with proper margins
+        $pdf->setOption('dpi', 300);
+        $pdf->setOption('isHtml5ParserEnabled', true);
+        $pdf->setOption('isRemoteEnabled', true);
+        
+        // Generate a filename with user information
+        $filename = 'leave_request_' . $leaveId . '_' . Str::slug($leave->user->name) . '.pdf';
+
+        // Return the PDF as download
+        return response()->streamDownload(
+            fn() => print($pdf->output()),
+            $filename
+        );
+    }
+    
+    /**
+     * Approve a leave request - called from the Alpine component
+     */
+    public function approveLeave($leaveId, $signature)
     {
         try {
-            // Check if document exists
-            if (!$this->selectedLeaveRequest->attachment_path || 
-                !File::exists(public_path($this->selectedLeaveRequest->attachment_path))) {
+            $leaveRequest = LeaveRequest::findOrFail($leaveId);
+            
+            // Check if the authenticated user is authorized to approve this leave
+            $user = Auth::user();
+            $leaveOwner = $leaveRequest->user;
+            
+            if ($user->department_id !== $leaveOwner->department_id || 
+                $user->role !== 'manager' || 
+                $leaveRequest->status !== 'pending_manager') {
+                session()->flash('error', 'You are not authorized to approve this leave request');
+                $this->dispatch('notify-error', ['message' => 'You are not authorized to approve this leave request']);
+                return;
+            }
+            
+            // Save the manager's signature
+            $image_data = base64_decode(Str::of($signature)->after(','));
+            $filename = 'manager_approval_' . $leaveRequest->id . '_' . time() . '.png';
+            
+            $directory = public_path('signatures');
+            if (!file_exists($directory)) {
+                mkdir($directory, 0755, true);
+            }
+            
+            $img = imagecreatefromstring($image_data);
+            imagesavealpha($img, true); // Preserve transparency
+            imagepng($img, "{$directory}/{$filename}", 0); // Max quality
+            imagedestroy($img);
+            
+            $signature_path = 'signatures/' . $filename;
+            
+            // Update leave request using the correct column name: manager_approved_at
+            $leaveRequest->status = 'pending_hr';
+            $leaveRequest->manager_id = $user->id;
+            $leaveRequest->manager_signature = $signature_path;
+            $leaveRequest->manager_approved_at = now();
+            $leaveRequest->save();
+            
+            session()->flash('message', 'Leave request approved successfully');
+            $this->dispatch('notify-success', ['message' => 'Leave request approved successfully']);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to approve leave request: ' . $e->getMessage());
+            $this->dispatch('notify-error', ['message' => 'Failed to approve leave request: ' . $e->getMessage()]);
+            return false;
+        }
+    }
+    
+    /**
+     * Reject a leave request - called from the Alpine component
+     */
+    public function rejectLeave($leaveId, $reason)
+    {
+        try {
+            $leaveRequest = LeaveRequest::findOrFail($leaveId);
+            
+            // Check if the authenticated user is authorized to reject this leave
+            $user = Auth::user();
+            $leaveOwner = $leaveRequest->user;
+            
+            if ($user->department_id !== $leaveOwner->department_id || 
+                $user->role !== 'manager' || 
+                $leaveRequest->status !== 'pending_manager') {
+                session()->flash('error', 'You are not authorized to reject this leave request');
+                $this->dispatch('notify-error', ['message' => 'You are not authorized to reject this leave request']);
                 return false;
             }
-
-            // Initialize template processor with the document
-            $templateProcessor = new TemplateProcessor(
-                public_path($this->selectedLeaveRequest->attachment_path)
-            );
-
-            // Determine signature placeholder based on user role
-            $role = auth()->user()->role;
-            $placeholder = match($role) {
-                'manager' => 'manager_signature',
-                'admin' => 'hr_signature',
-                'director' => 'director_signature',
-                default => null
-            };
-
-            if (!$placeholder) return false;
-
-            // Add signature to document
-            $templateProcessor->setImageValue($placeholder, public_path($signaturePath));
-
-            // Save document with the same filename (override)
-            $templateProcessor->saveAs(public_path($this->selectedLeaveRequest->attachment_path));
-
+            
+            // Update leave request using the correct column name
+            $leaveRequest->status = 'rejected_manager';
+            $leaveRequest->manager_id = $user->id;
+            $leaveRequest->rejection_reason = $reason;
+            $leaveRequest->manager_approved_at = now(); // Use as timestamp for rejection too
+            $leaveRequest->save();
+            
+            session()->flash('message', 'Leave request rejected successfully');
+            $this->dispatch('notify-success', ['message' => 'Leave request rejected successfully']);
             return true;
+            
         } catch (\Exception $e) {
-            \Log::error('Error adding signature to document: ' . $e->getMessage());
+            session()->flash('error', 'Failed to reject leave request: ' . $e->getMessage());
+            $this->dispatch('notify-error', ['message' => 'Failed to reject leave request: ' . $e->getMessage()]);
             return false;
         }
     }
 
     /**
-     * Signature Approval Process
+     * Reset all filters
      */
-    public function saveSignatureAndApprove()
+    public function resetFilters()
     {
-        // Validate signature
-        $this->validate([
-            'signature' => 'required'
-        ]);
-
-        $user = Auth::user();
-        $currentTime = now();
-
-        // Create signatures directory if not exists
-        $directory = public_path('signatures');
-        if (!File::exists($directory)) {
-            File::makeDirectory($directory, 0755, true);
-        }
-
-        // Generate signature filename
-        $filename = sprintf(
-            '%s_%s_%s.png',
-            strtolower($user->role),
-            Str::slug($user->name),
-            $user->id
-        );
-
-        // Save signature image
-        $imageData = base64_decode(Str::of($this->signature)->after(','));
-        $signaturePath = 'signatures/' . $filename;
-        File::put(public_path($signaturePath), $imageData);
-
-        // Add signature to document
-        $documentSigned = $this->addSignatureToDocument($signaturePath);
-
-        // Process approval based on role
-        $status = match($user->role) {
-            'manager' => [
-                'status' => 'pending_hr',
-                'manager_id' => $user->id,
-                'manager_approved_at' => $currentTime,
-                'manager_signature' => $signaturePath,
-                'message' => 'Leave request approved and sent to HR.'
-            ],
-            'admin' => [
-                'status' => 'pending_director',
-                'hr_id' => $user->id,
-                'hr_approved_at' => $currentTime,
-                'hr_signature' => $signaturePath,
-                'message' => 'Leave request approved and sent to Director.'
-            ],
-            'director' => [
-                'status' => 'approved',
-                'director_id' => $user->id,
-                'director_approved_at' => $currentTime,
-                'director_signature' => $signaturePath,
-                'message' => 'Leave request has been fully approved.'
-            ],
-            default => null
-        };
-
-        if ($status) {
-            if ($status['status'] === 'approved') {
-                $this->finalizeApproval($user, $currentTime, $signaturePath);
-            } else {
-                $this->selectedLeaveRequest->update(collect($status)->except('message')->toArray());
-            }
-            
-            session()->flash('message', $status['message'] . ($documentSigned ? ' Document has been signed.' : ''));
-        }
-
-        $this->dispatch('close-modal', 'signature-modal');
-        $this->resetSignature();
+        $this->status = '';
+        $this->searchTerm = '';
+        $this->start_date = Carbon::now()->subMonth()->format('Y-m-d');
+        $this->end_date = Carbon::now()->format('Y-m-d');
+        $this->resetPage();
     }
-
+    
     /**
-     * Final Approval Handler
-     */
-    private function finalizeApproval($user, $currentTime, $signaturePath)
-    {
-        DB::transaction(function () use ($user, $currentTime, $signaturePath) {
-            // Update leave request status
-            $this->selectedLeaveRequest->update([
-                'status' => 'approved',
-                'director_id' => $user->id,
-                'director_approved_at' => $currentTime,
-                'director_signature' => $signaturePath
-            ]);
-
-            // Update leave balance
-            $leaveBalance = $this->selectedLeaveRequest->user->currentLeaveBalance();
-            if ($leaveBalance) {
-                $usedDays = $this->selectedLeaveRequest->getDurationInDays();
-                $leaveBalance->updateBalance(
-                    $leaveBalance->used_balance + $usedDays
-                );
-
-                // Create attendance records
-                $startDate = $this->selectedLeaveRequest->start_date;
-                $endDate = $this->selectedLeaveRequest->end_date;
-                $currentDate = clone $startDate;
-
-                while ($currentDate <= $endDate) {
-                    if (!$currentDate->isWeekend()) {
-                        $this->selectedLeaveRequest->user->attendances()->create([
-                            'date' => $currentDate,
-                            'status' => 'holiday',
-                            'notes' => 'Approved leave: ' . $this->selectedLeaveRequest->type
-                        ]);
-                    }
-                    $currentDate->addDay();
-                }
-            }
-        });
-    }
-
-    /**
-     * Reset Handlers
-     */
-    private function resetSignature()
-    {
-        $this->selectedLeaveRequest = null;
-        $this->signature = '';
-    }
-
-    /**
-     * Reject Process Handlers
-     */
-    public function showModalReject($requestId)
-    {
-        $this->selectedRequest = LeaveRequest::findOrFail($requestId);
-        $this->rejectReason = '';
-        $this->showRejectModal = true;
-    }
-
-    public function rejectRequest()
-    {
-        $this->validate([
-            'rejectReason' => 'required|min:10',
-        ]);
-
-        if (!$this->selectedRequest) {
-            return;
-        }
-
-        DB::transaction(function () {
-            $this->selectedRequest->update([
-                'status' => LeaveRequest::STATUS_REJECTED_MANAGER,
-                'manager_id' => auth()->id(),
-                'manager_approved_at' => now(),
-                'rejection_reason' => $this->rejectReason
-            ]);
-        });
-
-        $this->selectedRequest = null;
-        $this->rejectReason = '';
-        $this->showRejectModal = false;
-
-        session()->flash('message', 'Leave request rejected successfully.');
-    }
-
-    /**
-     * Preview Handlers
-     */
-    public function previewAttachment($requestId)
-    {
-        $request = LeaveRequest::findOrFail($requestId);
-        if ($request->attachment_path) {
-            $this->previewUrl = asset($request->attachment_path);
-            $this->previewType = strtolower(pathinfo($request->attachment_path, PATHINFO_EXTENSION));
-            $this->showPreview = true;
-        }
-    }
-
-    public function closePreview()
-    {
-        $this->showPreview = false;
-        $this->previewUrl = null;
-        $this->previewType = null;
-    }
-
-    /**
-     * Data Getters
+     * Get the leave requests for manager's department
      */
     public function getLeaveRequestsProperty()
     {
-        return LeaveRequest::query()
-            ->where('user_id', '!=', auth()->id())
-            ->whereHas('user', function ($query) {
-                $query->where('department_id', $this->selectedDepartment);
+        $manager = Auth::user();
+        
+        // Base query - only show requests from manager's department
+        $query = LeaveRequest::with(['user', 'user.department'])
+            ->whereHas('user', function($q) use ($manager) {
+                $q->where('department_id', $manager->department_id);
             })
-            ->when($this->activeTab === 'pending', function ($query) {
-                $query->where('status', LeaveRequest::STATUS_PENDING_MANAGER);
-            })
-            ->when($this->activeTab === 'approved', function ($query) {
-                $query->whereIn('status', [
-                    LeaveRequest::STATUS_PENDING_HR,
-                    LeaveRequest::STATUS_PENDING_DIRECTOR,
-                    LeaveRequest::STATUS_APPROVED
-                ]);
-            })
-            ->when($this->activeTab === 'rejected', function ($query) {
-                $query->where('status', LeaveRequest::STATUS_REJECTED_MANAGER);
-            })
-            ->with(['user.department'])
-            ->latest()
-            ->get()
-            ->map(function ($request) {
-                $request->user->currentLeaveBalance = $request->user->leaveBalances()
-                    ->where('year', now()->year)
-                    ->first();
-                return $request;
+            ->orderBy('created_at', 'desc');
+        
+        // Apply status filter
+        if ($this->status) {
+            $query->where('status', $this->status);
+        }
+        
+        // Apply search filter
+        if ($this->searchTerm) {
+            $query->whereHas('user', function($q) {
+                $q->where('name', 'like', '%' . $this->searchTerm . '%')
+                  ->orWhere('email', 'like', '%' . $this->searchTerm . '%');
             });
-    }
-
-    public function getTeamLeaveBalancesProperty()
-    {
-        return User::where('department_id', $this->selectedDepartment)
-            ->where('id', '!=', auth()->id())
-            ->with(['leaveRequests' => function ($query) {
-                $query->whereYear('created_at', now()->year);
-            }])
-            ->get()
-            ->each(function ($user) {
-                $user->currentLeaveBalance = $user->leaveBalances()
-                    ->where('year', now()->year)
-                    ->first();
+        }
+        
+        // Apply date range filter
+        if ($this->start_date && $this->end_date) {
+            $startDate = Carbon::parse($this->start_date)->startOfDay();
+            $endDate = Carbon::parse($this->end_date)->endOfDay();
+            
+            $query->where(function($q) use ($startDate, $endDate) {
+                $q->whereBetween('start_date', [$startDate, $endDate])
+                  ->orWhereBetween('end_date', [$startDate, $endDate])
+                  ->orWhere(function($q) use ($startDate, $endDate) {
+                      $q->where('start_date', '<=', $startDate)
+                        ->where('end_date', '>=', $endDate);
+                  });
             });
+        }
+        
+        return $query->paginate(10);
     }
 
-    /**
-     * Counter Getters
-     */
-    public function getPendingCountProperty()
-    {
-        return $this->getDepartmentRequestsCount(LeaveRequest::STATUS_PENDING_MANAGER);
-    }
-
-    public function getApprovedCountProperty()
-    {
-        return $this->getDepartmentRequestsCount([
-            LeaveRequest::STATUS_PENDING_HR,
-            LeaveRequest::STATUS_PENDING_DIRECTOR,
-            LeaveRequest::STATUS_APPROVED
-        ]);
-    }
-
-    public function getRejectedCountProperty()
-    {
-        return $this->getDepartmentRequestsCount(LeaveRequest::STATUS_REJECTED_MANAGER);
-    }
-
-    protected function getDepartmentRequestsCount($status)
-    {
-        return LeaveRequest::query()
-            ->where('user_id', '!=', auth()->id())
-            ->whereHas('user', function ($query) {
-                $query->where('department_id', $this->selectedDepartment);
-            })
-            ->when(is_array($status), function ($query) use ($status) {
-                $query->whereIn('status', $status);
-            }, function ($query) use ($status) {
-                $query->where('status', $status);
-            })
-            ->count();
-    }
-
-    /**
-     * Render Component
-     */
     public function render()
     {
         return view('livewire.manager.leave', [
             'leaveRequests' => $this->leaveRequests,
-            'teamBalances' => $this->teamLeaveBalances,
-        ])->layout('layouts.manager', ['title' => 'Leave Management']);
+        ])->layout('layouts.manager', ['title' => 'Leave Approval']);
     }
 }

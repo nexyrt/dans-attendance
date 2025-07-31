@@ -7,24 +7,31 @@
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.10",
+        "@tailwindcss/typography": "^0.5.16",
         "alpinejs": "^3.13.10",
-        "autoprefixer": "^10.4.2",
+        "autoprefixer": "^10.4.21",
         "axios": "^1.6.4",
         "laravel-vite-plugin": "^1.0.0",
-        "postcss": "^8.4.31",
-        "tailwindcss": "^3.1.0",
+        "postcss": "^8.5.6",
+        "postcss-nesting": "^13.0.2",
+        "tailwindcss": "^3.4.17",
         "vite": "^5.0.0"
     },
     "dependencies": {
         "@preline/select": "^2.5.2",
         "boxicons": "^2.1.4",
         "ckeditor4": "^4.24.0",
+        "face-api.js": "^0.22.2",
         "flowbite": "^2.5.2",
+        "flux": "^4.0.4",
+        "html5-qrcode": "^2.3.8",
         "moment": "^2.30.1",
         "pikaday": "^1.8.2",
         "preline": "^2.7.0",
+        "qrcode": "^1.5.4",
         "quill": "^2.0.3",
         "quill-image-resize-module": "^3.0.0",
-        "quill-table": "^1.0.0"
+        "quill-table": "^1.0.0",
+        "signature_pad": "^5.0.4"
     }
 }

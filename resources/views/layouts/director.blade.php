@@ -112,6 +112,18 @@
                                         'icon' =>
                                             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />',
                                     ],
+                                    [
+                                        'route' => 'director.qrattendance',
+                                        'label' => 'QR Attendance',
+                                        'icon' =>
+                                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />',
+                                    ],
+                                    [
+                                        'route' => 'director.faceattendace',
+                                        'label' => 'Face Attendance',
+                                        'icon' =>
+                                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />',
+                                    ],
                                 ];
 
                                 // Add the new schedules routes
@@ -122,15 +134,15 @@
                                 <a href="{{ route($nav['route']) }}"
                                     @click.prevent="window.innerWidth < 1024 ? (isSidebarOpen = false, window.location.href = '{{ route($nav['route']) }}') : window.location.href = '{{ route($nav['route']) }}'"
                                     class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 
-            {{ request()->routeIs($nav['route'] . '*')
-                ? 'bg-primary-50 text-primary-600'
-                : 'text-gray-600 hover:bg-gray-50/80' }}">
+                                            {{ request()->routeIs($nav['route'] . '*')
+                                                ? 'bg-primary-50 text-primary-600'
+                                                : 'text-gray-600 hover:bg-gray-50/80' }}">
                                     <div class="flex items-center">
                                         <div
                                             class="{{ request()->routeIs($nav['route'] . '*')
                                                 ? 'bg-primary-100/50'
                                                 : 'bg-gray-100/50 group-hover:bg-primary-50/50' }} 
-                        p-2 rounded-lg transition-colors duration-200">
+                                                p-2 rounded-lg transition-colors duration-200">
                                             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"
                                                 stroke="currentColor">
                                                 {!! $nav['icon'] !!}
@@ -321,7 +333,7 @@
                     </header>
 
                     {{-- Main Content --}}
-                    <div class="container mx-auto">
+                    <div class="">
                         {{ $slot }}
                     </div>
                 </main>
@@ -329,7 +341,9 @@
             </div>
         </div>
 
+
         @livewireScripts
+        @filamentScripts
         @livewireChartsScripts
         <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     </body>

@@ -42,6 +42,8 @@ use App\Livewire\Director\{
     Leave as DirectorLeaves,
     Attendances as DirectorAttendances,
     Offices as DirectorOffices,
+    QrAttendance as QrAttendance,
+    FaceAttendance as FaceAttendance,
 };
 
 use App\Livewire\Hr\{
@@ -134,6 +136,11 @@ Route::middleware(['auth', 'role:manager'])
         Route::get('/leave', ManagerLeave::class)->name('leave.index');
     });
 
+// Manager PDF download route
+Route::middleware(['auth', 'role:manager'])->get('/manager/leave/{id}/pdf', function ($id) {
+    return app(\App\Livewire\Manager\Leave::class)->generatePdf($id);
+})->name('manager.leave.pdf');
+
 /*
 |--------------------------------------------------------------------------
 | Manager Routes
@@ -151,6 +158,11 @@ Route::middleware(['auth', 'role:director'])
         Route::get('/office', DirectorOffices::class)->name('office.index');
         Route::get('/default-schedules', DirectorDefaultSchedule::class)->name('schedules.default');
         Route::get('/schedules-calendar', DirectorSchedulesCalendar::class)->name('schedules.calendar');
+        Route::get('/face-attendace', QrAttendance::class)->name('qrattendance');
+        Route::get('/attendance/qr/scan', function() {
+            return redirect()->route('qr.attendance');
+        })->name('attendance.qr.scan');
+        Route::get('/face-attendance', FaceAttendance::class)->name('faceattendace');
     });
 
 /*
@@ -162,5 +174,9 @@ Route::middleware(['auth', 'role:director'])
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });
+
+Route::get('/proposal', function () {
+    return view('proposal');
+})->name('proposal');
 
 require __DIR__ . '/auth.php';

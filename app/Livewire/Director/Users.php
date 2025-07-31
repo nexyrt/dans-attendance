@@ -5,24 +5,37 @@ namespace App\Livewire\Director;
 use App\Models\User;
 use App\Models\Department;
 use Livewire\Component;
-use Livewire\WithPagination;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Cake\Chronos\Chronos;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Form;
+use Filament\Notifications\Notification;
+use Illuminate\Database\Eloquent\Builder;
 
-class Users extends Component
+class Users extends Component implements HasTable, HasForms
 {
-    use WithPagination;
+    use InteractsWithTable;
+    use InteractsWithForms;
 
-    // Search and filtering properties
-    public $search = '';
-    public $department = '';
-    public $role = '';
-    public $sortField = 'name';
-    public $sortDirection = 'asc';
-    public $perPage = 10;
-
-    // Form properties
+    // Form properties for modals
     public $userId;
     public $name;
     public $email;
@@ -53,31 +66,115 @@ class Users extends Component
         'userDeleted' => '$refresh'
     ];
 
-    // Reset pagination when filters change
-    public function updatingSearch()
+    public function table(Table $table): Table
     {
-        $this->resetPage();
-    }
-
-    public function updatingDepartment()
-    {
-        $this->resetPage();
-    }
-
-    public function updatingRole()
-    {
-        $this->resetPage();
-    }
-
-    // Sorting
-    public function sortBy($field)
-    {
-        if ($this->sortField === $field) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortField = $field;
-            $this->sortDirection = 'asc';
-        }
+        return $table
+            ->query(User::query())
+            ->columns([
+                Tables\Columns\ImageColumn::make('image')
+                    ->label('Avatar')
+                    ->circular()
+                    ->size(40)
+                    ->defaultImageUrl(fn($record) => 'https://ui-avatars.com/api/?name=' . urlencode($record->name) . '&color=3B82F6&background=DBEAFE'),
+                
+                TextColumn::make('name')
+                    ->label('Name')
+                    ->searchable()
+                    ->sortable()
+                    ->formatStateUsing(function ($record) {
+                        return $record->name . '<br><span class="text-gray-500 text-xs">' . $record->email . '</span>';
+                    })
+                    ->html(),
+                
+                TextColumn::make('department.name')
+                    ->label('Department')
+                    ->placeholder('N/A')
+                    ->sortable(),
+                
+                BadgeColumn::make('role')
+                    ->label('Role')
+                    ->colors([
+                        'success' => 'staff',
+                        'info' => 'manager', 
+                        'danger' => 'admin',
+                        'warning' => 'director',
+                    ])
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
+                    ->sortable(),
+                
+                TextColumn::make('phone_number')
+                    ->label('Contact Info')
+                    ->formatStateUsing(function ($record) {
+                        $contact = $record->phone_number ?? 'N/A';
+                        if ($record->birthdate) {
+                            $contact .= '<br><span class="text-gray-500 text-xs">Born: ' . \Cake\Chronos\Chronos::parse($record->birthdate)->format('M d, Y') . '</span>';
+                        }
+                        return $contact;
+                    })
+                    ->html()
+                    ->searchable(),
+            ])
+            ->filters([
+                SelectFilter::make('department_id')
+                    ->label('Department')
+                    ->relationship('department', 'name')
+                    ->placeholder('All Departments'),
+                
+                SelectFilter::make('role')
+                    ->options([
+                        'staff' => 'Staff',
+                        'manager' => 'Manager',
+                        'admin' => 'Admin', 
+                        'director' => 'Director',
+                    ])
+                    ->placeholder('All Roles'),
+            ])
+            ->actions([
+                ActionGroup::make([
+                    Action::make('view')
+                        ->icon('heroicon-o-eye')
+                        ->color('info')
+                        ->action(fn ($record) => $this->viewUser($record->id)),
+                    
+                    Action::make('whatsapp')
+                        ->icon('heroicon-o-chat-bubble-left-right')
+                        ->color('success')
+                        ->label('WhatsApp')
+                        ->url(fn ($record) => $this->getWhatsAppUrl($record))
+                        ->openUrlInNewTab()
+                        ->visible(fn ($record) => !empty($record->phone_number)),
+                    
+                    Action::make('edit')
+                        ->icon('heroicon-o-pencil')
+                        ->color('warning')
+                        ->action(fn ($record) => $this->edit($record->id)),
+                    
+                    Action::make('resetPassword')
+                        ->icon('heroicon-o-key')
+                        ->color('gray')
+                        ->action(fn ($record) => $this->confirmPasswordReset($record->id)),
+                    
+                    Action::make('delete')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->action(fn ($record) => $this->confirmUserDeletion($record->id)),
+                ])
+                ->label('Actions')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->color('gray')
+                ->button()
+            ])
+            ->headerActions([
+                Action::make('create')
+                    ->label('Add New User')
+                    ->icon('heroicon-o-plus')
+                    ->action('create')
+                    ->color('primary'),
+            ])
+            ->searchable()
+            ->defaultSort('name', 'asc')
+            ->paginated([10, 25, 50, 100])
+            ->defaultPaginationPageOption(10);
     }
 
     // Create or edit user form
@@ -154,7 +251,10 @@ class Users extends Component
             $user->update($userData);
 
             $this->dispatch('close-modal', 'edit-user-modal');
-            session()->flash('message', 'User updated successfully.');
+            Notification::make()
+                ->title('User updated successfully')
+                ->success()
+                ->send();
         } else {
             User::create([
                 'name' => $this->name,
@@ -169,7 +269,10 @@ class Users extends Component
             ]);
 
             $this->dispatch('close-modal', 'create-user-modal');
-            session()->flash('message', 'User created successfully.');
+            Notification::make()
+                ->title('User created successfully')
+                ->success()
+                ->send();
         }
 
         $this->reset(['userId', 'name', 'email', 'password', 'role_select', 'department_id', 'phone_number', 'birthdate', 'salary', 'address']);
@@ -202,11 +305,18 @@ class Users extends Component
             $user->update(['password' => Hash::make($this->newPassword)]);
 
             $this->dispatch('close-modal', 'reset-password-modal');
-            session()->flash('message', 'Password reset successfully.');
+            Notification::make()
+                ->title('Password reset successfully')
+                ->success()
+                ->send();
             $this->resetPasswordId = null;
             $this->newPassword = '';
         } catch (\Exception $e) {
-            session()->flash('error', 'Failed to reset password: ' . $e->getMessage());
+            Notification::make()
+                ->title('Failed to reset password')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
         }
     }
 
@@ -224,10 +334,17 @@ class Users extends Component
             $user->delete();
 
             $this->dispatch('close-modal', 'delete-user-modal');
-            session()->flash('message', 'User deleted successfully.');
+            Notification::make()
+                ->title('User deleted successfully')
+                ->success()
+                ->send();
             $this->userIdBeingDeleted = null;
         } catch (\Exception $e) {
-            session()->flash('error', 'Failed to delete user: ' . $e->getMessage());
+            Notification::make()
+                ->title('Failed to delete user')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
         }
     }
 
@@ -235,24 +352,39 @@ class Users extends Component
     {
         $departmentsList = Department::all();
         $this->dispatch('refresh-preline');
-        $users = User::query()
-            ->when($this->search, function ($query) {
-                return $query->where(function ($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhere('email', 'like', '%' . $this->search . '%')
-                        ->orWhere('phone_number', 'like', '%' . $this->search . '%');
-                });
-            })
-            ->when($this->department, fn($query) => $query->where('department_id', Department::where('name', $this->department)->pluck('id')->first()))
-            ->when($this->role, fn($query) => $query->where('role', $this->role))
-            ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate($this->perPage);
-
+        
         return view('livewire.director.users', [
-            'users' => $users,
             'departments' => $departmentsList,
             'roles' => ['staff', 'manager', 'admin', 'director'],
             'userBeingViewed' => $this->viewUserId ? User::findOrFail($this->viewUserId) : null,
         ])->layout('layouts.director', ['title' => 'Users Management']);
+    }
+
+    /**
+     * Generate WhatsApp URL for user's phone number
+     */
+    private function getWhatsAppUrl($user)
+    {
+        if (empty($user->phone_number)) {
+            return '#';
+        }
+
+        // Clean the phone number (remove non-numeric characters except +)
+        $phoneNumber = preg_replace('/[^\d+]/', '', $user->phone_number);
+        
+        // Remove leading + if present for WhatsApp API
+        $phoneNumber = ltrim($phoneNumber, '+');
+        
+        // If the number doesn't start with country code, assume Indonesian (+62)
+        if (!preg_match('/^(62|1|44|33|49|81|86|91|55|52|54|56|57|58|51|53|506|507|508|509)/', $phoneNumber)) {
+            // Remove leading 0 if present (common in Indonesian phone numbers)
+            $phoneNumber = ltrim($phoneNumber, '0');
+            $phoneNumber = '62' . $phoneNumber; // Indonesian country code
+        }
+        
+        // Pre-filled message
+        $message = urlencode("Hello {$user->name}, I'm contacting you from the company system.");
+        
+        return "https://wa.me/{$phoneNumber}?text={$message}";
     }
 }

@@ -1,7 +1,11 @@
 <?php
 
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\FaceEnrollmentController;
+use App\Http\Controllers\FaceRecognitionAttendanceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\API\ManagerLeaveController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,3 +21,30 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+// Manager Leave API Routes
+Route::middleware(['auth', 'role:manager'])->prefix('manager/leave')->group(function () {
+    Route::post('/approve', [ManagerLeaveController::class, 'approve']);
+    Route::post('/reject', [ManagerLeaveController::class, 'reject']);
+});
+
+// Universal attendance endpoint (new) - supports both GET and POST
+Route::match(['get', 'post'], '/attendance/universal', [AttendanceController::class, 'universalAttendance'])->name('attendance.api.universal');
+
+// Get attendance status
+Route::get('/attendance/status', [AttendanceController::class, 'getAttendanceStatus'])->name('attendance.api.status');
+
+// Optional: QR code file saving endpoint (if you want server-side QR storage)
+Route::post('/qr-codes/save', function(\Illuminate\Http\Request $request) {
+    // Handle QR code file saving if needed
+    return response()->json(['success' => true, 'message' => 'QR code saved']);
+})->name('qr.save');
+
+Route::post('/face-enrollment', [FaceEnrollmentController::class, 'store']);
+Route::get('/face-enrollment', [FaceEnrollmentController::class, 'index']);
+Route::delete('/face-enrollment/{identifier}', [FaceEnrollmentController::class, 'destroy']);
+
+// Face recognition attendance routes
+Route::post('/attendance/face-recognition', [FaceRecognitionAttendanceController::class, 'store']);
+Route::get('/attendance/today', [FaceRecognitionAttendanceController::class, 'getTodaysAttendance']);
+Route::get('/attendance/statistics', [FaceRecognitionAttendanceController::class, 'getStatistics']);

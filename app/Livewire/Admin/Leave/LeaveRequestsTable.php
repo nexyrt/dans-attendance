@@ -7,10 +7,15 @@ use App\Models\Department;
 use App\Models\LeaveBalance;
 use App\Models\LeaveRequest;
 use App\Models\User;
+use Auth;
+use DB;
+use File;
 use Livewire\Component;
 use Carbon\Carbon;
 use Livewire\WithPagination;
 use Cake\Chronos\Chronos;
+use PhpOffice\PhpWord\TemplateProcessor;
+use Str;
 
 class LeaveRequestsTable extends Component
 {
@@ -23,6 +28,19 @@ class LeaveRequestsTable extends Component
     public $users; // Add users property
     public $showEditModal = false;
     public $selectedRequest = null;
+
+
+    public $activeTab = 'pending';
+    public $showPreview = false;
+    public $previewUrl = null;
+    public $previewType = null;
+    public $showRejectModal = false;
+    public $rejectReason = '';
+    public $selectedDepartment = null;
+    public $signature = '';
+    public $selectedLeaveRequest = null;
+
+
     public $filters = [
         'leavetype' => [],  // Changed to array
         'status' => [],     // Changed to array
@@ -65,6 +83,196 @@ class LeaveRequestsTable extends Component
         $this->activeFilters = array_filter($this->filters, fn($value) => !empty ($value));
     }
 
+    // For Signature
+    public function closeRejectModal()
+    {
+        $this->showRejectModal = false;
+        $this->selectedRequest = null;
+        $this->rejectReason = '';
+        $this->resetValidation();
+    }
+
+    public function openSignatureModal($leaveRequestId)
+    {
+        $this->selectedLeaveRequest = LeaveRequest::find($leaveRequestId);
+        $this->dispatch('open-modal', 'signature-modal');
+    }
+
+    /**
+     * Document Signature Handler
+     */
+    private function addSignatureToDocument($signaturePath)
+    {
+        try {
+            // Check if document exists
+            if (
+                !$this->selectedLeaveRequest->attachment_path ||
+                !File::exists(public_path($this->selectedLeaveRequest->attachment_path))
+            ) {
+                return false;
+            }
+
+            // Initialize template processor with the document
+            $templateProcessor = new TemplateProcessor(
+                public_path($this->selectedLeaveRequest->attachment_path)
+            );
+
+            // Get current user and their department
+            $user = auth()->user();
+            $department = $user->department;
+
+            // HR specific placeholders
+            $placeholders = [
+                'signature' => 'hr_signature',
+                'name' => 'hr_name',
+                'department' => 'hr_department'
+            ];
+
+            // Set signature image
+            $templateProcessor->setImageValue($placeholders['signature'], public_path($signaturePath));
+
+            // Set name and department values
+            $templateProcessor->setValue($placeholders['name'], $user->name);
+            $templateProcessor->setValue($placeholders['department'], $department->name);
+
+            // Save document with the same filename (override)
+            $templateProcessor->saveAs(public_path($this->selectedLeaveRequest->attachment_path));
+
+            return true;
+        } catch (\Exception $e) {
+            \Log::error('Error adding signature to document: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Signature Approval Process
+     */
+    public function saveSignatureAndApprove()
+    {
+        // Validate signature
+        $this->validate([
+            'signature' => 'required'
+        ]);
+
+        $user = Auth::user();
+        $currentTime = now();
+
+        // Create signatures directory if not exists
+        $directory = public_path('signatures');
+        if (!File::exists($directory)) {
+            File::makeDirectory($directory, 0755, true);
+        }
+
+        // Generate signature filename
+        $filename = sprintf(
+            '%s_%s_%s.png',
+            'hr',
+            Str::slug($user->name),
+            $user->id
+        );
+
+        // Save signature image
+        $imageData = base64_decode(Str::of($this->signature)->after(','));
+        $signaturePath = 'signatures/' . $filename;
+        File::put(public_path($signaturePath), $imageData);
+
+        // Add signature to document
+        $documentSigned = $this->addSignatureToDocument($signaturePath);
+
+        // Process HR approval
+        $status = [
+            'status' => 'pending_director',
+            'hr_id' => $user->id,
+            'hr_approved_at' => $currentTime,
+            'hr_signature' => $signaturePath,
+            'message' => 'Leave request approved and sent to Director.'
+        ];
+
+        // Update leave request with HR approval details
+        $this->selectedLeaveRequest->update(collect($status)->except('message')->toArray());
+
+        session()->flash('message', $status['message'] . ($documentSigned ? ' Document has been signed.' : ''));
+
+        $this->dispatch('close-modal', 'signature-modal');
+        $this->resetSignature();
+    }
+
+    /**
+     * Reset Handlers
+     */
+    private function resetSignature()
+    {
+        $this->selectedLeaveRequest = null;
+        $this->signature = '';
+    }
+
+    /**
+     * Reject Process Handlers
+     */
+    public function showModalReject($requestId)
+    {
+        $this->selectedRequest = LeaveRequest::findOrFail($requestId);
+        $this->rejectReason = '';
+        $this->showRejectModal = true;
+    }
+
+    public function rejectRequest()
+    {
+        $this->validate([
+            'rejectReason' => 'required|min:10',
+        ]);
+
+        if (!$this->selectedRequest) {
+            return;
+        }
+
+        DB::transaction(function () {
+            $this->selectedRequest->update([
+                'status' => LeaveRequest::STATUS_REJECTED_HR,
+                'hr_id' => auth()->id(),
+                'hr_approved_at' => now(),
+                'rejection_reason' => $this->rejectReason
+            ]);
+        });
+
+        $this->selectedRequest = null;
+        $this->rejectReason = '';
+        $this->showRejectModal = false;
+
+        session()->flash('message', 'Leave request rejected by HR successfully.');
+    }
+
+    /**
+     * Data Getters
+     */
+    public function getLeaveRequestsProperty()
+    {
+        return LeaveRequest::query()
+            ->when($this->activeTab === 'pending', function ($query) {
+                $query->where('status', LeaveRequest::STATUS_PENDING_HR);
+            })
+            ->when($this->activeTab === 'approved', function ($query) {
+                $query->whereIn('status', [
+                    LeaveRequest::STATUS_PENDING_DIRECTOR,
+                    LeaveRequest::STATUS_APPROVED
+                ])->where('hr_id', auth()->id());
+            })
+            ->when($this->activeTab === 'rejected', function ($query) {
+                $query->where('status', LeaveRequest::STATUS_REJECTED_HR)
+                      ->where('hr_id', auth()->id());
+            })
+            ->with(['user.department'])
+            ->latest()
+            ->get()
+            ->map(function ($request) {
+                $request->user->currentLeaveBalance = $request->user->leaveBalances()
+                    ->where('year', now()->year)
+                    ->first();
+                return $request;
+            });
+    }
+
     public function checkLeaveBalance($userId, $startDate, $endDate)
     {
         $year = Carbon::parse($startDate)->year;
@@ -95,7 +303,6 @@ class LeaveRequestsTable extends Component
             'days' => $days
         ];
     }
-
 
     // Add watchers for automatic filter application
     public function updatedFilters($value, $key)
