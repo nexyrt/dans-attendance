@@ -4,13 +4,13 @@ import forms from '@tailwindcss/forms';
 /** @type {import('tailwindcss').Config} */
 export default {
     presets: [
-        require('./vendor/tallstackui/tallstackui/tailwind.config.js') 
+        require("./vendor/tallstackui/tallstackui/tailwind.config.js") 
     ],
     content: [
-        "./vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php",
+        "./vendor/laravel/framew`ork/src/Illuminate/Pagination/resources/views/*.blade.php",
         "./storage/framework/views/*.php",
         "./resources/**/*.blade.php",
-        './vendor/tallstackui/tallstackui/src/**/*.php', 
+        "./vendor/tallstackui/tallstackui/src/**/*.php",
     ],
     theme: {
         extend: {
