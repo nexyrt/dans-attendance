@@ -16,10 +16,10 @@
 
 
 {{-- Styles --}}
-@notifyCss
-@livewireStyles
 @filamentStyles
-@vite(['resources/css/app.css', 'resources/js/app.js','resources/js/face-attendance.js'])
+<tallstackui:script />
+@livewireStyles
+@vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/face-attendance.js'])
 
 <style>
     [x-cloak] {

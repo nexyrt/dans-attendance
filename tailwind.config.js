@@ -5,11 +5,11 @@ import preset from './vendor/filament/support/tailwind.config.preset'
 /** @type {import('tailwindcss').Config} */
 export default {
     presets: [
-        require("./vendor/wireui/wireui/tailwind.config.js"),
+        require('./vendor/tallstackui/tallstackui/tailwind.config.js'),
         preset
     ],
     content: [
-                './app/Filament/**/*.php',
+        './app/Filament/**/*.php',
         './resources/views/filament/**/*.blade.php',
         './vendor/filament/**/*.blade.php',
         "./vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php",
@@ -18,9 +18,9 @@ export default {
         "./resources/**/*.js",
         "./resources/**/*.vue",
         "./node_modules/flowbite/**/*.js",
-        "node_modules/preline/dist/*.js",
         "./app/Filament/**/*.php",
         './vendor/filament/**/*.blade.php',
+        './vendor/tallstackui/tallstackui/src/**/*.php',
     ],
     theme: {
         extend: {
@@ -81,7 +81,5 @@ export default {
     },
     plugins: [
         forms,
-        require('flowbite/plugin'),
-        require('preline/plugin'),
     ],
 };
