@@ -112,6 +112,6 @@ class LeaveManagement extends Component
 
     public function render()
     {
-        return view('livewire.staff.leave.leave-management');
+        return view('livewire.staff.leave.leave-management')->layout('layouts.staff', ['title' => 'Leave Management']);
     }
 }
