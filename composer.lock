@@ -4182,6 +4182,7 @@
         },
         {
             "name": "maatwebsite/excel",
+<<<<<<< HEAD
             "version": "3.1.66",
             "source": {
                 "type": "git",
@@ -4192,6 +4193,18 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/SpartnerNL/Laravel-Excel/zipball/3b29c2426a46674f444890c45f742452a396aae8",
                 "reference": "3b29c2426a46674f444890c45f742452a396aae8",
+=======
+            "version": "3.1.65",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/SpartnerNL/Laravel-Excel.git",
+                "reference": "4ef746726f9515784846e4d02f3c0f8f3eae0f29"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/SpartnerNL/Laravel-Excel/zipball/4ef746726f9515784846e4d02f3c0f8f3eae0f29",
+                "reference": "4ef746726f9515784846e4d02f3c0f8f3eae0f29",
+>>>>>>> e84036c8cf89cab2ae764322354cb37cb90964c0
                 "shasum": ""
             },
             "require": {
@@ -4247,7 +4260,11 @@
             ],
             "support": {
                 "issues": "https://github.com/SpartnerNL/Laravel-Excel/issues",
+<<<<<<< HEAD
                 "source": "https://github.com/SpartnerNL/Laravel-Excel/tree/3.1.66"
+=======
+                "source": "https://github.com/SpartnerNL/Laravel-Excel/tree/3.1.65"
+>>>>>>> e84036c8cf89cab2ae764322354cb37cb90964c0
             },
             "funding": [
                 {
@@ -4259,7 +4276,11 @@
                     "type": "github"
                 }
             ],
+<<<<<<< HEAD
             "time": "2025-08-07T08:31:22+00:00"
+=======
+            "time": "2025-07-29T15:30:55+00:00"
+>>>>>>> e84036c8cf89cab2ae764322354cb37cb90964c0
         },
         {
             "name": "maennchen/zipstream-php",
@@ -5385,6 +5406,7 @@
         },
         {
             "name": "phpoffice/phpspreadsheet",
+<<<<<<< HEAD
             "version": "1.30.0",
             "source": {
                 "type": "git",
@@ -5395,6 +5417,18 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/PHPOffice/PhpSpreadsheet/zipball/2f39286e0136673778b7a142b3f0d141e43d1714",
                 "reference": "2f39286e0136673778b7a142b3f0d141e43d1714",
+=======
+            "version": "1.29.12",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/PHPOffice/PhpSpreadsheet.git",
+                "reference": "7c06eed662cce7ecab88f6f9f7626b443f5285df"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/PHPOffice/PhpSpreadsheet/zipball/7c06eed662cce7ecab88f6f9f7626b443f5285df",
+                "reference": "7c06eed662cce7ecab88f6f9f7626b443f5285df",
+>>>>>>> e84036c8cf89cab2ae764322354cb37cb90964c0
                 "shasum": ""
             },
             "require": {
@@ -5485,9 +5519,15 @@
             ],
             "support": {
                 "issues": "https://github.com/PHPOffice/PhpSpreadsheet/issues",
+<<<<<<< HEAD
                 "source": "https://github.com/PHPOffice/PhpSpreadsheet/tree/1.30.0"
             },
             "time": "2025-08-10T06:28:02+00:00"
+=======
+                "source": "https://github.com/PHPOffice/PhpSpreadsheet/tree/1.29.12"
+            },
+            "time": "2025-07-23T04:40:30+00:00"
+>>>>>>> e84036c8cf89cab2ae764322354cb37cb90964c0
         },
         {
             "name": "phpoffice/phpword",
@@ -10637,6 +10677,7 @@
         },
         {
             "name": "phpunit/phpunit",
+<<<<<<< HEAD
             "version": "10.5.50",
             "source": {
                 "type": "git",
@@ -10647,6 +10688,18 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/a858178a64d88653e94ece15b25a860d48a4644b",
                 "reference": "a858178a64d88653e94ece15b25a860d48a4644b",
+=======
+            "version": "10.5.48",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/sebastianbergmann/phpunit.git",
+                "reference": "6e0a2bc39f6fae7617989d690d76c48e6d2eb541"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/6e0a2bc39f6fae7617989d690d76c48e6d2eb541",
+                "reference": "6e0a2bc39f6fae7617989d690d76c48e6d2eb541",
+>>>>>>> e84036c8cf89cab2ae764322354cb37cb90964c0
                 "shasum": ""
             },
             "require": {
@@ -10656,7 +10709,11 @@
                 "ext-mbstring": "*",
                 "ext-xml": "*",
                 "ext-xmlwriter": "*",
+<<<<<<< HEAD
                 "myclabs/deep-copy": "^1.13.4",
+=======
+                "myclabs/deep-copy": "^1.13.3",
+>>>>>>> e84036c8cf89cab2ae764322354cb37cb90964c0
                 "phar-io/manifest": "^2.0.4",
                 "phar-io/version": "^3.2.1",
                 "php": ">=8.1",
@@ -10718,7 +10775,11 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
+<<<<<<< HEAD
                 "source": "https://github.com/sebastianbergmann/phpunit/tree/10.5.50"
+=======
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/10.5.48"
+>>>>>>> e84036c8cf89cab2ae764322354cb37cb90964c0
             },
             "funding": [
                 {
@@ -10742,7 +10803,11 @@
                     "type": "tidelift"
                 }
             ],
+<<<<<<< HEAD
             "time": "2025-08-10T08:34:14+00:00"
+=======
+            "time": "2025-07-11T04:07:17+00:00"
+>>>>>>> e84036c8cf89cab2ae764322354cb37cb90964c0
         },
         {
             "name": "sebastian/cli-parser",

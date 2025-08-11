@@ -53,7 +53,7 @@ class CheckOutModal extends Component
     {
         return [
             'earlyLeaveReason' => $this->showEarlyLeaveForm ? 'required|string|max:255' : 'nullable|string|max:255',
-            'notes' => 'required|string|max:1000'
+            'notes' => 'required|string'
         ];
     }
 
@@ -169,10 +169,10 @@ class CheckOutModal extends Component
             return false;
         }
 
-        if ($this->nearestOfficeDistance > $this->nearestOffice->radius) {
-            $this->errorMessage = 'You must be within office area to check out.';
-            return false;
-        }
+        // if ($this->nearestOfficeDistance > $this->nearestOffice->radius) {
+        //     $this->errorMessage = 'You must be within office area to check out.';
+        //     return false;
+        // }
 
         return true;
     }

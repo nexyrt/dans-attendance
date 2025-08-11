@@ -24,7 +24,7 @@ use App\Livewire\Admin\Attendances\AttendanceRecord;
 use App\Livewire\Staff\{
     Dashboard as StaffDashboard,
     Attendance as StaffAttendance,
-    Leave as StaffLeave,
+    Leave\LeaveManagement as StaffLeave,
     Payroll as StaffPayroll,
     Profile as StaffProfile,
 };
@@ -116,7 +116,7 @@ Route::middleware(['auth', 'role:staff'])
     ->name('staff.')
     ->group(function () {
         Route::get('/dashboard', StaffDashboard::class)->name('dashboard');
-        Route::get('/attendance', StaffAttendance::class)->name('attendance.index');
+        Route::get('/attendance', action: StaffAttendance::class)->name('attendance.index');
         Route::get('/leave', StaffLeave::class)->name('leave.index');
         Route::get('/payroll', StaffPayroll::class)->name('payroll.index');
         Route::get('/profile', StaffProfile::class)->name('profile.index');

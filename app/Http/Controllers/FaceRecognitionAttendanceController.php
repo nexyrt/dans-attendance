@@ -18,45 +18,62 @@ class FaceRecognitionAttendanceController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        Log::info('Face recognition attendance request received', [
+        Log::info('🚀 STEP 8: ATTENDANCE REQUEST RECEIVED', [
+            '═══════════════════════════════════════════════════════════',
+            'timestamp' => now()->toISOString(),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'request_method' => $request->method(),
+            'content_type' => $request->header('Content-Type'),
+            'content_length' => $request->header('Content-Length'),
+            '═══════════════════════════════════════════════════════════',
+        ]);
+        
+        Log::info('📝 REQUEST DATA ANALYSIS', [
             'has_image' => $request->hasFile('image'),
-            'username' => $request->input('username'),
-            'auto_checkin' => $request->input('auto_checkin'),
-            'confidence' => $request->input('confidence'),
-            'ip' => $request->ip(),
-            'user_agent' => $request->userAgent()
+            'has_username' => $request->has('username'),
+            'has_timestamp' => $request->has('timestamp'),
+            'has_confidence' => $request->has('confidence'),
+            'has_auto_checkin' => $request->has('auto_checkin'),
+            'csrf_token_present' => $request->has('_token'),
+            'all_form_keys' => array_keys($request->all()),
+            'files_count' => count($request->allFiles()),
         ]);
 
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            Log::info('📸 IMAGE FILE ANALYSIS', [
+                'original_name' => $image->getClientOriginalName(),
+                'mime_type' => $image->getMimeType(),
+                'size_bytes' => $image->getSize(),
+                'size_mb' => round($image->getSize() / 1024 / 1024, 2),
+                'is_valid' => $image->isValid(),
+                'extension' => $image->getClientOriginalExtension(),
+                'temporary_path' => $image->getPathname(),
+            ]);
+        }
+
+        $inputData = $request->only(['username', 'timestamp', 'confidence', 'auto_checkin']);
+        Log::info('📊 INPUT PARAMETERS', $inputData);
+
         try {
-            // Enhanced validation with better error messages
+            Log::info('🔍 STEP 8a: STARTING VALIDATION');
+            
+            // Your existing validation code here...
             $validator = Validator::make($request->all(), [
-                'image' => 'required|file|image|mimes:jpeg,jpg,png|max:10240', // Increased to 10MB
+                'image' => 'required|file|image|mimes:jpeg,jpg,png|max:10240',
                 'timestamp' => 'required|date',
                 'username' => 'sometimes|string|max:255',
                 'confidence' => 'sometimes|numeric|min:0|max:100',
                 'auto_checkin' => 'sometimes|boolean'
-            ], [
-                'image.required' => 'Attendance image is required',
-                'image.file' => 'Invalid file uploaded',
-                'image.image' => 'File must be a valid image',
-                'image.mimes' => 'Only JPEG, JPG, and PNG images are allowed',
-                'image.max' => 'Image size cannot exceed 10MB',
-                'timestamp.required' => 'Timestamp is required',
-                'timestamp.date' => 'Invalid timestamp format',
-                'username.string' => 'Username must be a string',
-                'username.max' => 'Username cannot exceed 255 characters',
-                'confidence.numeric' => 'Confidence must be a number',
-                'confidence.min' => 'Confidence cannot be negative',
-                'confidence.max' => 'Confidence cannot exceed 100',
-                'auto_checkin.boolean' => 'Auto check-in must be true or false'
             ]);
 
             if ($validator->fails()) {
-                Log::warning('Face recognition attendance validation failed', [
+                Log::warning('❌ STEP 8a FAILED: VALIDATION ERRORS', [
                     'errors' => $validator->errors()->toArray(),
-                    'input' => $request->except(['image'])
+                    'failed_rules' => $validator->failed(),
                 ]);
-
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
@@ -64,68 +81,106 @@ class FaceRecognitionAttendanceController extends Controller
                 ], 422);
             }
 
+            Log::info('✅ STEP 8a: VALIDATION PASSED');
+
+            // Extract validated data
             $image = $request->file('image');
             $timestamp = Carbon::parse($request->input('timestamp'));
             $username = $request->input('username');
             $confidence = $request->input('confidence');
             $isAutoCheckin = $request->boolean('auto_checkin');
 
-            // Validate image file more thoroughly
-            if (!$image->isValid()) {
-                Log::error('Invalid image file uploaded', [
-                    'error' => $image->getErrorMessage(),
-                    'username' => $username
-                ]);
+            $currentTimeMakassar = Carbon::now('Asia/Makassar');
+            $todayMakassar = $currentTimeMakassar->format('Y-m-d');
 
+            Log::info('📋 STEP 8b: PROCESSED DATA', [
+                'parsed_timestamp' => $timestamp->toISOString(),
+                'username' => $username,
+                'confidence' => $confidence,
+                'is_auto_checkin' => $isAutoCheckin,
+                'today_date' => $timestamp->format('Y-m-d'),
+            ]);
+
+            // Image validation
+            Log::info('🔍 STEP 8c: IMAGE VALIDATION');
+            
+            if (!$image->isValid()) {
+                Log::error('❌ STEP 8c FAILED: INVALID IMAGE', [
+                    'error_message' => $image->getErrorMessage(),
+                    'error_code' => $image->getError(),
+                ]);
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid or corrupted image file: ' . $image->getErrorMessage()
                 ], 400);
             }
 
-            // Check image properties
             $imageInfo = @getimagesize($image->getPathname());
             if (!$imageInfo) {
-                Log::error('Unable to read image properties', [
-                    'username' => $username,
+                Log::error('❌ STEP 8c FAILED: CANNOT READ IMAGE PROPERTIES', [
                     'file_size' => $image->getSize(),
-                    'mime_type' => $image->getMimeType()
+                    'mime_type' => $image->getMimeType(),
+                    'temp_path' => $image->getPathname(),
                 ]);
-
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'Unable to process image file. Please try with a different image.'
                 ], 400);
             }
 
-            // Find user if username is provided
+            Log::info('✅ STEP 8c: IMAGE VALIDATION PASSED', [
+                'dimensions' => $imageInfo[0] . 'x' . $imageInfo[1],
+                'channels' => $imageInfo['channels'] ?? 'unknown',
+                'bits_per_pixel' => $imageInfo['bits'] ?? 'unknown',
+            ]);
+
+
+            // User search
+            Log::info('🔍 STEP 8d: USER SEARCH');
             $user = null;
+
             if ($username) {
-                // Try multiple search strategies
+                Log::info('├── Searching for user with multiple strategies...', ['username' => $username]);
+                
+                // Strategy 1: Exact name match
                 $user = User::where('name', $username)->first();
+                Log::info('├── Strategy 1 (exact name):', ['result' => $user ? 'Found ID ' . $user->id : 'Not found']);
                 
                 if (!$user) {
-                    // Try case-insensitive search
+                    // Strategy 2: Case-insensitive name match
                     $user = User::whereRaw('LOWER(name) = ?', [strtolower($username)])->first();
+                    Log::info('├── Strategy 2 (case-insensitive):', ['result' => $user ? 'Found ID ' . $user->id : 'Not found']);
                 }
                 
                 if (!$user) {
-                    // Try partial name match
+                    // Strategy 3: Partial name match
                     $user = User::where('name', 'like', '%' . $username . '%')->first();
+                    Log::info('├── Strategy 3 (partial name):', ['result' => $user ? 'Found ID ' . $user->id : 'Not found']);
                 }
                 
                 if (!$user) {
-                    // Try email search
+                    // Strategy 4: Email search
                     $user = User::where('email', 'like', '%' . $username . '%')->first();
+                    Log::info('├── Strategy 4 (email search):', ['result' => $user ? 'Found ID ' . $user->id : 'Not found']);
                 }
 
-                if (!$user) {
-                    Log::warning('User not found for face recognition attendance', [
-                        'username' => $username,
-                        'confidence' => $confidence
+                if ($user) {
+                    Log::info('✅ STEP 8d: USER FOUND', [
+                        'user_id' => $user->id,
+                        'user_name' => $user->name,
+                        'user_email' => $user->email,
+                        'department_id' => $user->department_id,
+                        'searched_username' => $username,
+                    ]);
+                } else {
+                    Log::warning('⚠️ STEP 8d: USER NOT FOUND', [
+                        'searched_username' => $username,
+                        'search_strategies_tried' => 4,
+                        'is_auto_checkin' => $isAutoCheckin,
                     ]);
                     
-                    // For auto check-in, we might want to continue without user
                     if (!$isAutoCheckin) {
                         return response()->json([
                             'success' => false,
@@ -136,17 +191,15 @@ class FaceRecognitionAttendanceController extends Controller
                             ]
                         ], 404);
                     }
-                } else {
-                    Log::info('User found for attendance', [
-                        'user_id' => $user->id,
-                        'user_name' => $user->name,
-                        'searched_username' => $username
-                    ]);
                 }
+            } else {
+                Log::info('├── No username provided, proceeding without user', ['auto_checkin' => $isAutoCheckin]);
             }
 
-            // Check if user already has attendance for today
+            // Duplicate check
+            Log::info('🔍 STEP 8e: DUPLICATE CHECK');
             $today = $timestamp->format('Y-m-d');
+            
             if ($user) {
                 $existingAttendance = Attendance::where('user_id', $user->id)
                     ->where('date', $today)
@@ -154,11 +207,13 @@ class FaceRecognitionAttendanceController extends Controller
                     ->first();
 
                 if ($existingAttendance) {
-                    Log::info('User already checked in today', [
+                    Log::warning('⚠️ STEP 8e: DUPLICATE ATTENDANCE DETECTED', [
                         'user_id' => $user->id,
                         'username' => $username,
+                        'existing_attendance_id' => $existingAttendance->id,
                         'existing_checkin' => $existingAttendance->check_in->format('H:i:s'),
-                        'attempted_checkin' => $timestamp->format('H:i:s')
+                        'attempted_checkin' => $timestamp->format('H:i:s'),
+                        'time_difference_minutes' => $existingAttendance->check_in->diffInMinutes($timestamp),
                     ]);
 
                     return response()->json([
@@ -167,53 +222,180 @@ class FaceRecognitionAttendanceController extends Controller
                         'data' => [
                             'existing_checkin' => $existingAttendance->check_in->format('H:i:s'),
                             'user' => $user->name,
-                            'date' => $today
+                            'date' => $today,
+                            'attendance_id' => $existingAttendance->id
                         ]
                     ], 409);
                 }
+                
+                Log::info('✅ STEP 8e: NO DUPLICATE FOUND');
             }
 
-            // Store the attendance image with better error handling
+            // Image storage
+            Log::info('STEP 8f: IMAGE STORAGE STARTED');
             $imagePath = null;
+
             try {
                 $directory = 'attendance/' . $today;
                 $filename = ($username ?: 'unknown') . '_' . 
-                           $timestamp->format('H-i-s') . '_' . 
-                           uniqid() . '.' . $image->getClientOriginalExtension();
+                        $timestamp->format('H-i-s') . '_' . 
+                        uniqid() . '.' . $image->getClientOriginalExtension();
                 
-                // Ensure directory exists
+                Log::info('Storage details prepared', [
+                    'directory' => $directory,
+                    'filename' => $filename,
+                    'full_path' => $directory . '/' . $filename,
+                    'storage_disk' => 'public',
+                ]);
+                
+                // Check directory exists
                 if (!Storage::disk('public')->exists($directory)) {
+                    Log::info('Creating directory', ['directory' => $directory]);
                     Storage::disk('public')->makeDirectory($directory);
                 }
                 
+                $storageStart = microtime(true);
                 $imagePath = Storage::disk('public')->putFileAs($directory, $image, $filename);
+                $storageEnd = microtime(true);
                 
                 if (!$imagePath) {
-                    throw new \Exception('Failed to store image file');
+                    throw new \Exception('Storage::putFileAs returned false');
                 }
                 
-                Log::info('Attendance image saved successfully', [
-                    'path' => $imagePath,
-                    'size' => $image->getSize(),
-                    'original_name' => $image->getClientOriginalName()
+                Log::info('STEP 8f SUCCESS: IMAGE STORED', [
+                    'storage_path' => $imagePath,
+                    'storage_time_ms' => round(($storageEnd - $storageStart) * 1000, 2),
+                    'file_exists' => Storage::disk('public')->exists($imagePath),
+                    'file_size' => Storage::disk('public')->size($imagePath),
+                    'public_url' => Storage::disk('public')->url($imagePath),
                 ]);
                 
             } catch (\Exception $storageError) {
-                Log::error('Failed to save attendance image', [
-                    'error' => $storageError->getMessage(),
-                    'username' => $username,
-                    'timestamp' => $timestamp->toISOString()
+                Log::error('STEP 8f FAILED: IMAGE STORAGE ERROR', [
+                    'error_message' => $storageError->getMessage(),
+                    'error_file' => $storageError->getFile(),
+                    'error_line' => $storageError->getLine(),
+                    'directory' => $directory ?? 'unknown',
+                    'filename' => $filename ?? 'unknown',
                 ]);
                 
                 // Continue without image - don't fail the attendance
                 $imagePath = null;
             }
 
-            // Create attendance record with comprehensive data
+            // LATE HOURS CALCULATION
+            Log::info('STEP 8f: CALCULATING LATE HOURS AND STATUS');
+
+            // Define work start time (8:30 AM) for the SAME DATE as check-in
+            $checkInDate = $timestamp->format('Y-m-d'); // Get the date from check-in timestamp
+            $workStartTime = Carbon::parse($checkInDate . ' 08:30:00', 'Asia/Makassar');
+
+            Log::info('Late calculation details - DEBUGGING', [
+                'check_in_timestamp_original' => $request->input('timestamp'),
+                'check_in_timestamp_parsed' => $timestamp->toISOString(),
+                'check_in_date_extracted' => $checkInDate,
+                'work_start_time_created' => $workStartTime->toISOString(),
+                'work_start_formatted' => $workStartTime->format('Y-m-d H:i:s'),
+                'check_in_formatted' => $timestamp->format('Y-m-d H:i:s'),
+                'timezone' => 'Asia/Makassar'
+            ]);
+
+            // Calculate if late and late hours
+            $isLate = $timestamp->isAfter($workStartTime);
+            $lateHours = 0;
+            $status = 'present'; // Default status
+
+            if ($isLate) {
+                // Calculate late duration in minutes - FIXED CALCULATION
+                $lateMinutes = $workStartTime->diffInMinutes($timestamp);
+                
+                // Convert to hours (decimal format: 1.5 hours = 1 hour 30 minutes)
+                $lateHours = round($lateMinutes / 60, 2);
+                
+                // Set status to late
+                $status = 'late';
+                
+                Log::info('LATE ATTENDANCE DETECTED - FIXED CALCULATION', [
+                    'user' => $username,
+                    'work_start_date' => $workStartTime->format('Y-m-d'),
+                    'work_start_time' => $workStartTime->format('H:i:s'),
+                    'check_in_date' => $timestamp->format('Y-m-d'),
+                    'check_in_time' => $timestamp->format('H:i:s'),
+                    'time_difference_calculation' => [
+                        'work_start_timestamp' => $workStartTime->timestamp,
+                        'check_in_timestamp' => $timestamp->timestamp,
+                        'difference_seconds' => $timestamp->timestamp - $workStartTime->timestamp,
+                        'difference_minutes' => $lateMinutes,
+                        'difference_hours_decimal' => $lateHours
+                    ],
+                    'late_minutes' => $lateMinutes,
+                    'late_hours' => $lateHours,
+                    'status' => $status
+                ]);
+                
+                // Additional validation to catch errors
+                if ($lateHours > 12) {
+                    Log::error('SUSPICIOUS LATE HOURS DETECTED - POSSIBLE CALCULATION ERROR', [
+                        'late_hours_calculated' => $lateHours,
+                        'late_minutes_calculated' => $lateMinutes,
+                        'work_start_full' => $workStartTime->toISOString(),
+                        'check_in_full' => $timestamp->toISOString(),
+                        'carbon_diff_result' => $workStartTime->diffInMinutes($timestamp),
+                        'manual_calculation' => [
+                            'work_start_hour' => $workStartTime->hour,
+                            'work_start_minute' => $workStartTime->minute,
+                            'check_in_hour' => $timestamp->hour,
+                            'check_in_minute' => $timestamp->minute,
+                            'hour_diff' => $timestamp->hour - $workStartTime->hour,
+                            'minute_diff' => $timestamp->minute - $workStartTime->minute,
+                            'manual_late_minutes' => (($timestamp->hour - $workStartTime->hour) * 60) + ($timestamp->minute - $workStartTime->minute),
+                            'manual_late_hours' => round(((($timestamp->hour - $workStartTime->hour) * 60) + ($timestamp->minute - $workStartTime->minute)) / 60, 2)
+                        ]
+                    ]);
+                    
+                    // Use manual calculation as fallback
+                    $manualLateMinutes = (($timestamp->hour - $workStartTime->hour) * 60) + ($timestamp->minute - $workStartTime->minute);
+                    
+                    // Only use manual calculation if it's reasonable (less than 12 hours)
+                    if ($manualLateMinutes > 0 && $manualLateMinutes < 720) { // 720 minutes = 12 hours
+                        $lateMinutes = $manualLateMinutes;
+                        $lateHours = round($lateMinutes / 60, 2);
+                        
+                        Log::info('USED MANUAL CALCULATION AS FALLBACK', [
+                            'corrected_late_minutes' => $lateMinutes,
+                            'corrected_late_hours' => $lateHours
+                        ]);
+                    }
+                }
+            } else {
+                Log::info('ON TIME ATTENDANCE', [
+                    'user' => $username,
+                    'work_start' => $workStartTime->format('H:i:s'),
+                    'check_in' => $timestamp->format('H:i:s'),
+                    'status' => $status
+                ]);
+            }
+
+            // Final validation
+            Log::info('FINAL LATE CALCULATION RESULT', [
+                'is_late' => $isLate,
+                'late_hours' => $lateHours,
+                'late_minutes' => $isLate ? $lateMinutes : 0,
+                'status' => $status,
+                'calculation_method' => $lateHours > 12 ? 'manual_fallback' : 'carbon_diff'
+            ]);
+
+
+
+
+            // Create attendance record
+             Log::info('STEP 8g: CREATING ATTENDANCE RECORD WITH LATE CALCULATION');
+        
             $attendanceData = [
-                'date' => $today,
+                'date' => $todayMakassar,
                 'check_in' => $timestamp,
-                'status' => 'present',
+                'status' => $status,                    // 'present' or 'late'
+                'late_hours' => $lateHours,            // Decimal hours (e.g., 1.5 for 1h 30m)
                 'device_type' => 'web_face_recognition'
             ];
 
@@ -221,19 +403,30 @@ class FaceRecognitionAttendanceController extends Controller
                 $attendanceData['user_id'] = $user->id;
             }
 
-            // Create comprehensive face recognition metadata
+            // Enhanced metadata with late information
             $faceRecognitionData = [
                 'method' => 'face_recognition',
                 'auto_checkin' => $isAutoCheckin,
                 'confidence' => $confidence,
                 'image_path' => $imagePath,
                 'timestamp' => $timestamp->toISOString(),
+                'timezone' => 'Asia/Makassar',
+                
+                // Late calculation metadata
+                'work_start_time' => $workStartTime->format('H:i:s'),
+                'check_in_time' => $timestamp->format('H:i:s'),
+                'is_late' => $isLate,
+                'late_minutes' => $isLate ? $workStartTime->diffInMinutes($timestamp) : 0,
+                'late_hours_calculated' => $lateHours,
+                'attendance_status' => $status,
+                
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'image_size' => $image->getSize(),
                 'image_dimensions' => $imageInfo ? [$imageInfo[0], $imageInfo[1]] : null,
-                'detected_face_count' => 1, // Assuming single face detection
-                'processing_version' => '1.0'
+                'detected_face_count' => 1,
+                'processing_version' => '1.0',
+                'request_id' => uniqid('req_'),
             ];
 
             if ($username && !$user) {
@@ -245,33 +438,53 @@ class FaceRecognitionAttendanceController extends Controller
 
             $attendanceData['notes'] = json_encode($faceRecognitionData);
 
-            // Create attendance record
-            $attendance = Attendance::create($attendanceData);
-
-            if (!$attendance) {
-                throw new \Exception('Failed to create attendance record');
-            }
-
-            Log::info('Face recognition attendance recorded successfully', [
-                'attendance_id' => $attendance->id,
-                'user_id' => $user?->id,
-                'username' => $username,
-                'confidence' => $confidence,
-                'auto_checkin' => $isAutoCheckin,
-                'date' => $today,
-                'check_in_time' => $timestamp->format('H:i:s')
+            Log::info('Attendance data prepared with late calculation', [
+                'user_id' => $attendanceData['user_id'] ?? null,
+                'date' => $attendanceData['date'],
+                'check_in_makassar' => $attendanceData['check_in']->format('Y-m-d H:i:s'),
+                'status' => $attendanceData['status'],
+                'late_hours' => $attendanceData['late_hours'],
+                'is_late' => $isLate,
+                'timezone' => 'Asia/Makassar',
             ]);
 
-            // Prepare comprehensive response data
+            $dbStart = microtime(true);
+            $attendance = Attendance::create($attendanceData);
+            $dbEnd = microtime(true);
+
+            if (!$attendance) {
+                throw new \Exception('Attendance::create returned null');
+            }
+
+            Log::info('STEP 8g SUCCESS: ATTENDANCE RECORD CREATED WITH LATE CALCULATION', [
+                'attendance_id' => $attendance->id,
+                'database_time_ms' => round(($dbEnd - $dbStart) * 1000, 2),
+                'status' => $attendance->status,
+                'late_hours' => $attendance->late_hours,
+                'is_late' => $isLate,
+                'work_start_time' => $workStartTime->format('H:i:s'),
+                'check_in_time' => $timestamp->format('H:i:s'),
+            ]);
+
+            // Enhanced response with late information
             $responseData = [
                 'attendance_id' => $attendance->id,
-                'date' => $today,
+                'date' => $todayMakassar,
                 'check_in_time' => $timestamp->format('H:i:s'),
                 'check_in_full' => $timestamp->toISOString(),
+                'timezone' => 'Asia/Makassar',
                 'method' => 'face_recognition',
                 'auto_checkin' => $isAutoCheckin,
                 'confidence' => $confidence,
-                'status' => 'success'
+                'status' => $status,
+                
+                // Late information in response
+                'is_late' => $isLate,
+                'late_hours' => $lateHours,
+                'work_start_time' => $workStartTime->format('H:i:s'),
+                'late_message' => $isLate ? 
+                    "Late by " . $this->formatLateHours($lateHours) : 
+                    "On time",
             ];
 
             if ($user) {
@@ -291,42 +504,44 @@ class FaceRecognitionAttendanceController extends Controller
                 $responseData['image_path'] = $imagePath;
             }
 
+            Log::info('STEP 8 COMPLETED: ATTENDANCE WITH LATE CALCULATION PROCESSED', [
+                'attendance_id' => $attendance->id,
+                'user_id' => $user?->id,
+                'username' => $username,
+                'check_in_time_makassar' => $timestamp->format('H:i:s'),
+                'status' => $status,
+                'is_late' => $isLate,
+                'late_hours' => $lateHours,
+                'late_message' => $responseData['late_message'],
+            ]);
+
+            // Success message based on late status
+            $successMessage = $isAutoCheckin ? 'Automatic attendance recorded successfully' : 'Attendance recorded successfully';
+            if ($isLate) {
+                $successMessage .= ' (Late arrival detected)';
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => $isAutoCheckin ? 
-                    'Automatic attendance recorded successfully' : 
-                    'Attendance recorded successfully',
+                'message' => $successMessage,
                 'data' => $responseData
             ], 201);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::warning('Validation error in face recognition attendance', [
-                'errors' => $e->errors(),
-                'username' => $request->input('username')
-            ]);
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
-            
         } catch (\Exception $e) {
-            Log::error('Face recognition attendance error: ' . $e->getMessage(), [
+            Log::error('STEP 8 FAILED: UNEXPECTED ERROR', [
+                'error_class' => get_class($e),
+                'error_message' => $e->getMessage(),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
                 'username' => $request->input('username'),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'auto_checkin' => $request->input('auto_checkin'),
+                'timezone' => 'Asia/Makassar',
             ]);
             
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while recording attendance',
-                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error',
-                'debug_info' => config('app.debug') ? [
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ] : null
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
     }
@@ -574,5 +789,29 @@ class FaceRecognitionAttendanceController extends Controller
                 'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
+    }
+
+    private function formatLateHours($lateHours)
+    {
+        if ($lateHours == 0) {
+            return "0 minutes";
+        }
+        
+        $hours = floor($lateHours);
+        $minutes = round(($lateHours - $hours) * 60);
+        
+        $result = '';
+        if ($hours > 0) {
+            $result .= $hours . ($hours == 1 ? ' hour' : ' hours');
+        }
+        
+        if ($minutes > 0) {
+            if ($hours > 0) {
+                $result .= ' ';
+            }
+            $result .= $minutes . ($minutes == 1 ? ' minute' : ' minutes');
+        }
+        
+        return $result;
     }
 }
