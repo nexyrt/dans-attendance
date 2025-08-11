@@ -9,6 +9,10 @@
 
     <body class="bg-gray-50">
         <div x-data="{ isSidebarOpen: false }" class="min-h-screen">
+
+            <!-- Toast & Dialog Components -->
+            <x-toast />
+            <x-dialog />
             <!-- Mobile Header -->
             <div class="lg:hidden fixed top-0 left-0 right-0 bg-white h-16 border-b border-gray-100 z-30 px-4">
                 <div class="flex items-center justify-between h-full">
