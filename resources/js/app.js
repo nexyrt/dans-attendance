@@ -19,273 +19,209 @@ document.addEventListener('livewire:init', () => {
     });
 });
 
-// Simple Dialog-Based Audio System
+// Global Audio System for Laravel Application
 // Add this code to your resources/js/app.js file
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎵 Simple Audio System with Dialog initialized');
-    
-    // Audio configuration
-    let audio = null;
-    let isAudioReady = false;
-    let userHasInteracted = false;
-    
-    // Check if user has already made a choice
-    const audioPreference = localStorage.getItem('backgroundAudioEnabled');
-    const hasChosenBefore = localStorage.getItem('audioChoiceMade');
-    
-    // Create audio element
-    function createAudioElement() {
-        audio = document.createElement('audio');
-        audio.id = 'background-audio';
-        audio.loop = true;
-        audio.preload = 'auto';
-        audio.volume = 0.4;
-        
-        // Add source
-        const source = document.createElement('source');
-        source.src = '/audio/background-music.mp3';
-        source.type = 'audio/mpeg';
-        audio.appendChild(source);
-        
-        // Add to DOM
-        document.body.appendChild(audio);
-        
-        // Event listeners
-        audio.addEventListener('canplaythrough', function() {
-            isAudioReady = true;
-            console.log('✅ Audio file loaded and ready');
-        });
-        
-        audio.addEventListener('error', function(e) {
-            console.error('❌ Audio loading error:', e);
-            console.error('Check if file exists: /audio/background-music.mp3');
-        });
-        
-        audio.addEventListener('play', function() {
-            console.log('🎵 Audio started playing');
-        });
-        
-        audio.addEventListener('pause', function() {
-            console.log('⏸️ Audio paused');
-        });
-        
-        return audio;
-    }
-    
-    // Show confirmation dialog
-    function showAudioDialog() {
-        const userWantsAudio = confirm(
-            "🎵 Ingin mendengarkan background music?\n\n" +
-            "• Klik OK untuk memutar musik\n" +
-            "• Klik Cancel untuk browsing tanpa musik\n\n" +
-            "Pilihan ini akan diingat untuk kunjungan berikutnya."
-        );
-        
-        // Save user preference
-        localStorage.setItem('audioChoiceMade', 'true');
-        localStorage.setItem('backgroundAudioEnabled', userWantsAudio.toString());
-        
-        if (userWantsAudio) {
-            startAudio();
-        } else {
-            console.log('🔇 User declined background music');
-        }
-        
-        return userWantsAudio;
-    }
-    
-    // Start audio playback
-    function startAudio() {
-        if (!audio) {
-            console.error('❌ Audio element not found');
+document.addEventListener('DOMContentLoaded', function () {
+    // Create audio element dynamically
+    const audio = document.createElement('audio');
+    audio.id = 'global-background-music';
+    audio.loop = true;
+    audio.preload = 'auto';
+    audio.volume = 0.3; // Set default volume to 30%
+
+    // Add audio source
+    const source = document.createElement('source');
+    source.src = '/audio/background-music.mp3'; // Direct path to public/audio
+    source.type = 'audio/mpeg';
+    audio.appendChild(source);
+
+    // Add to document body
+    document.body.appendChild(audio);
+
+    // Audio state management with localStorage
+    let audioInitialized = false;
+    let userInteracted = false;
+
+    // Check user preference from localStorage
+    const userMusicPreference = localStorage.getItem('backgroundMusicEnabled');
+    const hasUserChosenBefore = localStorage.getItem('backgroundMusicChoiceMade');
+
+    // Function to initialize audio with user confirmation (only once)
+    function initializeAudio() {
+        if (audioInitialized || userInteracted) return;
+
+        userInteracted = true;
+
+        // If user has already made a choice before
+        if (hasUserChosenBefore === 'true') {
+            if (userMusicPreference === 'true') {
+                // User previously chose to enable music, auto-play
+                playAudioDirectly();
+            } else {
+                // User previously chose to disable music, stay silent
+                console.log('🔇 Background music disabled by user preference');
+            }
             return;
         }
-        
-        // Wait for audio to be ready
-        const attemptPlay = () => {
-            if (isAudioReady) {
-                audio.play().then(() => {
-                    console.log('🎵 Background music started successfully');
-                }).catch((error) => {
-                    console.error('❌ Audio play failed:', error);
-                    
-                    // Retry after short delay
-                    setTimeout(() => {
-                        audio.play().catch(() => {
-                            console.warn('⚠️ Audio autoplay blocked by browser. This is normal.');
-                        });
-                    }, 1000);
-                });
-            } else {
-                // Wait a bit more for audio to load
-                setTimeout(attemptPlay, 500);
-            }
-        };
-        
-        attemptPlay();
-    }
-    
-    // Handle user interaction
-    function handleFirstInteraction() {
-        if (userHasInteracted) return;
-        userHasInteracted = true;
-        
-        console.log('👆 First user interaction detected');
-        
-        // Check previous choice
-        if (hasChosenBefore === 'true') {
-            if (audioPreference === 'true') {
-                console.log('🎵 Auto-starting audio based on previous choice');
-                startAudio();
-            } else {
-                console.log('🔇 Audio disabled based on previous choice');
-            }
+
+        // First time - show dialog
+        const userWantsMusic = confirm("🎵 Ingin mendengarkan background music selama browsing?\n\nKlik OK untuk memutar musik, Cancel untuk browsing dalam keheningan.");
+
+        // Save user choice to localStorage
+        localStorage.setItem('backgroundMusicChoiceMade', 'true');
+        localStorage.setItem('backgroundMusicEnabled', userWantsMusic.toString());
+
+        if (userWantsMusic) {
+            playAudioDirectly();
         } else {
-            // First time - show dialog
-            console.log('💬 Showing audio confirmation dialog');
-            showAudioDialog();
+            console.log('🔇 User declined background music');
+
+            // Show declined notification (optional)  
+            if (typeof window.showToast === 'function') {
+                window.showToast('🔇 Background music dinonaktifkan', 'info');
+            }
         }
-        
-        // Remove interaction listeners
-        removeInteractionListeners();
     }
-    
-    // Add interaction event listeners
-    function addInteractionListeners() {
-        const events = ['click', 'keydown', 'touchstart'];
-        
-        events.forEach(eventType => {
-            document.addEventListener(eventType, handleFirstInteraction, { once: true });
-        });
-        
-        console.log('👆 Waiting for user interaction...');
-    }
-    
-    // Remove interaction event listeners
-    function removeInteractionListeners() {
-        const events = ['click', 'keydown', 'touchstart'];
-        
-        events.forEach(eventType => {
-            document.removeEventListener(eventType, handleFirstInteraction);
+
+    // Function to play audio directly without dialog
+    function playAudioDirectly() {
+        audio.play().then(() => {
+            audioInitialized = true;
+            console.log('🎵 Background music started');
+
+            // Show success notification (optional)
+            if (typeof window.showToast === 'function') {
+                window.showToast('🎵 Background music dimulai!', 'success');
+            }
+        }).catch((error) => {
+            console.error('Audio play failed:', error);
+            // Don't show alert on auto-play, just log
+            console.warn('⚠️ Browser blocked audio autoplay');
         });
     }
-    
-    // Global audio controls
-    window.audioControls = {
-        // Play audio
-        play: function() {
-            if (audio && audio.paused) {
-                startAudio();
+
+    // Auto-trigger audio initialization on first meaningful interaction
+    function handleFirstInteraction(event) {
+        // Only trigger on meaningful interactions (not just mouse movements)
+        if (event.type === 'click' || event.type === 'keydown' || event.type === 'touchstart') {
+            initializeAudio();
+
+            // Remove listeners after first interaction
+            document.removeEventListener('click', handleFirstInteraction);
+            document.removeEventListener('keydown', handleFirstInteraction);
+            document.removeEventListener('touchstart', handleFirstInteraction);
+        }
+    }
+
+    // Add event listeners for first interaction
+    document.addEventListener('click', handleFirstInteraction);
+    document.addEventListener('keydown', handleFirstInteraction);
+    document.addEventListener('touchstart', handleFirstInteraction);
+
+    // Global functions for manual audio control (optional)
+    window.globalAudioControl = {
+        play: function () {
+            if (audio.paused) {
+                audio.play().then(() => {
+                    console.log('🎵 Background music resumed');
+                }).catch((error) => {
+                    console.error('Audio play failed:', error);
+                });
             }
         },
-        
-        // Pause audio
-        pause: function() {
-            if (audio && !audio.paused) {
+        pause: function () {
+            if (!audio.paused) {
                 audio.pause();
-                console.log('⏸️ Audio paused manually');
+                console.log('⏸️ Background music paused');
             }
         },
-        
-        // Toggle play/pause
-        toggle: function() {
-            if (audio) {
-                if (audio.paused) {
-                    this.play();
-                } else {
-                    this.pause();
-                }
+        toggle: function () {
+            if (audio.paused) {
+                this.play();
+            } else {
+                this.pause();
             }
         },
-        
-        // Set volume (0.0 to 1.0)
-        setVolume: function(volume) {
-            if (audio) {
-                audio.volume = Math.max(0, Math.min(1, volume));
-                console.log(`🔊 Volume set to ${Math.round(audio.volume * 100)}%`);
-            }
+        setVolume: function (volume) {
+            audio.volume = Math.max(0, Math.min(1, volume));
+            console.log(`🔊 Volume set to ${Math.round(audio.volume * 100)}%`);
         },
-        
-        // Get current status
-        getStatus: function() {
-            if (!audio) return { error: 'Audio not initialized' };
-            
+        getStatus: function () {
             return {
                 isPlaying: !audio.paused,
                 volume: audio.volume,
                 currentTime: audio.currentTime,
-                duration: audio.duration,
-                isReady: isAudioReady,
-                userPreference: audioPreference,
-                hasChosen: hasChosenBefore === 'true'
+                duration: audio.duration
             };
         },
-        
-        // Reset user preferences
-        resetPreferences: function() {
-            localStorage.removeItem('backgroundAudioEnabled');
-            localStorage.removeItem('audioChoiceMade');
-            console.log('🔄 Audio preferences reset');
-            
-            // Reload page to start fresh
-            if (confirm('Preferensi audio telah direset. Reload halaman untuk mengatur ulang?')) {
-                location.reload();
-            }
+        // Reset user preference (for testing or user settings)
+        resetPreference: function () {
+            localStorage.removeItem('backgroundMusicEnabled');
+            localStorage.removeItem('backgroundMusicChoiceMade');
+            console.log('🔄 Audio preferences reset. Dialog will show on next interaction.');
         },
-        
-        // Force show dialog again
-        showDialog: function() {
-            showAudioDialog();
+        // Enable music preference programmatically
+        enableMusic: function () {
+            localStorage.setItem('backgroundMusicChoiceMade', 'true');
+            localStorage.setItem('backgroundMusicEnabled', 'true');
+            this.play();
+        },
+        // Disable music preference programmatically  
+        disableMusic: function () {
+            localStorage.setItem('backgroundMusicChoiceMade', 'true');
+            localStorage.setItem('backgroundMusicEnabled', 'false');
+            this.pause();
         }
     };
-    
-    // Keyboard shortcuts
-    document.addEventListener('keydown', function(event) {
-        // Ctrl + M to toggle audio
-        if (event.ctrlKey && event.key === 'm') {
-            event.preventDefault();
-            window.audioControls.toggle();
-        }
-        
-        // Ctrl + Shift + A to reset audio preferences
-        if (event.ctrlKey && event.shiftKey && event.key === 'A') {
-            event.preventDefault();
-            window.audioControls.resetPreferences();
-        }
-    });
-    
-    // Handle page visibility changes
-    document.addEventListener('visibilitychange', function() {
-        if (audio && audioPreference === 'true') {
+
+    // Handle page visibility changes (pause when tab is hidden)
+    document.addEventListener('visibilitychange', function () {
+        if (audioInitialized && userMusicPreference === 'true') {
             if (document.hidden) {
                 audio.pause();
-                console.log('⏸️ Audio paused (tab hidden)');
-            } else if (userHasInteracted) {
-                setTimeout(() => {
-                    startAudio();
-                    console.log('🎵 Audio resumed (tab visible)');
-                }, 300);
+                console.log('⏸️ Background music paused (tab hidden)');
+            } else {
+                audio.play().then(() => {
+                    console.log('🎵 Background music resumed (tab visible)');
+                }).catch((error) => {
+                    console.error('Audio resume failed:', error);
+                });
             }
         }
     });
-    
-    // Initialize audio element
-    createAudioElement();
-    
-    // Start listening for interactions
-    addInteractionListeners();
-    
-    // Debug info
-    console.log('📊 Audio System Status:');
-    console.log('   • Has chosen before:', hasChosenBefore === 'true');
-    console.log('   • Audio preference:', audioPreference);
-    console.log('   • Ready for interaction');
-    
-    // Helpful console commands info
-    console.log('🎛️ Available commands:');
-    console.log('   • window.audioControls.getStatus() - Check status');
-    console.log('   • window.audioControls.toggle() - Toggle play/pause');
-    console.log('   • window.audioControls.resetPreferences() - Reset choices');
-    console.log('   • Ctrl+M - Toggle audio');
+
+    // Optional: Add keyboard shortcuts
+    document.addEventListener('keydown', function (event) {
+        // Ctrl + M to toggle music
+        if (event.ctrlKey && event.key === 'm') {
+            event.preventDefault();
+            if (audioInitialized) {
+                window.globalAudioControl.toggle();
+            } else {
+                initializeAudio();
+            }
+        }
+
+        // Ctrl + Shift + M to reset preferences (for testing)
+        if (event.ctrlKey && event.shiftKey && event.key === 'M') {
+            event.preventDefault();
+            window.globalAudioControl.resetPreference();
+        }
+    });
+
+    console.log('🎵 Global Audio System initialized. User preference will be remembered across sessions.');
 });
+
+// Optional: Helper function for toast notifications (if you're using any toast library)
+window.showToast = function (message, type = 'info') {
+    // Example implementation for common toast libraries:
+
+    // For TallStackUI (if you're using it):
+    // $interaction('toast').success(message).send();
+
+    // For basic browser notification:
+    console.log(`${type.toUpperCase()}: ${message}`);
+
+    // You can replace this with your preferred toast notification library
+};
