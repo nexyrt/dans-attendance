@@ -267,7 +267,11 @@
             <img src="{{ asset('images/rizky.png') }}" alt="Photo 1" class="bouncing-photo" id="photo1">
             <img src="{{ asset('images/dodi.png') }}" alt="Photo 2" class="bouncing-photo" id="photo2">
             <img src="{{ asset('images/alex.png') }}" alt="Photo 3" class="bouncing-photo" id="photo3">
-            <img src="{{ asset('images/irul.png') }}" alt="Photo 4" class="bouncing-photo" id="photo4">
+            <img src="{{ asset('images/masjo.png') }}" alt="Photo 4" class="bouncing-photo" id="photo4">
+            <img src="{{ asset('images/rama.png') }}" alt="Photo 4" class="bouncing-photo" id="photo4">
+            <img src="{{ asset('images/goji.png') }}" alt="Photo 4" class="bouncing-photo" id="photo4">
+            <img src="{{ asset('images/iqal.png') }}" alt="Photo 4" class="bouncing-photo" id="photo4">
+            <img src="{{ asset('images/arjun.png') }}" alt="Photo 4" class="bouncing-photo" id="photo4">
 
             <!-- Floating Geometric Shapes -->
             <div class="floating-shape shape-1 top-10 left-10 w-20 h-20">
