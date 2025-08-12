@@ -22,206 +22,328 @@ document.addEventListener('livewire:init', () => {
 // Global Audio System for Laravel Application
 // Add this code to your resources/js/app.js file
 
+// Alternative Global Audio System - Simpler Approach
+// Add this code to your resources/js/app.js file
+
 document.addEventListener('DOMContentLoaded', function () {
-    // Create audio element dynamically
-    const audio = document.createElement('audio');
-    audio.id = 'global-background-music';
-    audio.loop = true;
-    audio.preload = 'auto';
-    audio.volume = 0.3; // Set default volume to 30%
+    console.log('🎵 Initializing Alternative Audio System...');
 
-    // Add audio source
-    const source = document.createElement('source');
-    source.src = '/audio/background-music.mp3'; // Direct path to public/audio
-    source.type = 'audio/mpeg';
-    audio.appendChild(source);
+    // Audio configuration
+    const audioConfig = {
+        src: '/audio/background-music.mp3',
+        volume: 0.3,
+        fadeInDuration: 2000,
+        retryAttempts: 3
+    };
 
-    // Add to document body
-    document.body.appendChild(audio);
+    let audioContext = null;
+    let audioBuffer = null;
+    let audioSource = null;
+    let gainNode = null;
+    let isPlaying = false;
+    let isInitialized = false;
 
-    // Audio state management with localStorage
-    let audioInitialized = false;
-    let userInteracted = false;
+    // Alternative 1: Web Audio API approach
+    function initWebAudio() {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            gainNode = audioContext.createGain();
+            gainNode.connect(audioContext.destination);
+            gainNode.gain.value = 0; // Start with 0 volume for fade in
 
-    // Check user preference from localStorage
-    const userMusicPreference = localStorage.getItem('backgroundMusicEnabled');
-    const hasUserChosenBefore = localStorage.getItem('backgroundMusicChoiceMade');
-
-    // Function to initialize audio with user confirmation (only once)
-    function initializeAudio() {
-        if (audioInitialized || userInteracted) return;
-
-        userInteracted = true;
-
-        // If user has already made a choice before
-        if (hasUserChosenBefore === 'true') {
-            if (userMusicPreference === 'true') {
-                // User previously chose to enable music, auto-play
-                playAudioDirectly();
-            } else {
-                // User previously chose to disable music, stay silent
-                console.log('🔇 Background music disabled by user preference');
-            }
-            return;
-        }
-
-        // First time - show dialog
-        const userWantsMusic = confirm("🎵 Ingin mendengarkan background music selama browsing?\n\nKlik OK untuk memutar musik, Cancel untuk browsing dalam keheningan.");
-
-        // Save user choice to localStorage
-        localStorage.setItem('backgroundMusicChoiceMade', 'true');
-        localStorage.setItem('backgroundMusicEnabled', userWantsMusic.toString());
-
-        if (userWantsMusic) {
-            playAudioDirectly();
-        } else {
-            console.log('🔇 User declined background music');
-
-            // Show declined notification (optional)  
-            if (typeof window.showToast === 'function') {
-                window.showToast('🔇 Background music dinonaktifkan', 'info');
-            }
+            console.log('✅ Web Audio API initialized');
+            return true;
+        } catch (error) {
+            console.warn('❌ Web Audio API not supported:', error);
+            return false;
         }
     }
 
-    // Function to play audio directly without dialog
-    function playAudioDirectly() {
-        audio.play().then(() => {
-            audioInitialized = true;
-            console.log('🎵 Background music started');
+    // Load audio file using fetch
+    async function loadAudioFile() {
+        try {
+            console.log('📥 Loading audio file...');
+            const response = await fetch(audioConfig.src);
 
-            // Show success notification (optional)
-            if (typeof window.showToast === 'function') {
-                window.showToast('🎵 Background music dimulai!', 'success');
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
-        }).catch((error) => {
-            console.error('Audio play failed:', error);
-            // Don't show alert on auto-play, just log
-            console.warn('⚠️ Browser blocked audio autoplay');
+
+            const arrayBuffer = await response.arrayBuffer();
+            audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+            console.log('✅ Audio file loaded successfully');
+            return true;
+        } catch (error) {
+            console.error('❌ Failed to load audio file:', error);
+            return false;
+        }
+    }
+
+    // Play audio with Web Audio API
+    function playWebAudio() {
+        if (!audioContext || !audioBuffer) return false;
+
+        try {
+            // Stop previous source if exists
+            if (audioSource) {
+                audioSource.stop();
+            }
+
+            // Create new source
+            audioSource = audioContext.createBufferSource();
+            audioSource.buffer = audioBuffer;
+            audioSource.loop = true;
+            audioSource.connect(gainNode);
+
+            // Resume audio context if suspended
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            // Start playing
+            audioSource.start();
+
+            // Fade in effect
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(audioConfig.volume, audioContext.currentTime + (audioConfig.fadeInDuration / 1000));
+
+            isPlaying = true;
+            console.log('🎵 Web Audio started with fade-in effect');
+            return true;
+        } catch (error) {
+            console.error('❌ Web Audio play failed:', error);
+            return false;
+        }
+    }
+
+    // Alternative 2: Enhanced HTML5 Audio approach
+    function initHTML5Audio() {
+        const audio = document.createElement('audio');
+        audio.id = 'backup-audio-player';
+        audio.preload = 'auto';
+        audio.loop = true;
+        audio.volume = 0;
+
+        // Multiple source formats for better compatibility
+        const sources = [
+            { src: '/audio/background-music.mp3', type: 'audio/mpeg' },
+            { src: '/audio/background-music.ogg', type: 'audio/ogg' },
+            { src: '/audio/background-music.wav', type: 'audio/wav' }
+        ];
+
+        sources.forEach(source => {
+            const sourceElement = document.createElement('source');
+            sourceElement.src = source.src;
+            sourceElement.type = source.type;
+            audio.appendChild(sourceElement);
         });
+
+        document.body.appendChild(audio);
+
+        // Event listeners
+        audio.addEventListener('canplaythrough', () => {
+            console.log('✅ HTML5 Audio ready to play');
+        });
+
+        audio.addEventListener('error', (e) => {
+            console.error('❌ HTML5 Audio error:', e);
+        });
+
+        return audio;
     }
 
-    // Auto-trigger audio initialization on first meaningful interaction
-    function handleFirstInteraction(event) {
-        // Only trigger on meaningful interactions (not just mouse movements)
-        if (event.type === 'click' || event.type === 'keydown' || event.type === 'touchstart') {
-            initializeAudio();
+    // Fade in function for HTML5 audio
+    function fadeInHTML5Audio(audioElement) {
+        const fadeSteps = 50;
+        const fadeInterval = audioConfig.fadeInDuration / fadeSteps;
+        const volumeStep = audioConfig.volume / fadeSteps;
+        let currentStep = 0;
 
-            // Remove listeners after first interaction
-            document.removeEventListener('click', handleFirstInteraction);
-            document.removeEventListener('keydown', handleFirstInteraction);
-            document.removeEventListener('touchstart', handleFirstInteraction);
+        const fadeTimer = setInterval(() => {
+            currentStep++;
+            audioElement.volume = Math.min(volumeStep * currentStep, audioConfig.volume);
+
+            if (currentStep >= fadeSteps) {
+                clearInterval(fadeTimer);
+                console.log('🎵 HTML5 Audio fade-in completed');
+            }
+        }, fadeInterval);
+    }
+
+    // Try to play HTML5 audio
+    async function playHTML5Audio(audioElement) {
+        try {
+            audioElement.currentTime = 0;
+            await audioElement.play();
+            fadeInHTML5Audio(audioElement);
+            isPlaying = true;
+            console.log('🎵 HTML5 Audio started successfully');
+            return true;
+        } catch (error) {
+            console.error('❌ HTML5 Audio play failed:', error);
+            return false;
         }
     }
 
-    // Add event listeners for first interaction
-    document.addEventListener('click', handleFirstInteraction);
-    document.addEventListener('keydown', handleFirstInteraction);
-    document.addEventListener('touchstart', handleFirstInteraction);
-
-    // Global functions for manual audio control (optional)
-    window.globalAudioControl = {
-        play: function () {
-            if (audio.paused) {
-                audio.play().then(() => {
-                    console.log('🎵 Background music resumed');
-                }).catch((error) => {
-                    console.error('Audio play failed:', error);
+    // Alternative 3: Howler.js fallback (if available)
+    function tryHowlerAudio() {
+        if (typeof Howl !== 'undefined') {
+            try {
+                const howlAudio = new Howl({
+                    src: [audioConfig.src],
+                    loop: true,
+                    volume: audioConfig.volume,
+                    autoplay: false
                 });
+
+                howlAudio.play();
+                isPlaying = true;
+                console.log('🎵 Howler.js audio started');
+                return true;
+            } catch (error) {
+                console.error('❌ Howler.js failed:', error);
+                return false;
             }
-        },
-        pause: function () {
-            if (!audio.paused) {
-                audio.pause();
-                console.log('⏸️ Background music paused');
+        }
+        return false;
+    }
+
+    // Main audio initialization function
+    async function initializeAudio() {
+        if (isInitialized) return;
+
+        console.log('🎵 Starting audio initialization...');
+        isInitialized = true;
+
+        // Method 1: Try Web Audio API
+        if (initWebAudio()) {
+            if (await loadAudioFile()) {
+                if (playWebAudio()) {
+                    localStorage.setItem('audioMethod', 'webapi');
+                    return;
+                }
             }
-        },
-        toggle: function () {
-            if (audio.paused) {
-                this.play();
-            } else {
-                this.pause();
+        }
+
+        // Method 2: Try HTML5 Audio
+        console.log('🔄 Falling back to HTML5 Audio...');
+        const html5Audio = initHTML5Audio();
+
+        // Wait a bit for audio to load
+        setTimeout(async () => {
+            if (await playHTML5Audio(html5Audio)) {
+                localStorage.setItem('audioMethod', 'html5');
+                return;
             }
-        },
-        setVolume: function (volume) {
-            audio.volume = Math.max(0, Math.min(1, volume));
-            console.log(`🔊 Volume set to ${Math.round(audio.volume * 100)}%`);
-        },
-        getStatus: function () {
-            return {
-                isPlaying: !audio.paused,
-                volume: audio.volume,
-                currentTime: audio.currentTime,
-                duration: audio.duration
-            };
-        },
-        // Reset user preference (for testing or user settings)
-        resetPreference: function () {
-            localStorage.removeItem('backgroundMusicEnabled');
-            localStorage.removeItem('backgroundMusicChoiceMade');
-            console.log('🔄 Audio preferences reset. Dialog will show on next interaction.');
-        },
-        // Enable music preference programmatically
-        enableMusic: function () {
-            localStorage.setItem('backgroundMusicChoiceMade', 'true');
-            localStorage.setItem('backgroundMusicEnabled', 'true');
-            this.play();
-        },
-        // Disable music preference programmatically  
-        disableMusic: function () {
-            localStorage.setItem('backgroundMusicChoiceMade', 'true');
-            localStorage.setItem('backgroundMusicEnabled', 'false');
-            this.pause();
+
+            // Method 3: Try Howler.js (if available)
+            console.log('🔄 Trying Howler.js fallback...');
+            if (tryHowlerAudio()) {
+                localStorage.setItem('audioMethod', 'howler');
+                return;
+            }
+
+            // Method 4: Manual user interaction prompt
+            console.log('🔄 All automatic methods failed, requiring manual interaction...');
+            showManualAudioPrompt();
+        }, 1000);
+    }
+
+    // Manual audio prompt as last resort
+    function showManualAudioPrompt() {
+        const promptDiv = document.createElement('div');
+        promptDiv.id = 'audio-prompt';
+        promptDiv.innerHTML = `
+            <div style="
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(0,0,0,0.8);
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                z-index: 9999;
+                font-family: sans-serif;
+                font-size: 14px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            " onclick="window.manualStartAudio()">
+                🎵 Klik untuk memutar musik background
+            </div>
+        `;
+
+        document.body.appendChild(promptDiv);
+
+        // Auto hide after 10 seconds
+        setTimeout(() => {
+            if (promptDiv.parentNode) {
+                promptDiv.parentNode.removeChild(promptDiv);
+            }
+        }, 10000);
+    }
+
+    // Manual audio start function
+    window.manualStartAudio = function () {
+        const promptDiv = document.getElementById('audio-prompt');
+        if (promptDiv) promptDiv.remove();
+
+        const audio = document.getElementById('backup-audio-player');
+        if (audio) {
+            playHTML5Audio(audio);
         }
     };
 
-    // Handle page visibility changes (pause when tab is hidden)
-    document.addEventListener('visibilitychange', function () {
-        if (audioInitialized && userMusicPreference === 'true') {
-            if (document.hidden) {
-                audio.pause();
-                console.log('⏸️ Background music paused (tab hidden)');
-            } else {
-                audio.play().then(() => {
-                    console.log('🎵 Background music resumed (tab visible)');
-                }).catch((error) => {
-                    console.error('Audio resume failed:', error);
-                });
-            }
-        }
+    // Enhanced interaction detection
+    const interactionEvents = ['click', 'touchstart', 'keydown'];
+    let interactionDetected = false;
+
+    function handleInteraction() {
+        if (interactionDetected) return;
+        interactionDetected = true;
+
+        console.log('👆 User interaction detected, starting audio...');
+        setTimeout(initializeAudio, 100);
+
+        // Remove listeners
+        interactionEvents.forEach(event => {
+            document.removeEventListener(event, handleInteraction);
+        });
+    }
+
+    // Add interaction listeners
+    interactionEvents.forEach(event => {
+        document.addEventListener(event, handleInteraction, { once: true });
     });
 
-    // Optional: Add keyboard shortcuts
-    document.addEventListener('keydown', function (event) {
-        // Ctrl + M to toggle music
-        if (event.ctrlKey && event.key === 'm') {
-            event.preventDefault();
-            if (audioInitialized) {
-                window.globalAudioControl.toggle();
-            } else {
+    // Global controls
+    window.audioControl = {
+        start: initializeAudio,
+        stop: function () {
+            if (audioSource) audioSource.stop();
+            const audio = document.getElementById('backup-audio-player');
+            if (audio) audio.pause();
+            isPlaying = false;
+            console.log('⏹️ Audio stopped');
+        },
+        getStatus: function () {
+            return {
+                isPlaying,
+                isInitialized,
+                method: localStorage.getItem('audioMethod') || 'none'
+            };
+        }
+    };
+
+    // Try auto-init for returning users
+    if (localStorage.getItem('audioMethod')) {
+        setTimeout(() => {
+            if (!interactionDetected) {
+                console.log('🔄 Attempting auto-resume for returning user...');
                 initializeAudio();
             }
-        }
+        }, 2000);
+    }
 
-        // Ctrl + Shift + M to reset preferences (for testing)
-        if (event.ctrlKey && event.shiftKey && event.key === 'M') {
-            event.preventDefault();
-            window.globalAudioControl.resetPreference();
-        }
-    });
-
-    console.log('🎵 Global Audio System initialized. User preference will be remembered across sessions.');
+    console.log('🎵 Alternative Audio System ready. Waiting for user interaction...');
 });
-
-// Optional: Helper function for toast notifications (if you're using any toast library)
-window.showToast = function (message, type = 'info') {
-    // Example implementation for common toast libraries:
-
-    // For TallStackUI (if you're using it):
-    // $interaction('toast').success(message).send();
-
-    // For basic browser notification:
-    console.log(`${type.toUpperCase()}: ${message}`);
-
-    // You can replace this with your preferred toast notification library
-};
